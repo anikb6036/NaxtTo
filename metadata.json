@@ -1,0 +1,6 @@
+{
+  "name": "NaxtTo Fine Jewellery",
+  "description": "Minimalist luxury jewellery atelier with an editorial product catalog, comprehensive admin panel for products and orders management, secure checkout, interactive galleries, shoppable Instagram feed, and patron accounts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

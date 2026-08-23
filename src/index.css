@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-display: 'Cinzel', serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #1d1d1f;
+    background-color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-sans);
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-italiana {
+    font-family: 'Italiana', 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-bodoni {
+    font-family: 'Bodoni Moda', 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Custom Artistic Flair subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b5;
+}
+
+/* Image zoom & gallery frame utilities */
+.zoom-container {
+  overflow: hidden;
+}
+
+.zoom-container img {
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zoom-container:hover img {
+  transform: scale(1.06);
+}
+
+/* Exact Print & PDF Export Styles */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except the PDF catalogue when printing */
+  nav, footer, main, #main-footer, #global-toast-notification, .no-print {
+    display: none !important;
+  }
+
+  #pdf-catalogue-modal {
+    position: static !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  #pdf-catalogue-modal header, 
+  #pdf-catalogue-modal footer,
+  #pdf-catalogue-modal button {
+    display: none !important;
+  }
+
+  [id^="pdf-page-"] {
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    aspect-ratio: 16/9 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+}
+
