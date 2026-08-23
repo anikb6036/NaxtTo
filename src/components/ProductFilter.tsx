@@ -90,17 +90,18 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
     (filterOptions.priceRange[0] > 0 || filterOptions.priceRange[1] < 3000 ? 1 : 0);
 
   return (
-    <div id="product-filter-bar" className="w-full bg-white border-b border-[#e5e5ea] pt-8 pb-4">
-      <div className="max-w-7xl mx-auto px-6 sm:px-12">
-        {/* Category Pills Header */}
-        <div className="flex items-center justify-between gap-4 overflow-x-auto pb-4 scrollbar-none">
-          <div className="flex items-center gap-2">
+    <div id="product-filter-bar" className="w-full bg-white border-b border-[#e5e5ea] pt-6 sm:pt-8 pb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Category Pills Header & Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pb-3">
+          {/* Scrollable Category Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 id={`filter-cat-${cat.id}`}
                 onClick={() => onChangeFilter({ ...filterOptions, category: cat.id })}
-                className={`px-4 py-2 rounded-full text-[10px] font-sans font-medium tracking-[0.2em] uppercase whitespace-nowrap transition-all duration-200 border ${
+                className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-sans font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition-all duration-200 border shrink-0 ${
                   filterOptions.category === cat.id
                     ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] shadow-xs'
                     : 'bg-[#f5f5f7] text-[#6e6e73] border-transparent hover:bg-[#e8e8ed] hover:text-[#1d1d1f]'
@@ -112,11 +113,11 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
           </div>
 
           {/* Quick Drawer Trigger & Sort */}
-          <div className="flex items-center gap-3 shrink-0 font-sans">
+          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0 font-sans pt-1 sm:pt-0 border-t sm:border-t-0 border-[#f0f0f2]">
             <button
               id="open-filter-drawer-btn"
               onClick={() => setDrawerOpen(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-sans font-medium tracking-[0.2em] uppercase border transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-sans font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase border transition-all ${
                 activeFilterCount > 0
                   ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] font-bold'
                   : 'bg-[#f5f5f7] text-[#1d1d1f] border-[#e5e5ea] hover:bg-[#e8e8ed]'
@@ -137,7 +138,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                 id="product-sort-select"
                 value={filterOptions.sortBy}
                 onChange={(e) => onChangeFilter({ ...filterOptions, sortBy: e.target.value as any })}
-                className="appearance-none bg-[#f5f5f7] hover:bg-[#e8e8ed] border border-[#e5e5ea] rounded-full text-[10px] text-[#1d1d1f] font-medium tracking-[0.2em] uppercase py-2 pl-4 pr-8 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#1d1d1f] font-sans"
+                className="appearance-none bg-[#f5f5f7] hover:bg-[#e8e8ed] border border-[#e5e5ea] rounded-full text-[9px] sm:text-[10px] text-[#1d1d1f] font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase py-1.5 sm:py-2 pl-3 sm:pl-4 pr-7 sm:pr-8 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#1d1d1f] font-sans"
               >
                 <option value="featured">Curated Selection</option>
                 <option value="price-low">Price: Low to High</option>
@@ -145,7 +146,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                 <option value="newest">New Archetypes</option>
                 <option value="rating">Highest Rated</option>
               </select>
-              <ChevronDown className="w-3 h-3 text-[#86868b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3 h-3 text-[#86868b] absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
         </div>

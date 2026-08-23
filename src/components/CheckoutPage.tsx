@@ -203,48 +203,48 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             <div className="lg:col-span-7 space-y-8">
               
               {/* Stepper Progress Bar */}
-              <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-4 text-xs font-semibold">
+              <div className="flex items-center justify-between border-b border-[#e5e5ea] pb-4 text-[11px] sm:text-xs font-semibold overflow-x-auto scrollbar-none gap-2 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className={`flex items-center gap-2 transition-colors ${
+                  className={`flex items-center gap-1.5 sm:gap-2 transition-colors shrink-0 ${
                     step >= 1 ? 'text-[#1d1d1f]' : 'text-[#86868b]'
                   }`}
                 >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                  <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${
                     step >= 1 ? 'bg-[#1d1d1f] text-white' : 'bg-[#e5e5ea] text-[#86868b]'
                   }`}>1</span>
-                  <span>Shipping Address</span>
+                  <span>Address</span>
                 </button>
 
-                <ChevronRight className="w-4 h-4 text-[#d2d2d7]" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d2d2d7] shrink-0" />
 
                 <button
                   type="button"
                   onClick={() => { if (step > 2) setStep(2); }}
-                  className={`flex items-center gap-2 transition-colors ${
+                  className={`flex items-center gap-1.5 sm:gap-2 transition-colors shrink-0 ${
                     step >= 2 ? 'text-[#1d1d1f]' : 'text-[#86868b]'
                   }`}
                 >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                  <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${
                     step >= 2 ? 'bg-[#1d1d1f] text-white' : 'bg-[#e5e5ea] text-[#86868b]'
                   }`}>2</span>
                   <span>Delivery & Gift</span>
                 </button>
 
-                <ChevronRight className="w-4 h-4 text-[#d2d2d7]" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d2d2d7] shrink-0" />
 
                 <button
                   type="button"
                   onClick={() => { if (step > 3) setStep(3); }}
-                  className={`flex items-center gap-2 transition-colors ${
+                  className={`flex items-center gap-1.5 sm:gap-2 transition-colors shrink-0 ${
                     step >= 3 ? 'text-[#1d1d1f]' : 'text-[#86868b]'
                   }`}
                 >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                  <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${
                     step >= 3 ? 'bg-[#1d1d1f] text-white' : 'bg-[#e5e5ea] text-[#86868b]'
                   }`}>3</span>
-                  <span>Payment & Review</span>
+                  <span>Payment</span>
                 </button>
               </div>
 
