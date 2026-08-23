@@ -480,7 +480,7 @@ export const renderPdfSlide = (page: number) => {
                   </p>
                 </div>
                 <div className="bg-[#a69c93] py-3 sm:py-4 px-4 sm:px-6 text-white text-center font-serif text-xl sm:text-3xl font-light">
-                  $350 – $1,200
+                  ₹28,000 – ₹98,000
                 </div>
               </div>
 
@@ -494,7 +494,7 @@ export const renderPdfSlide = (page: number) => {
                   </p>
                 </div>
                 <div className="bg-[#a69c93] py-3 sm:py-4 px-4 sm:px-6 text-white text-center font-serif text-xl sm:text-3xl font-light">
-                  $1,500 – $8,500+
+                  ₹1,25,000 – ₹6,90,000+
                 </div>
               </div>
             </div>

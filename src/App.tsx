@@ -146,16 +146,17 @@ export default function App() {
     localStorage.setItem('naxtto_all_orders', JSON.stringify(orders));
   }, [orders]);
 
-  // 2. Currency State
-  const [currency, setCurrency] = useState('USD');
+  // 2. Currency State (Default: INR)
+  const [currency, setCurrency] = useState('INR');
   const currencySymbols: Record<string, string> = {
+    INR: '₹',
     USD: '$',
     EUR: '€',
     GBP: '£',
     AUD: 'A$',
     JPY: '¥'
   };
-  const currencySymbol = currencySymbols[currency] || '$';
+  const currencySymbol = currencySymbols[currency] || '₹';
 
   // 3. Navigation View State: 'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'
   const [currentView, setCurrentView] = useState<'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'>('shop');
@@ -645,6 +646,7 @@ export default function App() {
               filterOptions={filterOptions}
               onChangeFilter={setFilterOptions}
               totalResults={filteredProducts.length}
+              currencySymbol={currencySymbol}
             />
 
             {/* Product Catalog Grid */}

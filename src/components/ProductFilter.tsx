@@ -16,12 +16,14 @@ interface ProductFilterProps {
   filterOptions: FilterOptions;
   onChangeFilter: (newFilters: FilterOptions) => void;
   totalResults: number;
+  currencySymbol?: string;
 }
 
 export const ProductFilter: React.FC<ProductFilterProps> = ({
   filterOptions,
   onChangeFilter,
-  totalResults
+  totalResults,
+  currencySymbol = '₹'
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -337,7 +339,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                     Price Ceiling
                   </h4>
                   <span className="text-xs font-serif font-bold text-[#2d2a26]">
-                    Up to ${filterOptions.priceRange[1]} USD
+                    Up to {currencySymbol}{filterOptions.priceRange[1]}
                   </span>
                 </div>
                 <input
@@ -353,9 +355,9 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                   className="w-full accent-[#2d2a26] cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] font-sans text-[#a39d96] mt-1">
-                  <span>$200</span>
-                  <span>$1,500</span>
-                  <span>$3,000+</span>
+                  <span>{currencySymbol}200</span>
+                  <span>{currencySymbol}1,500</span>
+                  <span>{currencySymbol}3,000+</span>
                 </div>
               </div>
 

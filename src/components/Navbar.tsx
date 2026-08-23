@@ -78,6 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const currencies = [
+    { code: 'INR', symbol: '₹', label: 'INR (₹)' },
     { code: 'USD', symbol: '$', label: 'USD ($)' },
     { code: 'EUR', symbol: '€', label: 'EUR (€)' },
     { code: 'GBP', symbol: '£', label: 'GBP (£)' },
