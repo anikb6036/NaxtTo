@@ -104,19 +104,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         id="main-navbar"
         className={`w-full transition-all duration-300 ${
           isScrolled 
-            ? 'bg-white/95 backdrop-blur-md shadow-xs border-b border-[#e5e5ea] py-3.5 px-6 sm:px-12' 
-            : 'bg-white border-b border-[#e5e5ea] py-4 sm:py-5 px-6 sm:px-12'
+            ? 'bg-white/95 backdrop-blur-md shadow-xs border-b border-[#e5e5ea] py-3 px-4 sm:px-6 lg:px-8' 
+            : 'bg-white border-b border-[#e5e5ea] py-3.5 sm:py-4 px-4 sm:px-6 lg:px-8'
         }`}
       >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Left Corner: Brand Logo & Mobile Menu Toggle */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
               {/* Mobile Menu Button (Small Screens) */}
               <button
                 id="mobile-menu-toggle"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 -ml-2 text-[#1d1d1f] hover:opacity-50 transition-opacity lg:hidden"
+                className="p-1.5 -ml-1 text-[#1d1d1f] hover:opacity-50 transition-opacity lg:hidden"
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Brand Logo at Left Corner */}
               <div 
                 id="navbar-brand-logo"
-                className="flex items-center cursor-pointer select-none pr-2 lg:pr-6 shrink-0" 
+                className="flex items-center cursor-pointer select-none pr-1 lg:pr-4 shrink-0" 
                 onClick={() => { onSelectCategory('all'); onNavigateToShop(); }}
               >
                 <BrandLogo 
@@ -138,11 +138,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
 
               {/* Desktop Navigation Links (Adjacent to Brand Logo) */}
-              <div className="hidden lg:flex items-center space-x-6 text-sm font-sans text-[#1d1d1f] ml-2">
+              <div className="hidden lg:flex items-center space-x-3.5 xl:space-x-5 text-xs xl:text-sm font-sans text-[#1d1d1f] ml-1 xl:ml-2">
                 <button
                   id="nav-shop-all"
                   onClick={() => { onSelectCategory('all'); onNavigateToShop(); }}
-                  className={`hover:text-[#c5a059] transition-colors relative py-1 ${
+                  className={`hover:text-[#c5a059] transition-colors relative py-1 whitespace-nowrap ${
                     activeCategory === 'all' ? 'font-semibold text-[#1d1d1f]' : 'text-[#6e6e73]'
                   }`}
                 >
@@ -154,7 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   id="nav-rings"
                   onClick={() => { onSelectCategory('rings'); onNavigateToShop(); }}
-                  className={`hover:text-[#c5a059] transition-colors relative py-1 ${
+                  className={`hover:text-[#c5a059] transition-colors relative py-1 whitespace-nowrap ${
                     activeCategory === 'rings' ? 'font-semibold text-[#1d1d1f]' : 'text-[#6e6e73]'
                   }`}
                 >
@@ -163,7 +163,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   id="nav-necklaces"
                   onClick={() => { onSelectCategory('necklaces'); onNavigateToShop(); }}
-                  className={`hover:text-[#c5a059] transition-colors relative py-1 ${
+                  className={`hover:text-[#c5a059] transition-colors relative py-1 whitespace-nowrap ${
                     activeCategory === 'necklaces' ? 'font-semibold text-[#1d1d1f]' : 'text-[#6e6e73]'
                   }`}
                 >
@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   id="nav-earrings"
                   onClick={() => { onSelectCategory('earrings'); onNavigateToShop(); }}
-                  className={`hover:text-[#c5a059] transition-colors relative py-1 ${
+                  className={`hover:text-[#c5a059] transition-colors relative py-1 whitespace-nowrap ${
                     activeCategory === 'earrings' ? 'font-semibold text-[#1d1d1f]' : 'text-[#6e6e73]'
                   }`}
                 >
@@ -181,7 +181,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   id="nav-bracelets"
                   onClick={() => { onSelectCategory('bracelets'); onNavigateToShop(); }}
-                  className={`hover:text-[#c5a059] transition-colors relative py-1 ${
+                  className={`hover:text-[#c5a059] transition-colors relative py-1 whitespace-nowrap ${
                     activeCategory === 'bracelets' ? 'font-semibold text-[#1d1d1f]' : 'text-[#6e6e73]'
                   }`}
                 >
@@ -190,14 +190,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   id="nav-journal"
                   onClick={onNavigateToJournal}
-                  className="hover:text-[#c5a059] transition-colors text-[#86868b]"
+                  className="hover:text-[#c5a059] transition-colors text-[#86868b] whitespace-nowrap"
                 >
                   Archive
                 </button>
                 <button
                   id="nav-ethos"
                   onClick={onNavigateToAtelier}
-                  className="hover:text-[#c5a059] transition-colors text-[#86868b]"
+                  className="hover:text-[#c5a059] transition-colors text-[#86868b] whitespace-nowrap"
                 >
                   About
                 </button>
@@ -205,12 +205,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Right Section: Search Bar + Utility Icons */}
-            <div className="flex items-center space-x-3 sm:space-x-5 text-sm font-sans text-[#1d1d1f]">
+            <div className="flex items-center space-x-2.5 sm:space-x-3.5 lg:space-x-4 text-xs xl:text-sm font-sans text-[#1d1d1f] shrink-0">
               {/* Mobile Search Button (Small Screens) */}
               <button
                 id="mobile-search-btn"
                 onClick={() => setIsInlineSearchOpen(!isInlineSearchOpen)}
-                className="p-2 text-[#1d1d1f] hover:opacity-50 transition-opacity md:hidden"
+                className="p-1.5 text-[#1d1d1f] hover:opacity-50 transition-opacity md:hidden"
                 aria-label="Search"
               >
                 <Search className="w-4 h-4" />
@@ -219,9 +219,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Inline Search Bar */}
               <div 
                 id="navbar-search-section"
-                className="hidden md:flex items-center gap-2 bg-[#f5f5f7] hover:bg-[#e8e8ed] focus-within:bg-[#f5f5f7] focus-within:ring-1 focus-within:ring-[#1d1d1f]/40 border border-[#e5e5ea] rounded-full px-3.5 py-1.5 w-44 sm:w-56 lg:w-64 xl:w-72 transition-all"
+                className="hidden md:flex items-center gap-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] focus-within:bg-[#f5f5f7] focus-within:ring-1 focus-within:ring-[#1d1d1f]/40 border border-[#e5e5ea] rounded-full px-3 py-1.5 w-36 lg:w-44 xl:w-60 transition-all shrink"
               >
-                <Search className="w-4 h-4 text-[#86868b] shrink-0" />
+                <Search className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -234,8 +234,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onNavigateToShop();
                     }
                   }}
-                  placeholder="Search rings, necklaces, 18K..."
-                  className="bg-transparent text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none w-full"
+                  placeholder="Search 18K, rings..."
+                  className="bg-transparent text-xs text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none w-full"
                 />
                 {searchQuery && (
                   <button
@@ -243,7 +243,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="text-[#86868b] hover:text-[#1d1d1f] p-0.5"
                     title="Clear search"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3 h-3" />
                   </button>
                 )}
               </div>
@@ -252,16 +252,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-wishlist-btn"
                 onClick={onOpenWishlist}
-                className="flex items-center gap-1.5 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+                className="flex items-center gap-1 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors shrink-0 py-1"
                 aria-label="Wishlist"
                 title="View Saved Pieces"
               >
                 <Heart className="w-4 h-4" />
-                <span className="hidden xl:inline">Wishlist</span>
+                <span className="hidden xl:inline text-xs">Wishlist</span>
                 {wishlistCount > 0 && (
                   <span 
                     id="wishlist-count-badge"
-                    className="bg-[#1d1d1f] text-white px-2 py-0.5 rounded-full text-xs font-sans font-medium"
+                    className="bg-[#1d1d1f] text-white px-1.5 py-0.2 rounded-full text-[10px] sm:text-xs font-sans font-medium"
                   >
                     {wishlistCount}
                   </span>
@@ -272,12 +272,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-cart-btn"
                 onClick={onOpenCart}
-                className="flex items-center gap-1.5 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+                className="flex items-center gap-1 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors shrink-0 py-1"
                 aria-label="Shopping Bag"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Bag</span>
-                <span className="bg-[#1d1d1f] text-white px-2 py-0.5 rounded-full text-xs font-sans font-medium">
+                <span className="hidden sm:inline text-xs">Bag</span>
+                <span className="bg-[#1d1d1f] text-white px-1.5 py-0.2 rounded-full text-[10px] sm:text-xs font-sans font-medium">
                   {cartCount}
                 </span>
               </button>
@@ -286,12 +286,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-account-btn"
                 onClick={onOpenAccount}
-                className="flex items-center gap-1.5 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+                className="flex items-center gap-1 text-[#6e6e73] hover:text-[#1d1d1f] transition-colors shrink-0 py-1"
                 aria-label={user.isLoggedIn ? 'Account' : 'Login'}
                 title={user.isLoggedIn ? `Account (${user.name})` : 'Login'}
               >
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{user.isLoggedIn ? 'Account' : 'Login'}</span>
+                <span className="hidden sm:inline text-xs">{user.isLoggedIn ? 'Account' : 'Login'}</span>
               </button>
             </div>
           </div>
