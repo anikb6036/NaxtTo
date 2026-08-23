@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Check, Copy, ArrowRight, ShieldCheck } from 'lucide-react';
+import { apiClient } from '../services/api';
 
 interface NewsletterSignupProps {
   onSubscribed?: (email: string) => void;
@@ -31,6 +32,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ onSubscribed
     if (!email.trim() || !email.includes('@')) return;
 
     setIsSubmitted(true);
+    apiClient.subscribeNewsletter(email.trim());
     if (onSubscribed) {
       onSubscribed(email);
     }

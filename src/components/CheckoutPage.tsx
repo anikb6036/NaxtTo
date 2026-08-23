@@ -17,7 +17,7 @@ import {
   Clock,
   Sparkles as UnusedSparkles
 } from 'lucide-react';
-import { CartItem, Address, Order } from '../types';
+import { CartItem, Address, Order, UserProfile } from '../types';
 import { BrandLogo } from './BrandLogo';
 
 interface CheckoutPageProps {
@@ -29,6 +29,7 @@ interface CheckoutPageProps {
   onOrderCompleted: (order: Order) => void;
   onBackToShop: () => void;
   savedAddresses?: Address[];
+  user?: UserProfile;
   onApplyPromo?: (code: string) => boolean;
   onRemovePromo?: () => void;
 }
@@ -42,22 +43,24 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   onOrderCompleted,
   onBackToShop,
   savedAddresses = [],
+  user,
   onApplyPromo,
   onRemovePromo
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [copiedTracking, setCopiedTracking] = useState(false);
 
-  // Form State
-  const [email, setEmail] = useState('sophia.montgomery@atelier.com');
-  const [fullName, setFullName] = useState('Sophia Montgomery');
-  const [addressLine1, setAddressLine1] = useState('742 Evergreen Gardens, Apt 4B');
-  const [addressLine2, setAddressLine2] = useState('');
-  const [city, setCity] = useState('London');
-  const [state, setState] = useState('Greater London');
-  const [postalCode, setPostalCode] = useState('W1K 7TH');
-  const [country, setCountry] = useState('United Kingdom');
-  const [phone, setPhone] = useState('+44 20 7946 0912');
+  // Form State initialized from real authenticated user or blank
+  const defaultAddr = user?.savedAddresses?.find(a => a.isDefault) || user?.savedAddresses?.[0];
+  const [email, setEmail] = useState(user?.email || '');
+  const [fullName, setFullName] = useState(user?.name || defaultAddr?.fullName || '');
+  const [addressLine1, setAddressLine1] = useState(defaultAddr?.addressLine1 || '');
+  const [addressLine2, setAddressLine2] = useState(defaultAddr?.addressLine2 || '');
+  const [city, setCity] = useState(defaultAddr?.city || '');
+  const [state, setState] = useState(defaultAddr?.state || '');
+  const [postalCode, setPostalCode] = useState(defaultAddr?.postalCode || '');
+  const [country, setCountry] = useState(defaultAddr?.country || 'United Kingdom');
+  const [phone, setPhone] = useState(defaultAddr?.phone || user?.phone || '');
 
   // Shipping Method
   const [shippingMethod, setShippingMethod] = useState<'express' | 'priority'>('express');
@@ -68,10 +71,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<'credit-card' | 'apple-pay' | 'klarna' | 'wire'>('credit-card');
-  const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4921');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCVC, setCardCVC] = useState('892');
-  const [cardName, setCardName] = useState('Sophia Montgomery');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVC, setCardCVC] = useState('');
+  const [cardName, setCardName] = useState(user?.name || '');
   const [agreeTerms, setAgreeTerms] = useState(true);
 
   // Promo code input
@@ -293,7 +296,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         required
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        placeholder="sophia@example.com"
+                        placeholder="your.email@example.com"
                         className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
@@ -305,7 +308,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         required
                         value={fullName}
                         onChange={e => setFullName(e.target.value)}
-                        placeholder="e.g. Sophia Montgomery"
+                        placeholder="Enter recipient's full name"
                         className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
@@ -317,7 +320,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         required
                         value={addressLine1}
                         onChange={e => setAddressLine1(e.target.value)}
-                        placeholder="e.g. 742 Evergreen Gardens, Apt 4B"
+                        placeholder="Street address and apartment, suite, or unit"
                         className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
@@ -329,7 +332,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         required
                         value={city}
                         onChange={e => setCity(e.target.value)}
-                        placeholder="e.g. London"
+                        placeholder="City"
                         className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
@@ -340,7 +343,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         type="text"
                         value={state}
                         onChange={e => setState(e.target.value)}
-                        placeholder="e.g. Greater London"
+                        placeholder="State / Province"
                         className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>

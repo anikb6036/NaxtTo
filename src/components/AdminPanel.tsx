@@ -343,7 +343,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="flex items-center gap-3">
                 <BrandLogo layout="horizontal" size="sm" variant="dark" />
                 <span className="bg-[#1d1d1f] text-white text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full">
-                  Atelier Admin
+                  Admin: Anik
                 </span>
               </div>
             </div>
@@ -352,7 +352,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-medium">Administrator Session</span>
+                <span className="font-medium">Active Session: Anik</span>
               </div>
 
               <button

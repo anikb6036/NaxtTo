@@ -872,62 +872,18 @@ export const BLOG_POSTS: BlogPost[] = [
 ];
 
 export const DEMO_USER: UserProfile = {
-  id: 'user-001',
-  name: 'Sophia Montgomery',
-  email: 'sophia.montgomery@atelier.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-  isLoggedIn: true,
-  memberTier: 'Atelier Connoisseur',
-  memberSince: 'October 2025',
-  savedAddresses: [
-    {
-      fullName: 'Sophia Montgomery',
-      addressLine1: '742 Evergreen Gardens, Apt 4B',
-      addressLine2: 'Mayfair District',
-      city: 'London',
-      state: 'Greater London',
-      postalCode: 'W1K 7TH',
-      country: 'United Kingdom',
-      phone: '+44 20 7946 0912',
-      isDefault: true
-    }
-  ],
-  orderHistory: [
-    {
-      id: 'ord-88392',
-      orderNumber: 'NXT-2026-88392',
-      date: 'July 24, 2026',
-      items: [
-        {
-          product: INITIAL_PRODUCTS[0],
-          selectedSize: 'US 6',
-          selectedFinish: '18k-yellow-gold',
-          quantity: 1
-        }
-      ],
-      subtotal: 680,
-      shippingFee: 0,
-      discount: 68,
-      tax: 55.08,
-      total: 667.08,
-      status: 'Delivered',
-      shippingAddress: {
-        fullName: 'Sophia Montgomery',
-        addressLine1: '742 Evergreen Gardens, Apt 4B',
-        city: 'London',
-        state: 'Greater London',
-        postalCode: 'W1K 7TH',
-        country: 'United Kingdom',
-        phone: '+44 20 7946 0912'
-      },
-      paymentMethod: 'Apple Pay (•••• 4921)',
-      trackingNumber: 'DHL-EX-992817401GB',
-      estimatedDelivery: 'July 27, 2026'
-    }
-  ],
+  id: '',
+  name: '',
+  email: '',
+  avatar: undefined,
+  isLoggedIn: false,
+  memberTier: 'NaxtTo Circle',
+  memberSince: '',
+  savedAddresses: [],
+  orderHistory: [],
   preferences: {
-    metalPreferences: ['18K Recycled Yellow Gold', 'Platinum 950'],
+    metalPreferences: ['18K Recycled Yellow Gold'],
     ringSize: 'US 6',
-    newsletterSubscribed: true
+    newsletterSubscribed: false
   }
 };

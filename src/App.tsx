@@ -33,6 +33,7 @@ import { Footer } from './components/Footer';
 import { PdfCatalogueViewer } from './components/PdfCatalogueViewer';
 import { AdminPanel } from './components/AdminPanel';
 import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
+import { apiClient } from './services/api';
 
 export default function App() {
   // 1. Core State & Local Persistence
@@ -68,15 +69,61 @@ export default function App() {
   });
 
   const [user, setUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('naxtto_user');
-    return saved ? JSON.parse(saved) : DEMO_USER;
+    try {
+      const saved = localStorage.getItem('naxtto_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email && parsed.email !== 'sophia.montgomery@atelier.com') {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return DEMO_USER;
   });
 
   // Global store orders (for admin order management and patron sync)
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('naxtto_all_orders');
-    return saved ? JSON.parse(saved) : DEMO_USER.orderHistory;
+    try {
+      const saved = localStorage.getItem('naxtto_all_orders');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // ignore
+    }
+    return [];
   });
+
+  // Real Firebase Auth listener
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    import('./lib/firebase').then(({ auth }) => {
+      import('firebase/auth').then(({ onAuthStateChanged }) => {
+        unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          if (firebaseUser) {
+            setUser(prev => ({
+              ...prev,
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || prev.name || firebaseUser.email?.split('@')[0] || 'Patron',
+              email: firebaseUser.email || prev.email || '',
+              avatar: firebaseUser.photoURL || prev.avatar || undefined,
+              isLoggedIn: true,
+              memberTier: prev.memberTier || 'NaxtTo Circle',
+              memberSince: prev.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            }));
+          }
+        });
+      });
+    }).catch(err => {
+      console.warn('Firebase auth listener notice:', err);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   // Save to LocalStorage on updates
   useEffect(() => {
@@ -394,11 +441,13 @@ export default function App() {
     }));
     setOrders(prev => [newOrder, ...prev]);
     setCartItems([]);
+    apiClient.createOrder(newOrder);
   };
 
   // 12. Admin CRUD Handlers
   const handleAddProduct = (newProd: Product) => {
     setProducts(prev => [newProd, ...prev]);
+    apiClient.createProduct(newProd);
     showToast(`Piece "${newProd.name}" successfully catalogued.`);
   };
 
@@ -407,6 +456,7 @@ export default function App() {
     if (selectedProduct && selectedProduct.id === updatedProd.id) {
       setSelectedProduct(updatedProd);
     }
+    apiClient.updateProduct(updatedProd.id, updatedProd);
     showToast(`Piece "${updatedProd.name}" updated successfully.`);
   };
 
@@ -416,6 +466,7 @@ export default function App() {
       setSelectedProduct(null);
       setCurrentView('shop');
     }
+    apiClient.deleteProduct(productId);
     showToast('Piece removed from Atelier collection.');
   };
 
@@ -425,6 +476,7 @@ export default function App() {
       ...prev,
       orderHistory: prev.orderHistory.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
     }));
+    apiClient.updateOrderStatus(orderId, newStatus);
     showToast(`Order #${orderId.slice(-6)} status updated to ${newStatus}.`);
   };
 
@@ -543,6 +595,7 @@ export default function App() {
             scrollToCatalog();
           }}
           savedAddresses={user.savedAddresses}
+          user={user}
           onApplyPromo={handleApplyPromo}
           onRemovePromo={handleRemovePromo}
         />
