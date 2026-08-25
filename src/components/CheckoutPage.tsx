@@ -157,7 +157,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setCompletedOrder(newOrder);
     onOrderCompleted(newOrder);
     setStep(4);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const handleCopyTracking = () => {

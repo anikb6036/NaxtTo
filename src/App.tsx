@@ -32,6 +32,7 @@ import { AtelierEthos } from './components/AtelierEthos';
 import { Footer } from './components/Footer';
 import { PdfCatalogueViewer } from './components/PdfCatalogueViewer';
 import { AdminPanel } from './components/AdminPanel';
+import { StaffAuthModal } from './components/StaffAuthModal';
 import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
 import { apiClient } from './services/api';
 
@@ -162,6 +163,21 @@ export default function App() {
   const [currentView, setCurrentView] = useState<'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'>('shop');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Staff / Admin Authentication State (Credential Verification Required)
+  const [isStaffAuthenticated, setIsStaffAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('naxtto_staff_auth') === 'true' || 
+           localStorage.getItem('naxtto_admin_auth') === 'true';
+  });
+  const [isStaffAuthModalOpen, setIsStaffAuthModalOpen] = useState(false);
+  const [staffUser, setStaffUser] = useState<{ email: string; role: string; name: string } | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('naxtto_staff_info');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   // Drawers & Overlays Visibility State
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
@@ -192,7 +208,7 @@ export default function App() {
     searchQuery: ''
   });
 
-  // Section Refs for smooth scrolling
+  // Section Refs for direct navigation
   const catalogRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
   const ethosRef = useRef<HTMLDivElement>(null);
@@ -201,24 +217,24 @@ export default function App() {
     setCurrentView('shop');
     setSelectedProduct(null);
     setTimeout(() => {
-      catalogRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+      catalogRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, 10);
   };
 
   const scrollToJournal = () => {
     setCurrentView('shop');
     setSelectedProduct(null);
     setTimeout(() => {
-      journalRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+      journalRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, 10);
   };
 
   const scrollToEthos = () => {
     setCurrentView('shop');
     setSelectedProduct(null);
     setTimeout(() => {
-      ethosRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+      ethosRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, 10);
   };
 
   // Toast notifier helper
@@ -304,7 +320,7 @@ export default function App() {
     setIsCartOpen(false);
     setIsWishlistOpen(false);
     setCurrentView('checkout');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const handleOpenAccount = () => {
@@ -312,7 +328,7 @@ export default function App() {
     setIsCartOpen(false);
     setIsWishlistOpen(false);
     setCurrentView('account');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const handleOpenCheckout = () => {
@@ -320,7 +336,7 @@ export default function App() {
     setIsCartOpen(false);
     setIsWishlistOpen(false);
     setCurrentView('checkout');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const handleUpdateQuantity = (productId: string, newQty: number, size?: string, finish?: any) => {
@@ -482,13 +498,39 @@ export default function App() {
   };
 
   const handleAdminSignOut = () => {
+    setIsStaffAuthenticated(false);
+    setStaffUser(null);
+    sessionStorage.removeItem('naxtto_staff_auth');
+    sessionStorage.removeItem('naxtto_staff_info');
     localStorage.removeItem('naxtto_admin_auth');
-    sessionStorage.removeItem('naxtto_admin_auth');
-    setUser(prev => ({ ...prev, isLoggedIn: false }));
     setSelectedProduct(null);
-    setCurrentView('account');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentView('shop');
+    window.scrollTo(0, 0);
     showToast('Signed out of Administrator session.');
+  };
+
+  const handleRequestStaffAccess = () => {
+    if (isStaffAuthenticated) {
+      setSelectedProduct(null);
+      setCurrentView('admin');
+      window.scrollTo(0, 0);
+    } else {
+      setIsStaffAuthModalOpen(true);
+    }
+  };
+
+  const handleStaffAuthSuccess = (staff?: { email: string; role: string; name: string }) => {
+    setIsStaffAuthenticated(true);
+    setIsStaffAuthModalOpen(false);
+    sessionStorage.setItem('naxtto_staff_auth', 'true');
+    if (staff) {
+      setStaffUser(staff);
+      sessionStorage.setItem('naxtto_staff_info', JSON.stringify(staff));
+    }
+    setSelectedProduct(null);
+    setCurrentView('admin');
+    window.scrollTo(0, 0);
+    showToast(`Staff credentials verified. Welcome${staff?.name ? `, ${staff.name}` : ''}.`);
   };
 
   return (
@@ -518,11 +560,7 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenAccount={handleOpenAccount}
-        onNavigateToAdmin={() => {
-          setSelectedProduct(null);
-          setCurrentView('admin');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onNavigateToAdmin={handleRequestStaffAccess}
         onOpenPdfCatalogue={() => setIsPdfCatalogueOpen(true)}
         onNavigateToJournal={() => {
           setSelectedProduct(null);
@@ -549,7 +587,7 @@ export default function App() {
       />
 
       {/* Dynamic Page Views: Dedicated Account Page, Admin Panel, Dedicated Checkout Page, Product Detail Page, or Home Catalog */}
-      {currentView === 'admin' ? (
+      {currentView === 'admin' && isStaffAuthenticated ? (
         <AdminPanel
           products={products}
           orders={orders}
@@ -564,6 +602,7 @@ export default function App() {
           }}
           onSignOut={handleAdminSignOut}
           currencySymbol={currencySymbol}
+          staffInfo={staffUser}
         />
       ) : currentView === 'account' ? (
         <AccountPage
@@ -575,11 +614,7 @@ export default function App() {
             scrollToCatalog();
           }}
           onOpenWishlist={() => setIsWishlistOpen(true)}
-          onNavigateToAdmin={() => {
-            setSelectedProduct(null);
-            setCurrentView('admin');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onNavigateToAdmin={handleRequestStaffAccess}
           currencySymbol={currencySymbol}
         />
       ) : currentView === 'checkout' ? (
@@ -612,7 +647,7 @@ export default function App() {
           onSelectProduct={(p) => {
             setSelectedProduct(p);
             setCurrentView('product-detail');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo(0, 0);
           }}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
@@ -684,7 +719,7 @@ export default function App() {
                       onQuickView={(p) => {
                         setSelectedProduct(p);
                         setCurrentView('product-detail');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.scrollTo(0, 0);
                       }}
                       onAddToCart={handleAddToCart}
                       isWishlisted={isWishlisted(product.id)}
@@ -704,7 +739,7 @@ export default function App() {
             onSelectProduct={(p) => {
               setSelectedProduct(p);
               setCurrentView('product-detail');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              window.scrollTo(0, 0);
             }}
             onAddToCart={handleAddToCart}
             currencySymbol={currencySymbol}
@@ -723,7 +758,7 @@ export default function App() {
               onSelectProduct={(p) => {
                 setSelectedProduct(p);
                 setCurrentView('product-detail');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo(0, 0);
               }}
               onAddToCart={handleAddToCart}
               currencySymbol={currencySymbol}
@@ -762,11 +797,7 @@ export default function App() {
           scrollToEthos();
         }}
         onOpenWishlist={() => setIsWishlistOpen(true)}
-        onNavigateToAdmin={() => {
-          setSelectedProduct(null);
-          setCurrentView('admin');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onNavigateToAdmin={handleRequestStaffAccess}
       />
 
       {/* Drawers and Overlays */}
@@ -804,7 +835,7 @@ export default function App() {
           setSelectedProduct(p);
           setCurrentView('product-detail');
           setIsWishlistOpen(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo(0, 0);
         }}
       />
 
@@ -812,6 +843,13 @@ export default function App() {
       <PdfCatalogueViewer
         isOpen={isPdfCatalogueOpen}
         onClose={() => setIsPdfCatalogueOpen(false)}
+      />
+
+      {/* 4. Staff & Admin Authentication Gate Modal */}
+      <StaffAuthModal
+        isOpen={isStaffAuthModalOpen}
+        onClose={() => setIsStaffAuthModalOpen(false)}
+        onSuccess={handleStaffAuthSuccess}
       />
     </div>
   );

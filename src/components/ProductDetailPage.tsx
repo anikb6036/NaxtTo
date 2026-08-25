@@ -75,7 +75,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     setSelectedFinish(product.availableFinishes?.[0]?.type || product.metal);
     setSelectedSize(product.availableSizes?.[0] || 'Standard');
     setQuantity(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   }, [product.id]);
 
   const handleAddReviewSubmit = (e: React.FormEvent) => {

@@ -56,6 +56,7 @@ interface AdminPanelProps {
   onBackToShop: () => void;
   onSignOut: () => void;
   currencySymbol: string;
+  staffInfo?: { email: string; role: string; name: string } | null;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -67,7 +68,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onUpdateOrderStatus,
   onBackToShop,
   onSignOut,
-  currencySymbol
+  currencySymbol,
+  staffInfo
 }) => {
   // Navigation tabs in Admin
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'add-product'>('products');
@@ -343,7 +345,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="flex items-center gap-3">
                 <BrandLogo layout="horizontal" size="sm" variant="dark" />
                 <span className="bg-[#1d1d1f] text-white text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full">
-                  Admin: Anik
+                  {staffInfo?.role || 'Admin: Anik'}
                 </span>
               </div>
             </div>
@@ -352,7 +354,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-medium">Active Session: Anik</span>
+                <span className="font-medium">Active Session: {staffInfo?.name || 'Anik'}</span>
               </div>
 
               <button
