@@ -8,7 +8,8 @@ import {
   ProductReview, 
   UserProfile, 
   Order, 
-  BlogPost 
+  BlogPost,
+  Address 
 } from './types';
 import { 
   INITIAL_PRODUCTS, 
@@ -461,6 +462,20 @@ export default function App() {
     apiClient.createOrder(newOrder);
   };
 
+  const handleSaveNewAddress = (newAddr: Address) => {
+    setUser(prev => {
+      const existing = prev.savedAddresses || [];
+      const withId = { ...newAddr, id: newAddr.id || `addr-${Date.now()}` };
+      const updated = newAddr.isDefault
+        ? existing.map(a => ({ ...a, isDefault: false })).concat(withId)
+        : [...existing, withId];
+      return {
+        ...prev,
+        savedAddresses: updated
+      };
+    });
+  };
+
   // 12. Admin CRUD Handlers
   const handleAddProduct = (newProd: Product) => {
     setProducts(prev => [newProd, ...prev]);
@@ -634,6 +649,7 @@ export default function App() {
           user={user}
           onApplyPromo={handleApplyPromo}
           onRemovePromo={handleRemovePromo}
+          onSaveNewAddress={handleSaveNewAddress}
         />
       ) : currentView === 'product-detail' && selectedProduct ? (
         <ProductDetailPage
