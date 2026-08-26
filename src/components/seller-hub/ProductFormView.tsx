@@ -1137,31 +1137,63 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
     applyCategoryDefaults(configKey, node);
   };
 
-  // Image Processing & Upload Handlers
-  const processImageFiles = (files: FileList | File[]) => {
+  // Image Processing & Upload Handlers with client-side canvas compression
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1200;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.85);
+            resolve(compressed);
+          } else {
+            resolve(e.target?.result as string);
+          }
+        };
+        img.onerror = () => {
+          resolve(e.target?.result as string);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const processImageFiles = async (files: FileList | File[]) => {
     const fileList = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (fileList.length === 0) return;
 
-    let loadedCount = 0;
-    const newImages: string[] = [];
-
-    fileList.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        if (uploadEvent.target?.result) {
-          newImages.push(uploadEvent.target.result as string);
-        }
-        loadedCount++;
-        if (loadedCount === fileList.length) {
-          setFormData(prev => {
-            const combined = [...newImages, ...prev.images];
-            setImageUrlsText(combined.join('\n'));
-            return { ...prev, images: combined };
-          });
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const compressedList = await Promise.all(fileList.map(f => compressImage(f)));
+      const validImages = compressedList.filter(Boolean);
+      if (validImages.length > 0) {
+        setFormData(prev => {
+          const combined = [...validImages, ...prev.images];
+          setImageUrlsText(combined.join('\n'));
+          return { ...prev, images: combined };
+        });
+      }
+    } catch (err) {
+      console.error('Error compressing uploaded images:', err);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
