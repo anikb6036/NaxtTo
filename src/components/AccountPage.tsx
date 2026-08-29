@@ -70,13 +70,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [unauthorizedDomain, setUnauthorizedDomain] = useState<string | null>(null);
-  const [copiedDomain, setCopiedDomain] = useState(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    setUnauthorizedDomain(null);
     const identifier = loginEmail.trim();
     const enteredPassword = loginPassword.trim();
 
@@ -160,25 +157,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     }
   };
 
-  const handleQuickLogin = (email: string, name: string, tier: string = 'Atelier Connoisseur') => {
-    setAuthError(null);
-    setUnauthorizedDomain(null);
-    onUpdateUser({
-      id: `usr-${Date.now()}`,
-      name,
-      email,
-      isLoggedIn: true,
-      memberTier: tier,
-      memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    });
-    setUserName(name);
-    setUserEmail(email);
-  };
-
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     setAuthError(null);
-    setUnauthorizedDomain(null);
     try {
       const { signInWithPopup } = await import('firebase/auth');
       const { auth, googleAuthProvider } = await import('../lib/firebase');
@@ -199,9 +180,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     } catch (err: any) {
       console.error('Google Auth Error:', err);
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
-        const currentHost = window.location.hostname;
-        setUnauthorizedDomain(currentHost);
-        setAuthError(`Firebase domain authorization required for "${currentHost}". You can authorize it in Firebase Console or use the Instant 1-Click Google Patron Login below.`);
+        setAuthError(`Domain authorization required: Please add "${window.location.hostname}" to Authorized Domains in your Firebase Console (Authentication > Settings > Authorized domains).`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setAuthError('Google Sign-In popup was closed. Please try again.');
       } else if (err.code === 'auth/popup-blocked') {
@@ -209,7 +188,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       } else if (err.code === 'auth/cancelled-popup-request') {
         // user clicked multiple times
       } else {
-        setAuthError(err.message || 'Google authentication failed. Please try again or use direct login.');
+        setAuthError(err.message || 'Google authentication failed. Please try again.');
       }
     } finally {
       setIsGoogleLoading(false);
@@ -432,86 +411,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               </div>
             </div>
 
-            {/* Error & Domain Authorization Banner */}
-            {unauthorizedDomain && (
-              <div id="unauthorized-domain-banner" className="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl space-y-3 text-xs animate-fadeIn">
-                <div className="flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-amber-950">Firebase Domain Authorization</p>
-                    <p className="text-[11px] text-amber-800 mt-0.5">
-                      To enable live Google OAuth popups on this container, add this domain to your Firebase Console under <span className="font-medium">Authentication &gt; Settings &gt; Authorized domains</span>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 bg-white/80 border border-amber-200 rounded-lg p-2 font-mono text-[11px]">
-                  <span className="truncate flex-1 text-amber-950 select-all">{unauthorizedDomain}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(unauthorizedDomain);
-                      setCopiedDomain(true);
-                      setTimeout(() => setCopiedDomain(false), 2000);
-                    }}
-                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded text-[10px] font-sans font-medium transition-colors shrink-0 flex items-center gap-1"
-                  >
-                    {copiedDomain ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedDomain ? 'Copied!' : 'Copy Domain'}</span>
-                  </button>
-                </div>
-
-                {/* Instant Google Login Bypass for unblocked development */}
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    id="instant-patron-login-btn"
-                    onClick={() => handleQuickLogin('baidyaanik18@gmail.com', 'Anik Baidya', 'Atelier Connoisseur')}
-                    className="w-full py-2 bg-[#1d1d1f] hover:bg-black text-white rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all shadow-xs"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-                    <span>Instant Login as Anik (baidyaanik18@gmail.com)</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {authError && !unauthorizedDomain && (
+            {/* Error Message */}
+            {authError && (
               <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2 animate-fadeIn">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{authError}</span>
               </div>
             )}
-
-            {/* Quick 1-Click Access for Instant Preview Testing */}
-            <div className="bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-semibold tracking-wider text-[#6e6e73]">
-                  Quick Demo Access
-                </span>
-                <span className="text-[10px] text-emerald-700 font-medium">Instant 1-Click</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  id="quick-login-anik-btn"
-                  onClick={() => handleQuickLogin('baidyaanik18@gmail.com', 'Anik Baidya', 'Atelier Connoisseur')}
-                  className="px-2.5 py-1.5 bg-white hover:bg-[#eaeaea] border border-[#d2d2d7] rounded-lg text-[11px] font-medium text-[#1d1d1f] text-left transition-colors flex items-center justify-between"
-                >
-                  <span className="truncate">Anik Baidya</span>
-                  <ArrowRight className="w-3 h-3 text-[#86868b] shrink-0" />
-                </button>
-                <button
-                  type="button"
-                  id="quick-login-sophia-btn"
-                  onClick={() => handleQuickLogin('sophia.montgomery@atelier.com', 'Sophia Montgomery', 'Privé Circle')}
-                  className="px-2.5 py-1.5 bg-white hover:bg-[#eaeaea] border border-[#d2d2d7] rounded-lg text-[11px] font-medium text-[#1d1d1f] text-left transition-colors flex items-center justify-between"
-                >
-                  <span className="truncate">Sophia (VIP)</span>
-                  <ArrowRight className="w-3 h-3 text-[#86868b] shrink-0" />
-                </button>
-              </div>
-            </div>
 
             {/* Sign In Form */}
             <form onSubmit={handleLoginSubmit} className="space-y-4">
