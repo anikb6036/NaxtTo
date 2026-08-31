@@ -1,11 +1,12 @@
 {
-  "projectId": "my-app-b0a81",
-  "appId": "1:67419556113:web:5d3727963265cc396aa4b0",
-  "apiKey": "AIzaSyA6hT6v157XWGLLpEAcUouLABicQQh74Us",
-  "authDomain": "my-app-b0a81.firebaseapp.com",
-  "storageBucket": "my-app-b0a81.firebasestorage.app",
-  "messagingSenderId": "67419556113",
+  "projectId": "acoustic-phoenix-207pf",
+  "appId": "1:509813992931:web:0ac93ab74ad9255fc344d6",
+  "apiKey": "AIzaSyB5jnrxZH88ck9sy8JY6yKKlupDDhLbV7c",
+  "authDomain": "acoustic-phoenix-207pf.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-naxttofinejewell-82822edf-4311-46b5-86b9-51d2fc4983b0",
+  "storageBucket": "acoustic-phoenix-207pf.firebasestorage.app",
+  "messagingSenderId": "509813992931",
   "measurementId": "",
-  "oAuthClientId": "",
+  "oAuthClientId": "509813992931-oonf3eno646qakap7qp8b7oqf5uvfntg.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }
