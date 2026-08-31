@@ -38,7 +38,7 @@ import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
 import { apiClient } from './services/api';
 
 export default function App() {
-  // 1. Core State & Local Persistence
+  // 1. Core State & Local Persistence (Empty by default)
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('naxtto_products');
     return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
@@ -46,7 +46,11 @@ export default function App() {
 
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
-      const saved = localStorage.getItem('naxtto_cart');
+      // Clear legacy sample cart if present from old build
+      if (localStorage.getItem('naxtto_cart')) {
+        localStorage.removeItem('naxtto_cart');
+      }
+      const saved = localStorage.getItem('naxtto_cart_v2');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -54,17 +58,16 @@ export default function App() {
   });
 
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(() => {
-    const saved = localStorage.getItem('naxtto_wishlist');
-    return saved ? JSON.parse(saved) : [
-      {
-        product: INITIAL_PRODUCTS[1],
-        addedAt: '2026-08-18'
-      },
-      {
-        product: INITIAL_PRODUCTS[2],
-        addedAt: '2026-08-17'
+    try {
+      // Clear legacy sample wishlist if present from old build
+      if (localStorage.getItem('naxtto_wishlist')) {
+        localStorage.removeItem('naxtto_wishlist');
       }
-    ];
+      const saved = localStorage.getItem('naxtto_wishlist_v2');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [user, setUser] = useState<UserProfile>(() => {
@@ -130,11 +133,11 @@ export default function App() {
   }, [products]);
 
   useEffect(() => {
-    localStorage.setItem('naxtto_cart', JSON.stringify(cartItems));
+    localStorage.setItem('naxtto_cart_v2', JSON.stringify(cartItems));
   }, [cartItems]);
 
   useEffect(() => {
-    localStorage.setItem('naxtto_wishlist', JSON.stringify(wishlistItems));
+    localStorage.setItem('naxtto_wishlist_v2', JSON.stringify(wishlistItems));
   }, [wishlistItems]);
 
   useEffect(() => {
