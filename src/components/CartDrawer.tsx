@@ -14,7 +14,6 @@ import {
   Truck
 } from 'lucide-react';
 import { CartItem } from '../types';
-import { LotusEmblem } from './BrandLogo';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -100,7 +99,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-[#E8DFD1] flex items-center justify-between bg-[#FAF9F5]">
           <div className="flex items-center gap-2.5">
-            <LotusEmblem className="w-5 h-5 text-[#c5a059]" />
+            <ShoppingBag className="w-5 h-5 text-[#8C5D3B]" />
             <h2 className="font-serif text-xl font-medium text-[#1A1816]">Atelier Bag</h2>
             <span className="text-xs text-[#8C7E70] font-sans">({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
           </div>

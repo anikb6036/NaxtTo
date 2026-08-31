@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrandLogo, LotusEmblem } from './BrandLogo';
+import { BrandLogo } from './BrandLogo';
 
 export const TOTAL_PDF_PAGES = 15;
 
@@ -53,7 +53,6 @@ export const renderPdfSlide = (page: number) => {
           <div className="grid grid-cols-12 gap-4 sm:gap-6 items-center flex-1 my-2 sm:my-4">
             {/* Left Title */}
             <div className="col-span-5 pr-2 sm:pr-4 space-y-4">
-              <LotusEmblem className="w-12 h-12 text-[#c5a059]" />
               <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.05] tracking-tight text-[#2d2a26]">
                 NaxtTo <br />
                 Catalogue

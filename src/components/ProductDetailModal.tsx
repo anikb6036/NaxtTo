@@ -19,7 +19,7 @@ import {
   Gem
 } from 'lucide-react';
 import { Product, MetalType, ProductReview } from '../types';
-import { BrandLogo, LotusEmblem } from './BrandLogo';
+import { BrandLogo } from './BrandLogo';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -391,7 +391,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               {/* NaxtTo Provenance Certificate Banner */}
               <div className="mt-4 p-3 rounded-sm bg-[#FAF7F0] border border-[#E8DFD1] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <LotusEmblem className="w-4 h-4 text-[#c5a059]" />
+                  <Sparkles className="w-4 h-4 text-[#c5a059]" />
                   <span className="text-[11px] font-medium text-[#4A443D]">
                     NaxtTo Certificate of Authenticity & Provenance Included
                   </span>

@@ -6,6 +6,7 @@ export interface BrandLogoProps {
   variant?: 'dark' | 'light' | 'bronze' | 'gold' | 'champagne' | 'embossed' | 'monochrome' | 'inherit';
   showSubtitle?: boolean;
   subtitleText?: string;
+  showIcon?: boolean;
   className?: string;
   onClick?: () => void;
   id?: string;
@@ -292,6 +293,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'bronze',
   showSubtitle = false,
   subtitleText = 'FINE JEWELLERY',
+  showIcon = false,
   className = '',
   onClick,
   id
@@ -429,8 +431,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       } ${onClick ? 'cursor-pointer group' : ''} ${className}`}
       onClick={onClick}
     >
-      {/* Lotus Emblem Icon (Original geometry from NaxtTo reference) */}
-      {layout !== 'text-only' && (
+      {/* Lotus Emblem Icon - only rendered when explicitly enabled */}
+      {(showIcon || layout === 'icon-only') && (
         <LotusEmblem
           className={`${currentSize.icon} group-hover:scale-[1.03] transition-transform duration-300`}
           color={currentColors.icon}

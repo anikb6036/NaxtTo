@@ -73,7 +73,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               fontStyle: 'normal'
             }}
           >
-            By Emily Dawson
+            By NaxtTo
           </p>
         </div>
       </div>

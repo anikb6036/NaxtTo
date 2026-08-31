@@ -278,9 +278,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span className="hidden sm:inline text-xs">Bag</span>
-                <span className="bg-[#1d1d1f] text-white px-1.5 py-0.2 rounded-full text-[10px] sm:text-xs font-sans font-medium">
-                  {cartCount}
-                </span>
+                {cartCount > 0 && (
+                  <span 
+                    id="nav-cart-badge"
+                    className="bg-[#1d1d1f] text-white px-1.5 py-0.2 rounded-full text-[10px] sm:text-xs font-sans font-medium"
+                  >
+                    {cartCount}
+                  </span>
+                )}
               </button>
 
               {/* User Profile / Account Button (Rightmost Corner) */}

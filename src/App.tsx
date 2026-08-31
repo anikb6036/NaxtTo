@@ -45,15 +45,12 @@ export default function App() {
   });
 
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('naxtto_cart');
-    return saved ? JSON.parse(saved) : [
-      {
-        product: INITIAL_PRODUCTS[0],
-        selectedSize: 'US 6',
-        selectedFinish: '18k-yellow-gold',
-        quantity: 1
-      }
-    ];
+    try {
+      const saved = localStorage.getItem('naxtto_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(() => {
