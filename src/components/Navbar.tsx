@@ -132,9 +132,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <BrandLogo 
                   layout="horizontal" 
                   size="md" 
-                  variant="dark" 
+                  variant="bronze" 
                   showSubtitle={true} 
-                  subtitleText="Fine Jewellery" 
+                  subtitleText="FINE JEWELLERY" 
                 />
               </div>
 
