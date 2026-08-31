@@ -180,7 +180,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     } catch (err: any) {
       console.error('Google Auth Error:', err);
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
-        setAuthError(`Domain authorization required: Please add "${window.location.hostname}" to Authorized Domains in your Firebase Console (Authentication > Settings > Authorized domains).`);
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        setAuthError(`Domain authorization required: Firebase has not yet whitelisted "${hostname}". To enable Google Sign-In, add "${hostname}" in your Firebase Console under Authentication > Settings > Authorized domains. You can also sign in directly using email & password below.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setAuthError('Google Sign-In popup was closed. Please try again.');
       } else if (err.code === 'auth/popup-blocked') {
