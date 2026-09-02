@@ -6,7 +6,7 @@ import { StarRating } from './StarRating';
 interface ProductCardProps {
   product: Product;
   onQuickView: (product: Product) => void;
-  onAddToCart: (product: Product, selectedSize?: string, selectedFinish?: any) => void;
+  onAddToCart: (product: Product, selectedSize?: string, selectedFinish?: any) => boolean | void;
   isWishlisted: boolean;
   onToggleWishlist: (product: Product) => void;
   currencySymbol: string;
@@ -27,9 +27,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onAddToCart(product, product.availableSizes?.[0], selectedFinish);
-    setAddedAnimation(true);
-    setTimeout(() => setAddedAnimation(false), 1500);
+    const result = onAddToCart(product, product.availableSizes?.[0], selectedFinish);
+    if (result !== false) {
+      setAddedAnimation(true);
+      setTimeout(() => setAddedAnimation(false), 1500);
+    }
   };
 
   const handleWishlistClick = (e: React.MouseEvent) => {
@@ -85,31 +87,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
         </button>
 
-        {/* Quick View & Instant Add Overlay Buttons (Touch friendly & Hover friendly) */}
-        <div className="absolute bottom-2 inset-x-2 sm:bottom-3 sm:inset-x-3 flex items-center gap-1.5 sm:gap-2 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 z-10 font-sans">
+        {/* Quick View Overlay Button (Touch friendly & Hover friendly) */}
+        <div className="absolute bottom-2 inset-x-2 sm:bottom-3 sm:inset-x-3 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 z-10 font-sans">
           <button
             id={`quickview-btn-${product.id}`}
             onClick={(e) => {
               e.stopPropagation();
               onQuickView(product);
             }}
-            className="flex-1 py-1.5 sm:py-2.5 bg-white/95 hover:bg-white text-[#1d1d1f] text-[8px] sm:text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase rounded-xs backdrop-blur-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-sm transition-all"
+            className="w-full py-1.5 sm:py-2.5 bg-white/95 hover:bg-white text-[#1d1d1f] text-[8px] sm:text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase rounded-xs backdrop-blur-xs flex items-center justify-center gap-1 sm:gap-1.5 shadow-sm transition-all"
           >
             <Eye className="w-3 h-3" />
             <span>View</span>
-          </button>
-
-          <button
-            id={`quickadd-btn-${product.id}`}
-            onClick={handleQuickAdd}
-            className={`p-1.5 sm:p-2.5 rounded-lg transition-all flex items-center justify-center shadow-xs active:scale-95 ${
-              addedAnimation
-                ? 'bg-emerald-800 text-white'
-                : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/50'
-            }`}
-            title="Quick Add to Bag"
-          >
-            {addedAnimation ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" /> : <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1A1816]" />}
           </button>
         </div>
       </div>
@@ -140,27 +129,55 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </p>
         </div>
 
-        {/* Finish Swatches & Price */}
-        <div className="pt-2 sm:pt-2.5 border-t border-[#e5e5ea] flex items-center justify-between gap-1">
-          {/* Swatches if available */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {product.availableFinishes?.map(f => (
-              <button
-                key={f.type}
-                onClick={() => setSelectedFinish(f.type)}
-                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border transition-transform ${
-                  selectedFinish === f.type
-                    ? 'ring-1 ring-[#1d1d1f] ring-offset-1 scale-110'
-                    : 'border-black/20 hover:scale-105'
-                }`}
-                style={{ backgroundColor: f.colorHex }}
-                title={f.name}
-              />
-            ))}
+        {/* Action Button & Price Bottom Section */}
+        <div className="pt-2 sm:pt-2.5 border-t border-[#e5e5ea] flex items-center justify-between gap-2">
+          {/* Buy / Add to Bag Button (moved to bottom left section) */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              id={`quickadd-btn-${product.id}`}
+              onClick={handleQuickAdd}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 shrink-0 ${
+                addedAnimation
+                  ? 'bg-emerald-800 text-white'
+                  : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/50'
+              }`}
+              title="Add to Bag"
+            >
+              {addedAnimation ? (
+                <>
+                  <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+                  <span className="font-sans whitespace-nowrap">Added</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1A1816]" />
+                  <span className="font-sans whitespace-nowrap">Add to Bag</span>
+                </>
+              )}
+            </button>
+
+            {/* Swatches if available */}
+            {product.availableFinishes && product.availableFinishes.length > 1 && (
+              <div className="hidden md:flex items-center gap-1 shrink-0 ml-0.5" onClick={(e) => e.stopPropagation()}>
+                {product.availableFinishes.map(f => (
+                  <button
+                    key={f.type}
+                    onClick={() => setSelectedFinish(f.type)}
+                    className={`w-2.5 h-2.5 rounded-full border transition-transform ${
+                      selectedFinish === f.type
+                        ? 'ring-1 ring-[#1d1d1f] ring-offset-1 scale-110'
+                        : 'border-black/20 hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: f.colorHex }}
+                    title={f.name}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Price */}
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className="flex items-baseline gap-1 justify-end">
               {product.originalPrice && (
                 <span className="text-[9px] sm:text-[10px] text-[#86868b] line-through font-sans">

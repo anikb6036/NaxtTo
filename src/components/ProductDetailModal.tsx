@@ -24,7 +24,7 @@ import { StarRating, OrangeStar } from './StarRating';
 interface ProductDetailModalProps {
   product: Product | null;
   onClose: () => void;
-  onAddToCart: (product: Product, selectedSize?: string, selectedFinish?: MetalType, quantity?: number) => void;
+  onAddToCart: (product: Product, selectedSize?: string, selectedFinish?: MetalType, quantity?: number) => boolean | void;
   onBuyNow: (product: Product, selectedSize?: string, selectedFinish?: MetalType) => void;
   isWishlisted: boolean;
   onToggleWishlist: (product: Product) => void;
@@ -92,9 +92,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleAddToCart = () => {
-    onAddToCart(product, selectedSize, selectedFinish, quantity);
-    setAddedAnimation(true);
-    setTimeout(() => setAddedAnimation(false), 2000);
+    const result = onAddToCart(product, selectedSize, selectedFinish, quantity);
+    if (result !== false) {
+      setAddedAnimation(true);
+      setTimeout(() => setAddedAnimation(false), 2000);
+    }
   };
 
   return (

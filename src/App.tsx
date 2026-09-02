@@ -34,6 +34,7 @@ import { Footer } from './components/Footer';
 import { PdfCatalogueViewer } from './components/PdfCatalogueViewer';
 import { AdminPanel } from './components/AdminPanel';
 import { StaffAuthModal } from './components/StaffAuthModal';
+import { LoginPromptModal } from './components/LoginPromptModal';
 import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
 import { apiClient } from './services/api';
 
@@ -184,6 +185,9 @@ export default function App() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isPdfCatalogueOpen, setIsPdfCatalogueOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+  const [loginPromptProductName, setLoginPromptProductName] = useState<string | undefined>(undefined);
+  const [loginPromptActionType, setLoginPromptActionType] = useState<'bag' | 'wishlist'>('bag');
 
   // 4. Checkout Promo & Gift Options
   const [appliedPromo, setAppliedPromo] = useState<{
@@ -294,7 +298,15 @@ export default function App() {
     selectedSize?: string,
     selectedFinish?: any,
     quantity: number = 1
-  ) => {
+  ): boolean => {
+    // If account is not logged in, prompt login modal
+    if (!user.isLoggedIn) {
+      setLoginPromptProductName(product.name);
+      setLoginPromptActionType('bag');
+      setIsLoginPromptOpen(true);
+      return false;
+    }
+
     const size = selectedSize || product.availableSizes?.[0] || 'Standard';
     const finish = selectedFinish || product.availableFinishes?.[0]?.type || product.metal;
 
@@ -312,15 +324,31 @@ export default function App() {
     });
 
     showToast(`Added "${product.name}" to your Atelier Bag`);
+    return true;
   };
 
-  // Navigates directly to Checkout Page without popup
+  // Navigates directly to Checkout Page without popup (also gates for login)
   const handleBuyNow = (product: Product, selectedSize?: string, selectedFinish?: any) => {
+    if (!user.isLoggedIn) {
+      setLoginPromptProductName(product.name);
+      setLoginPromptActionType('bag');
+      setIsLoginPromptOpen(true);
+      return;
+    }
     handleAddToCart(product, selectedSize, selectedFinish, 1);
     setSelectedProduct(null);
     setIsCartOpen(false);
     setIsWishlistOpen(false);
     setCurrentView('checkout');
+    window.scrollTo(0, 0);
+  };
+
+  const handleGoToLogin = () => {
+    setIsLoginPromptOpen(false);
+    setSelectedProduct(null);
+    setIsCartOpen(false);
+    setIsWishlistOpen(false);
+    setCurrentView('account');
     window.scrollTo(0, 0);
   };
 
@@ -330,6 +358,16 @@ export default function App() {
     setIsWishlistOpen(false);
     setCurrentView('account');
     window.scrollTo(0, 0);
+  };
+
+  const handleOpenWishlist = () => {
+    if (!user.isLoggedIn) {
+      setLoginPromptProductName(undefined);
+      setLoginPromptActionType('wishlist');
+      setIsLoginPromptOpen(true);
+      return;
+    }
+    setIsWishlistOpen(true);
   };
 
   const handleOpenCheckout = () => {
@@ -366,6 +404,12 @@ export default function App() {
   };
 
   const handleToggleWishlist = (product: Product) => {
+    if (!user.isLoggedIn) {
+      setLoginPromptProductName(product.name);
+      setLoginPromptActionType('wishlist');
+      setIsLoginPromptOpen(true);
+      return;
+    }
     if (isWishlisted(product.id)) {
       setWishlistItems(prev => prev.filter(w => w.product.id !== product.id));
       showToast(`Removed "${product.name}" from your Wishlist`);
@@ -573,7 +617,7 @@ export default function App() {
         cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
         wishlistCount={wishlistItems.length}
         onOpenCart={() => setIsCartOpen(true)}
-        onOpenWishlist={() => setIsWishlistOpen(true)}
+        onOpenWishlist={handleOpenWishlist}
         onOpenAccount={handleOpenAccount}
         onNavigateToAdmin={handleRequestStaffAccess}
         onOpenPdfCatalogue={() => setIsPdfCatalogueOpen(true)}
@@ -628,7 +672,7 @@ export default function App() {
             setSelectedProduct(null);
             scrollToCatalog();
           }}
-          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onOpenWishlist={handleOpenWishlist}
           onNavigateToAdmin={handleRequestStaffAccess}
           currencySymbol={currencySymbol}
         />
@@ -812,7 +856,7 @@ export default function App() {
           setCurrentView('shop');
           scrollToEthos();
         }}
-        onOpenWishlist={() => setIsWishlistOpen(true)}
+        onOpenWishlist={handleOpenWishlist}
         onNavigateToAdmin={handleRequestStaffAccess}
       />
 
@@ -868,6 +912,15 @@ export default function App() {
         isOpen={isStaffAuthModalOpen}
         onClose={() => setIsStaffAuthModalOpen(false)}
         onSuccess={handleStaffAuthSuccess}
+      />
+
+      {/* 5. Login Prompt Modal when attempting to add to bag or wishlist while unauthenticated */}
+      <LoginPromptModal
+        isOpen={isLoginPromptOpen}
+        onClose={() => setIsLoginPromptOpen(false)}
+        onGoToLogin={handleGoToLogin}
+        productName={loginPromptProductName}
+        actionType={loginPromptActionType}
       />
     </div>
   );
