@@ -493,7 +493,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       <button
                         type="button"
                         onClick={handleProceedToStep2}
-                        className="w-full py-4 bg-[#1d1d1f] hover:bg-black text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm mt-4"
+                        className="w-full py-4 bg-[#E56A85] hover:bg-[#D45974] text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg mt-4 active:scale-[0.99]"
                       >
                         <span>Deliver to Selected Address & Continue</span>
                         <ArrowRight className="w-4 h-4" />
@@ -648,7 +648,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       <button
                         type="button"
                         onClick={handleProceedToStep2}
-                        className="w-full py-4 bg-[#1d1d1f] hover:bg-black text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                        className="w-full py-4 bg-[#E56A85] hover:bg-[#D45974] text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
                       >
                         <span>Save Address & Continue</span>
                         <ArrowRight className="w-4 h-4" />
@@ -732,7 +732,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     <button
                       type="button"
                       onClick={() => setStep(3)}
-                      className="flex-1 py-4 bg-[#1d1d1f] hover:bg-black text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                      className="flex-1 py-4 bg-[#E56A85] hover:bg-[#D45974] text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
                     >
                       <span>Continue to Payment</span>
                       <ArrowRight className="w-4 h-4" />
@@ -893,7 +893,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       type="button"
                       disabled={!agreeTerms}
                       onClick={handlePlaceOrder}
-                      className="flex-1 py-4 bg-[#1d1d1f] hover:bg-black disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md"
+                      className="flex-1 py-4 bg-[#E56A85] hover:bg-[#D45974] disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
                     >
                       <Lock className="w-4 h-4" />
                       <span>Place Order • {currencySymbol}{Math.round(total)}</span>
@@ -1092,7 +1092,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               <button
                 type="button"
                 onClick={onBackToShop}
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all shadow-sm"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs font-semibold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.99]"
               >
                 Return to Collection
               </button>

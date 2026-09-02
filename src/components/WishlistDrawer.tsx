@@ -101,7 +101,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
             </div>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <span className="text-[#5A524A]">Saved locally to this device</span>
+              <span className="text-[#5A524A]">Please log in to your account</span>
               <button
                 onClick={() => {
                   onClose();
@@ -109,7 +109,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                 }}
                 className="text-[#1A1816] font-semibold underline underline-offset-2 hover:text-[#8C5D3B]"
               >
-                Sign in to sync
+                Sign in
               </button>
             </div>
           )}
@@ -125,15 +125,39 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
               <div>
                 <h3 className="font-serif text-lg text-[#1A1816]">No pieces saved yet</h3>
                 <p className="text-xs text-[#7A7065] mt-1 max-w-xs">
-                  Click the heart icon on any band, necklace, or earring to curate your private wishlist.
+                  {user.isLoggedIn
+                    ? 'Click the heart icon on any band, necklace, or earring to curate your private wishlist.'
+                    : 'Please log in to your account to curate, save, and sync your private wishlist.'}
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="px-6 py-2.5 bg-[#1A1816] text-[#FAF9F5] text-xs uppercase tracking-[0.16em] font-semibold rounded-xs hover:bg-[#2E2B27]"
-              >
-                Discover Creations
-              </button>
+
+              {!user.isLoggedIn ? (
+                <div className="flex flex-col items-center gap-2.5 w-full max-w-xs">
+                  <button
+                    id="wishlist-login-btn"
+                    onClick={() => {
+                      onClose();
+                      onOpenAccount();
+                    }}
+                    className="w-full px-6 py-3 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs uppercase tracking-[0.14em] font-semibold rounded-xl transition-all shadow-xs active:scale-[0.99]"
+                  >
+                    Please Login Your Account
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="text-xs text-[#7A7065] underline underline-offset-4 hover:text-[#1A1816] transition-colors"
+                  >
+                    Discover Creations
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40 text-xs uppercase tracking-[0.14em] font-semibold rounded-xl shadow-2xs"
+                >
+                  Discover Creations
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -201,20 +225,20 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
 
                       <button
                         onClick={(e) => handleSingleAddToCart(item.product, e)}
-                        className={`px-3 py-1.5 rounded-xs text-[11px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-2xs active:scale-[0.99] ${
                           addedItemMap[item.product.id]
                             ? 'bg-emerald-700 text-white'
-                            : 'bg-[#1A1816] hover:bg-[#2E2B27] text-[#FAF9F5]'
+                            : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40'
                         }`}
                       >
                         {addedItemMap[item.product.id] ? (
                           <>
-                            <Check className="w-3 h-3" />
+                            <Check className="w-3 h-3 text-white" />
                             <span>In Bag</span>
                           </>
                         ) : (
                           <>
-                            <ShoppingBag className="w-3 h-3 text-[#D4AF37]" />
+                            <ShoppingBag className="w-3 h-3 text-[#1A1816]" />
                             <span>Add To Bag</span>
                           </>
                         )}
@@ -233,9 +257,9 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
             <button
               id="move-all-wishlist-to-cart-btn"
               onClick={onMoveAllToCart}
-              className="w-full py-3.5 bg-[#1A1816] hover:bg-[#2E2B27] text-[#FAF9F5] text-xs tracking-[0.18em] uppercase font-semibold rounded-sm transition-all shadow-xl flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs tracking-[0.16em] uppercase font-semibold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-[0.99]"
             >
-              <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
+              <ShoppingBag className="w-4 h-4 text-white" />
               <span>Move All ({wishlistItems.length}) To Bag</span>
             </button>
           </div>

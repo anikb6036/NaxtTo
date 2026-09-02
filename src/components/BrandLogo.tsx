@@ -13,12 +13,12 @@ export interface BrandLogoProps {
 }
 
 /**
- * Geometric Luxury Lotus Emblem matching the exact original NaxtTo brand identity from the official reference
+ * Geometric Luxury Lotus Emblem matching the official reference logo provided by user
  * Features:
- * - Gothic central apex spire with inner intersecting arch
- * - Split central flame void with vertical base gap
- * - Dual-tier stepped outer wings with sharp geometric top edges
- * - Metallic 3D bevel / bronze relief finish and scalable vector precision
+ * - Clean solid chocolate bronze linework with precise sacred geometric curves
+ * - Pointed gothic central petal with apex and bottom intersection
+ * - Stepped dual-tier outer petals with sharp geometric tips
+ * - Central vertical opening at the grounded base
  */
 export const LotusEmblem: React.FC<{
   className?: string;
@@ -29,217 +29,81 @@ export const LotusEmblem: React.FC<{
 }> = ({ 
   className = "w-8 h-8", 
   sizeClass, 
-  strokeWidth = 2.4,
-  color = "#3E271D",
-  embossed = true
+  strokeWidth = 26,
+  color = "#54280E",
+  embossed = false
 }) => {
   return (
     <svg
-      viewBox="0 0 1000 920"
+      viewBox="0 0 1000 680"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`${sizeClass || className} shrink-0 transition-transform duration-300`}
       aria-label="NaxtTo Official Lotus Emblem"
     >
-      <defs>
-        {/* Rich Metallic Bronze Gradients matching the original reference */}
-        <linearGradient id="naxtto-metal-body" x1="20%" y1="0%" x2="80%" y2="100%">
-          <stop offset="0%" stopColor="#4A3125" />
-          <stop offset="30%" stopColor="#382117" />
-          <stop offset="70%" stopColor="#2D1910" />
-          <stop offset="100%" stopColor="#452C20" />
-        </linearGradient>
-
-        <linearGradient id="naxtto-rim-light" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#A88B77" stopOpacity="0.8" />
-          <stop offset="25%" stopColor="#553A2C" stopOpacity="0.3" />
-          <stop offset="50%" stopColor="#CBB5A1" stopOpacity="0.9" />
-          <stop offset="75%" stopColor="#553A2C" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#A88B77" stopOpacity="0.8" />
-        </linearGradient>
-
-        <linearGradient id="naxtto-gold-lux" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E5CE93" />
-          <stop offset="35%" stopColor="#C5A059" />
-          <stop offset="70%" stopColor="#99752D" />
-          <stop offset="100%" stopColor="#D4B46E" />
-        </linearGradient>
-
-        {/* Realistic drop shadow and metallic relief filter */}
-        <filter id="naxtto-shadow" x="-8%" y="-8%" width="120%" height="120%">
-          <feDropShadow dx="3" dy="6" stdDeviation="5" floodColor="#1A0E08" floodOpacity="0.35" />
-          <feDropShadow dx="-1" dy="-1" stdDeviation="2" floodColor="#FFF6ED" floodOpacity="0.25" />
-        </filter>
-      </defs>
-
-      <g filter={embossed ? "url(#naxtto-shadow)" : undefined}>
-        {/* ==================== LEFT HALF ==================== */}
-        {/* Left Wing (Outermost lower petal) */}
+      <g
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="miter"
+        strokeMiterlimit={10}
+      >
+        {/* Top Central Pointed Petal */}
         <path
-          d="M 145 435 
-             L 272 485 
-             C 285 580, 360 760, 480 875 
-             L 458 875 
-             C 325 750, 240 580, 174 470 
-             L 145 470 
-             Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="4"
-          strokeLinejoin="miter"
+          d="M 500 32 
+             C 425 115, 370 180, 370 250 
+             C 370 345, 440 415, 500 445 
+             C 560 415, 630 345, 630 250 
+             C 630 180, 575 115, 500 32 Z"
         />
 
-        {/* Left Outer Sweep Base Arc Ribbon */}
+        {/* Upper Left Petal with Sharp Point (tip at 250, 195) */}
         <path
-          d="M 145 435 
-             L 174 470 
-             C 240 640, 340 810, 480 875 
-             L 500 875 
-             C 340 810, 220 620, 145 435 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
+          d="M 370 250 
+             C 330 225, 290 205, 250 195 
+             C 255 240, 255 290, 250 340"
         />
 
-        {/* Left Upper Tier Petal */}
+        {/* Upper Right Petal with Sharp Point (tip at 750, 195) */}
         <path
-          d="M 268 300 
-             L 375 330 
-             C 390 410, 435 550, 480 875 
-             L 458 875 
-             C 415 570, 365 425, 298 335 
-             L 268 300 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="3.5"
-          strokeLinejoin="miter"
+          d="M 630 250 
+             C 670 225, 710 205, 750 195 
+             C 745 240, 745 290, 750 340"
         />
 
-        {/* Left Mid Petal Rib Loop */}
+        {/* Outermost Lower Left Petal (tip at 120, 340, sweeping to base) */}
         <path
-          d="M 268 300 
-             L 298 335 
-             C 350 490, 410 680, 480 875 
-             L 458 875 
-             C 390 680, 320 480, 268 300 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
+          d="M 250 340 
+             C 205 338, 160 338, 120 340 
+             C 165 470, 260 590, 450 648 
+             L 480 648"
         />
 
-        {/* Left Inner Rib (flanking central void) */}
+        {/* Outermost Lower Right Petal (tip at 880, 340, sweeping to base) */}
         <path
-          d="M 375 330 
-             C 425 450, 470 610, 480 875 
-             L 458 875 
-             C 445 630, 405 470, 375 330 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
+          d="M 750 340 
+             C 795 338, 840 338, 880 340 
+             C 835 470, 740 590, 550 648 
+             L 520 648"
         />
 
-        {/* ==================== RIGHT HALF ==================== */}
-        {/* Right Wing (Outermost lower petal) */}
+        {/* Inner Left Mid-Tier Arc */}
         <path
-          d="M 855 435 
-             L 728 485 
-             C 715 580, 640 760, 520 875 
-             L 542 875 
-             C 675 750, 760 580, 826 470 
-             L 855 470 
-             Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="4"
-          strokeLinejoin="miter"
+          d="M 250 340 
+             C 330 440, 410 550, 465 648"
         />
 
-        {/* Right Outer Sweep Base Arc Ribbon */}
+        {/* Inner Right Mid-Tier Arc */}
         <path
-          d="M 855 435 
-             L 826 470 
-             C 760 640, 660 810, 520 875 
-             L 500 875 
-             C 660 810, 780 620, 855 435 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
+          d="M 750 340 
+             C 670 440, 590 550, 535 648"
         />
 
-        {/* Right Upper Tier Petal */}
+        {/* Central Lower Flame Void */}
         <path
-          d="M 732 300 
-             L 625 330 
-             C 610 410, 565 550, 520 875 
-             L 542 875 
-             C 585 570, 635 425, 702 335 
-             L 732 300 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="3.5"
-          strokeLinejoin="miter"
-        />
-
-        {/* Right Mid Petal Rib Loop */}
-        <path
-          d="M 732 300 
-             L 702 335 
-             C 650 490, 590 680, 520 875 
-             L 542 875 
-             C 610 680, 680 480, 732 300 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-        />
-
-        {/* Right Inner Rib (flanking central void) */}
-        <path
-          d="M 625 330 
-             C 575 450, 530 610, 520 875 
-             L 542 875 
-             C 555 630, 595 470, 625 330 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-        />
-
-        {/* ==================== CENTRAL APEX SPIRE & HEART ==================== */}
-        {/* Top Central Spire Gothic Outer Shell */}
-        <path
-          d="M 500 95 
-             C 455 170, 390 275, 375 330
-             C 410 440, 465 500, 500 535
-             C 535 500, 590 440, 625 330
-             C 610 275, 545 170, 500 95 Z"
-          fill="none"
-          stroke={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          strokeWidth="28"
-          strokeLinejoin="round"
-        />
-
-        {/* Central Inverted Gothic Arch / Split Core Frame */}
-        <path
-          d="M 500 535 
-             C 475 570, 455 670, 458 875 
-             L 480 875 
-             C 480 670, 495 580, 500 545 
-             C 505 580, 520 670, 520 875 
-             L 542 875 
-             C 545 670, 525 570, 500 535 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="3"
-        />
-
-        {/* High-Precision Continuous Filigree Outlines matching photo bevels */}
-        {/* Left main cradle */}
-        <path
-          d="M 145 435 C 190 650, 310 820, 480 875 L 458 875 C 300 815, 185 640, 145 470 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="2.5"
-        />
-        {/* Right main cradle */}
-        <path
-          d="M 855 435 C 810 650, 690 820, 520 875 L 542 875 C 700 815, 815 640, 855 470 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-metal-body)" : color}
-          stroke={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          strokeWidth="2.5"
-        />
-
-        {/* Top apex highlight accent */}
-        <path
-          d="M 500 95 L 498 120 C 530 180, 580 270, 608 335 L 625 330 C 590 250, 535 150, 500 95 Z"
-          fill={color === "#3E271D" ? "url(#naxtto-rim-light)" : color}
-          opacity="0.6"
+          d="M 480 648 
+             C 445 540, 460 470, 500 445 
+             C 540 470, 555 540, 520 648"
         />
       </g>
     </svg>
@@ -293,7 +157,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'bronze',
   showSubtitle = false,
   subtitleText = 'FINE JEWELLERY',
-  showIcon = false,
+  showIcon = true,
   className = '',
   onClick,
   id
@@ -301,11 +165,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   // Variant Colors
   const colorMap = {
     bronze: {
-      icon: '#3E271D',
+      icon: '#54280E',
       text: 'text-[#3E271D]',
       subtitle: 'text-[#5E4234]',
       divider: '#3E271D',
-      embossed: true
+      embossed: false
     },
     dark: {
       icon: '#2A1810',
@@ -315,11 +179,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       embossed: false
     },
     embossed: {
-      icon: '#3E271D',
+      icon: '#54280E',
       text: 'text-[#3E271D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]',
       subtitle: 'text-[#5E4234]',
       divider: '#3E271D',
-      embossed: true
+      embossed: false
     },
     light: {
       icon: '#FDFCFB',
@@ -363,56 +227,56 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   // Size configurations
   const sizeConfig = {
     xs: {
-      icon: 'w-4 h-4',
+      icon: 'h-4 w-auto',
       title: 'text-sm tracking-[0.20em]',
       subtitle: 'text-[7px] tracking-[0.26em]',
       dividerWidth: 'max-w-[80px]',
       gap: 'gap-2'
     },
     sm: {
-      icon: 'w-6 h-6',
+      icon: 'h-6 w-auto',
       title: 'text-base sm:text-lg tracking-[0.22em]',
       subtitle: 'text-[8px] tracking-[0.28em]',
       dividerWidth: 'max-w-[100px]',
       gap: 'gap-2.5'
     },
     md: {
-      icon: 'w-8 h-8 sm:w-9 sm:h-9',
+      icon: 'h-8 sm:h-9 w-auto',
       title: 'text-xl sm:text-[22px] tracking-[0.22em]',
       subtitle: 'text-[8.5px] sm:text-[9.5px] tracking-[0.30em]',
       dividerWidth: 'max-w-[130px]',
-      gap: 'gap-3'
+      gap: 'gap-2.5 sm:gap-3'
     },
     lg: {
-      icon: 'w-11 h-11',
+      icon: 'h-10 sm:h-11 w-auto',
       title: 'text-2xl sm:text-3xl tracking-[0.24em]',
       subtitle: 'text-xs tracking-[0.32em]',
       dividerWidth: 'max-w-[160px]',
       gap: 'gap-3.5'
     },
     xl: {
-      icon: 'w-16 h-16',
+      icon: 'h-14 sm:h-16 w-auto',
       title: 'text-3xl sm:text-4xl tracking-[0.26em]',
       subtitle: 'text-xs sm:text-sm tracking-[0.34em]',
       dividerWidth: 'max-w-[200px]',
       gap: 'gap-4'
     },
     '2xl': {
-      icon: 'w-24 h-24',
+      icon: 'h-20 sm:h-24 w-auto',
       title: 'text-4xl sm:text-5xl tracking-[0.28em]',
       subtitle: 'text-sm sm:text-base tracking-[0.36em]',
       dividerWidth: 'max-w-[240px]',
       gap: 'gap-4.5'
     },
     original: {
-      icon: 'w-28 h-28 sm:w-36 sm:h-36',
+      icon: 'h-24 sm:h-32 w-auto',
       title: 'text-4xl sm:text-5xl md:text-6xl tracking-[0.28em]',
       subtitle: 'text-xs sm:text-sm tracking-[0.38em]',
       dividerWidth: 'max-w-[280px]',
       gap: 'gap-4'
     },
     custom: {
-      icon: 'w-8 h-8',
+      icon: 'h-8 w-auto',
       title: 'text-xl tracking-[0.22em]',
       subtitle: 'text-[9px] tracking-[0.28em]',
       dividerWidth: 'max-w-[120px]',

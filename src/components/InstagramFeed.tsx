@@ -7,7 +7,6 @@ import {
   ExternalLink, 
   X, 
   Check,
-  Star,
   ShieldCheck,
   Award
 } from 'lucide-react';
@@ -264,17 +263,17 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
 
                         <button
                           onClick={(e) => handleQuickAddTagged(prod, e)}
-                          className={`p-1.5 rounded-xs transition-colors ${
+                          className={`p-1.5 rounded-lg transition-all shadow-2xs active:scale-95 ${
                             addedAnimationId === prod.id
                               ? 'bg-emerald-700 text-white'
-                              : 'bg-[#1A1816] text-[#FAF9F5] hover:bg-[#2E2B27]'
+                              : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40'
                           }`}
                           title="Quick Add to Cart"
                         >
                           {addedAnimationId === prod.id ? (
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5 text-white" />
                           ) : (
-                            <ShoppingBag className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <ShoppingBag className="w-3.5 h-3.5 text-[#1A1816]" />
                           )}
                         </button>
                       </div>

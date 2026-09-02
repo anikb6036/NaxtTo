@@ -87,10 +87,10 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ onSubscribed
               </div>
               <button
                 type="submit"
-                className="px-8 py-3.5 bg-[#1d1d1f] hover:bg-black text-white text-[10px] uppercase tracking-[0.22em] font-bold rounded-full transition-all shadow-sm flex items-center justify-center gap-2 group shrink-0"
+                className="px-8 py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-[10px] uppercase tracking-[0.22em] font-bold rounded-full transition-all shadow-sm flex items-center justify-center gap-2 group shrink-0 active:scale-95"
               >
                 <span>Join Circle</span>
-                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform text-[#c5a059]" />
+                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform text-white" />
               </button>
             </div>
 

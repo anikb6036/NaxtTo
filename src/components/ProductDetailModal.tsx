@@ -3,7 +3,6 @@ import {
   X, 
   Heart, 
   ShoppingBag, 
-  Star, 
   ShieldCheck, 
   Truck, 
   Gift, 
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Product, MetalType, ProductReview } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { StarRating, OrangeStar } from './StarRating';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -187,15 +187,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <span className="tracking-[0.16em] uppercase font-semibold text-[#8C5D3B]">
                   {product.styleName}
                 </span>
-                <div className="flex items-center gap-1 text-[#1A1816]">
-                  <div className="flex items-center text-[#D4AF37]">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-[#D4AF37]' : ''}`} />
-                    ))}
-                  </div>
-                  <span className="font-semibold text-xs">{product.rating.toFixed(1)}</span>
-                  <span className="text-[#8C7E70] text-[11px]">({product.reviewsCount} reviews)</span>
-                </div>
+                <StarRating rating={product.rating} count={product.reviewsCount} size="sm" countFormat="number" />
               </div>
 
               {/* Title & Subtitle */}
@@ -323,20 +315,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   <button
                     id="modal-add-to-cart-btn"
                     onClick={handleAddToCart}
-                    className={`flex-1 py-3 px-4 rounded-sm text-xs tracking-[0.16em] uppercase font-semibold transition-all flex items-center justify-center gap-2 shadow-md ${
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs tracking-[0.12em] uppercase font-semibold transition-all flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] ${
                       addedAnimation
                         ? 'bg-emerald-700 text-white'
-                        : 'bg-[#1A1816] hover:bg-[#2E2B27] text-[#FAF9F5]'
+                        : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40'
                     }`}
                   >
                     {addedAnimation ? (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Check className="w-4 h-4 text-white" />
                         <span>Added to Atelier Bag</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
+                        <ShoppingBag className="w-4 h-4 text-[#1A1816]" />
                         <span>Add To Bag</span>
                       </>
                     )}
@@ -346,14 +338,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   <button
                     id="modal-wishlist-toggle-btn"
                     onClick={() => onToggleWishlist(product)}
-                    className={`p-3 rounded-sm border transition-all ${
+                    className={`p-3 rounded-xl border transition-all ${
                       isWishlisted
-                        ? 'bg-[#1A1816] text-[#E0A899] border-[#1A1816]'
+                        ? 'bg-[#E56A85] text-white border-[#E56A85]'
                         : 'bg-[#FAF9F5] text-[#4A443D] border-[#D8CEBF] hover:bg-[#F2ECE3]'
                     }`}
                     title={isWishlisted ? 'Saved in Wishlist' : 'Add to Wishlist'}
                   >
-                    <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-[#E0A899]' : ''}`} />
+                    <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
                   </button>
                 </div>
 
@@ -361,9 +353,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <button
                   id="modal-instant-buy-btn"
                   onClick={() => onBuyNow(product, selectedSize, selectedFinish)}
-                  className="w-full py-3 bg-[#E8DFD1] hover:bg-[#D4AF37]/30 text-[#1A1816] text-xs tracking-[0.16em] uppercase font-semibold rounded-sm border border-[#D8CEBF] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs tracking-[0.14em] uppercase font-semibold rounded-xl transition-all shadow-xs hover:shadow-md flex items-center justify-center gap-2 active:scale-[0.99]"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#1A1816]" />
+                  <Lock className="w-3.5 h-3.5 text-white" />
                   <span>Instant Secure Checkout</span>
                 </button>
               </div>
@@ -516,7 +508,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             onClick={() => setNewReviewRating(star)}
                             className="p-1 hover:scale-110 transition-transform"
                           >
-                            <Star className={`w-4 h-4 ${star <= newReviewRating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-[#D8CEBF]'}`} />
+                            <OrangeStar
+                              sizeClass="w-5 h-5"
+                              fillPercent={star <= newReviewRating ? 100 : 0}
+                              color="#FF6000"
+                            />
                           </button>
                         ))}
                       </div>
@@ -556,7 +552,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <button
                         type="submit"
                         disabled={reviewSubmitted}
-                        className="px-4 py-1.5 bg-[#1A1816] text-[#FAF9F5] text-xs uppercase font-semibold tracking-wider rounded-xs hover:bg-[#2E2B27]"
+                        className="px-4 py-2 bg-[#E56A85] text-white text-xs uppercase font-semibold tracking-wider rounded-xl hover:bg-[#D45974] transition-all shadow-xs"
                       >
                         {reviewSubmitted ? 'Submitted!' : 'Publish Review'}
                       </button>
@@ -581,10 +577,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           </div>
                           <span className="text-[10px] text-[#A89F91]">{rev.date}</span>
                         </div>
-                        <div className="flex items-center text-[#D4AF37]">
-                          {[...Array(rev.rating)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-[#D4AF37]" />
-                          ))}
+                        <div>
+                          <StarRating rating={rev.rating} size="xs" showCount={false} />
                         </div>
                         <h5 className="text-xs font-semibold text-[#1A1816]">{rev.title}</h5>
                         <p className="text-xs text-[#4A443D] leading-relaxed font-light">{rev.comment}</p>

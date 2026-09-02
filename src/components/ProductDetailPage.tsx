@@ -3,7 +3,6 @@ import {
   ArrowLeft, 
   Heart, 
   ShoppingBag, 
-  Star, 
   ShieldCheck, 
   Truck, 
   Gift, 
@@ -18,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { Product, MetalType, ProductReview, ProductCategory } from '../types';
+import { StarRating, OrangeStar } from './StarRating';
 
 interface ProductDetailPageProps {
   product: Product;
@@ -262,14 +262,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   {product.styleName} • {product.category}
                 </span>
 
-                <a href="#reviews-section" className="flex items-center gap-1.5 text-[#1d1d1f] hover:underline">
-                  <div className="flex items-center text-[#c5a059]">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-[#c5a059]' : ''}`} />
-                    ))}
-                  </div>
-                  <span className="font-semibold text-xs">{product.rating.toFixed(1)}</span>
-                  <span className="text-[#86868b] text-xs">({product.reviewsCount} reviews)</span>
+                <a href="#reviews-section" className="flex items-center hover:opacity-85 transition-opacity">
+                  <StarRating rating={product.rating} count={product.reviewsCount} size="sm" countFormat="number" />
                 </a>
               </div>
 
@@ -425,7 +419,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 className={`w-full py-3.5 px-6 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm ${
                   addedAnimation
                     ? 'bg-emerald-600 text-white shadow-emerald-200'
-                    : 'bg-[#1d1d1f] hover:bg-black text-white hover:shadow-md'
+                    : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40 hover:shadow-md active:scale-[0.99]'
                 }`}
               >
                 {addedAnimation ? (
@@ -435,7 +429,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="w-4 h-4 text-[#c5a059]" />
+                    <ShoppingBag className="w-4 h-4 text-[#1A1816]" />
                     <span>Add to Bag • {currencySymbol}{product.price * quantity}</span>
                   </>
                 )}
@@ -444,7 +438,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <button
                 id="pdp-buy-now-btn"
                 onClick={() => onBuyNow(product, selectedSize, selectedFinish)}
-                className="w-full py-3 px-6 rounded-xl text-sm font-semibold border border-[#1d1d1f] text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-6 rounded-xl text-sm font-semibold bg-[#E56A85] hover:bg-[#D45974] text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-[0.99]"
               >
                 <span>Buy Now</span>
               </button>
@@ -577,8 +571,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         <div id="reviews-section" className="mt-16 pt-10 border-t border-[#e5e5ea] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#c5a059]">
-                <Star className="w-3.5 h-3.5 fill-[#c5a059]" />
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF6000]">
+                <OrangeStar sizeClass="w-3.5 h-3.5" color="#FF6000" />
                 <span>Customer Reviews</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f] mt-1">
@@ -589,7 +583,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             <button
               id="write-review-btn"
               onClick={() => setShowReviewForm(true)}
-              className="px-5 py-2.5 rounded-xl border border-[#1d1d1f] text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white text-xs font-semibold transition-all flex items-center gap-2 self-start sm:self-auto"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/50 text-xs font-semibold transition-all flex items-center gap-2 self-start sm:self-auto shadow-xs active:scale-[0.99]"
             >
               <MessageSquarePlus className="w-3.5 h-3.5" />
               <span>Write a Review</span>
@@ -602,10 +596,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <span className="text-4xl sm:text-5xl font-bold text-[#1d1d1f]">
                 {product.rating.toFixed(1)}
               </span>
-              <div className="flex items-center justify-center md:justify-start text-[#c5a059] gap-1 my-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'fill-[#c5a059]' : ''}`} />
-                ))}
+              <div className="flex items-center justify-center md:justify-start my-1.5">
+                <StarRating rating={product.rating} count={product.reviewsCount} size="md" countFormat="number" />
               </div>
               <p className="text-xs text-[#6e6e73]">
                 Based on {product.reviewsCount} verified purchases
@@ -616,21 +608,21 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <div className="flex items-center gap-3">
                 <span className="w-12 text-right">5 Stars</span>
                 <div className="flex-1 h-2 rounded-full bg-[#e5e5ea] overflow-hidden">
-                  <div className="h-full bg-[#c5a059] rounded-full" style={{ width: '92%' }}></div>
+                  <div className="h-full bg-[#FF6000] rounded-full" style={{ width: '92%' }}></div>
                 </div>
                 <span className="w-8">92%</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="w-12 text-right">4 Stars</span>
                 <div className="flex-1 h-2 rounded-full bg-[#e5e5ea] overflow-hidden">
-                  <div className="h-full bg-[#c5a059] rounded-full" style={{ width: '8%' }}></div>
+                  <div className="h-full bg-[#FF6000] rounded-full" style={{ width: '8%' }}></div>
                 </div>
                 <span className="w-8">8%</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="w-12 text-right">3 Stars</span>
                 <div className="flex-1 h-2 rounded-full bg-[#e5e5ea] overflow-hidden">
-                  <div className="h-full bg-[#c5a059] rounded-full" style={{ width: '0%' }}></div>
+                  <div className="h-full bg-[#FF6000] rounded-full" style={{ width: '0%' }}></div>
                 </div>
                 <span className="w-8">0%</span>
               </div>
@@ -665,15 +657,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   <form onSubmit={handleAddReviewSubmit} className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-[#1d1d1f] mb-1">Your Rating</label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
                             key={star}
                             type="button"
                             onClick={() => setNewReviewRating(star)}
-                            className="p-1 text-[#c5a059]"
+                            className="p-1 hover:scale-110 transition-transform"
                           >
-                            <Star className={`w-6 h-6 ${star <= newReviewRating ? 'fill-[#c5a059]' : 'text-[#e5e5ea]'}`} />
+                            <OrangeStar
+                              sizeClass="w-6 h-6"
+                              fillPercent={star <= newReviewRating ? 100 : 0}
+                              color="#FF6000"
+                            />
                           </button>
                         ))}
                       </div>
@@ -728,7 +724,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
                     <button
                       type="submit"
-                      className="w-full py-3 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all"
+                      className="w-full py-3 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs font-semibold rounded-xl transition-all shadow-sm active:scale-[0.99]"
                     >
                       Submit Review
                     </button>
@@ -754,10 +750,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       <span className="text-xs text-[#86868b]">• {rev.location}</span>
                     </div>
 
-                    <div className="flex items-center text-[#c5a059] gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? 'fill-[#c5a059]' : 'text-[#e5e5ea]'}`} />
-                      ))}
+                    <div>
+                      <StarRating rating={rev.rating} size="xs" showCount={false} />
                     </div>
                   </div>
 
@@ -826,9 +820,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       e.stopPropagation();
                       onAddToCart(item);
                     }}
-                    className="mt-3 w-full py-2 rounded-xl border border-[#e5e5ea] hover:border-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                    className="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.99]"
                   >
-                    <ShoppingBag className="w-3.5 h-3.5 text-[#c5a059]" />
+                    <ShoppingBag className="w-3.5 h-3.5 text-[#1A1816]" />
                     <span>Add to Bag</span>
                   </button>
                 </div>

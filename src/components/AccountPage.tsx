@@ -501,7 +501,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 type="submit"
                 id="submit-signin-btn"
                 disabled={authLoading || isGoogleLoading}
-                className="w-full bg-[#1d1d1f] hover:bg-black text-white py-2.5 rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center justify-center gap-2 mt-2"
+                className="w-full bg-[#E56A85] hover:bg-[#D45974] text-white py-3 rounded-xl text-xs font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 active:scale-[0.99]"
               >
                 {authLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -13,7 +13,7 @@ import {
   Lock,
   Truck
 } from 'lucide-react';
-import { CartItem } from '../types';
+import { CartItem, UserProfile } from '../types';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -30,6 +30,8 @@ interface CartDrawerProps {
   onToggleGiftWrap: (val: boolean) => void;
   giftMessage: string;
   onChangeGiftMessage: (msg: string) => void;
+  user?: UserProfile;
+  onOpenAccount?: () => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -46,7 +48,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   giftWrapIncluded,
   onToggleGiftWrap,
   giftMessage,
-  onChangeGiftMessage
+  onChangeGiftMessage,
+  user,
+  onOpenAccount
 }) => {
   if (!isOpen) return null;
 
@@ -133,6 +137,29 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           </div>
         </div>
 
+        {/* User Sync Status Bar */}
+        <div className="bg-[#FAF6F0] px-6 py-2 border-b border-[#E8DFD1] text-xs flex items-center justify-between">
+          {user?.isLoggedIn ? (
+            <div className="flex items-center gap-2 text-[11px] text-[#2E2B27]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              <span className="truncate">Bag synced with {user.name}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between w-full text-[11px]">
+              <span className="text-[#5A524A]">Please log in to your account</span>
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAccount?.();
+                }}
+                className="text-[#1A1816] font-semibold underline underline-offset-2 hover:text-[#8C5D3B]"
+              >
+                Sign in
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Cart Item List */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {cartItems.length === 0 ? (
@@ -143,15 +170,39 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <div>
                 <h3 className="font-serif text-lg text-[#1A1816]">Your bag is currently empty</h3>
                 <p className="text-xs text-[#7A7065] mt-1 max-w-xs">
-                  Discover our minimal solid 18k gold bands, diamond studs, and organic pearl heirlooms.
+                  {user?.isLoggedIn
+                    ? 'Discover our minimal solid 18k gold bands, diamond studs, and organic pearl heirlooms.'
+                    : 'Please log in to your account to view your saved bag items, checkout securely, or explore creations.'}
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="px-6 py-2.5 bg-[#1A1816] text-[#FAF9F5] text-xs uppercase tracking-[0.16em] font-semibold rounded-xs hover:bg-[#2E2B27]"
-              >
-                Explore Catalog
-              </button>
+
+              {!user?.isLoggedIn ? (
+                <div className="flex flex-col items-center gap-2.5 w-full max-w-xs">
+                  <button
+                    id="cart-login-btn"
+                    onClick={() => {
+                      onClose();
+                      onOpenAccount?.();
+                    }}
+                    className="w-full px-6 py-3 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs uppercase tracking-[0.14em] font-semibold rounded-xl transition-all shadow-xs active:scale-[0.99]"
+                  >
+                    Please Login Your Account
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="text-xs text-[#7A7065] underline underline-offset-4 hover:text-[#1A1816] transition-colors"
+                  >
+                    Explore Catalog
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40 text-xs uppercase tracking-[0.14em] font-semibold rounded-xl shadow-2xs"
+                >
+                  Explore Catalog
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -315,9 +366,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <button
               id="proceed-to-checkout-btn"
               onClick={onProceedToCheckout}
-              className="w-full py-3.5 bg-[#1A1816] hover:bg-[#2E2B27] text-[#FAF9F5] text-xs tracking-[0.18em] uppercase font-semibold rounded-sm transition-all shadow-xl flex items-center justify-center gap-2 group"
+              className="w-full py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs tracking-[0.16em] uppercase font-semibold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group active:scale-[0.99]"
             >
-              <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <Lock className="w-3.5 h-3.5 text-white" />
               <span>Proceed To Secure Checkout</span>
               <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
             </button>

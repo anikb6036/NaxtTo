@@ -833,6 +833,8 @@ export default function App() {
         onToggleGiftWrap={setGiftWrapIncluded}
         giftMessage={giftMessage}
         onChangeGiftMessage={setGiftMessage}
+        user={user}
+        onOpenAccount={handleOpenAccount}
       />
 
       {/* 2. Wishlist Drawer */}

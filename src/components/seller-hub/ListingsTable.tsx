@@ -24,6 +24,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { Product } from '../../types';
+import { StarRating } from '../StarRating';
 
 interface ListingsTableProps {
   products: Product[];
@@ -488,10 +489,7 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
                       {/* 6. Rating & Reviews */}
                       <td className="py-3 px-4">
                         <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#212121]">
-                            <span>⭐</span>
-                            <span>{prod.rating ? prod.rating.toFixed(1) : '5.0'}</span>
-                          </div>
+                          <StarRating rating={prod.rating || 5} count={prod.reviewsCount} size="xs" countFormat="parentheses" />
                           <p className="text-[11px] text-[#717478]">
                             {prod.reviewsCount ? `${prod.reviewsCount} customer review(s)` : 'Direct atelier piece'}
                           </p>

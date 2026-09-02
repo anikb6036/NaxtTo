@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Heart, Eye, ShoppingBag, Star, Check } from 'lucide-react';
+import { Heart, Eye, ShoppingBag, Check } from 'lucide-react';
 import { Product } from '../types';
+import { StarRating } from './StarRating';
 
 interface ProductCardProps {
   product: Product;
@@ -101,14 +102,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <button
             id={`quickadd-btn-${product.id}`}
             onClick={handleQuickAdd}
-            className={`p-1.5 sm:p-2.5 rounded-xs transition-all flex items-center justify-center shadow-sm ${
+            className={`p-1.5 sm:p-2.5 rounded-lg transition-all flex items-center justify-center shadow-xs active:scale-95 ${
               addedAnimation
                 ? 'bg-emerald-800 text-white'
-                : 'bg-[#1d1d1f] hover:opacity-90 text-white'
+                : 'bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/50'
             }`}
             title="Quick Add to Bag"
           >
-            {addedAnimation ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />}
+            {addedAnimation ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" /> : <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1A1816]" />}
           </button>
         </div>
       </div>
@@ -118,13 +119,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div>
           {/* Metal & Rating Line */}
           <div className="flex items-center justify-between text-[8px] sm:text-[9px] text-[#86868b] uppercase tracking-[0.15em] sm:tracking-[0.2em] font-sans mb-1">
-            <span className="truncate max-w-[110px] sm:max-w-[170px]">
+            <span className="truncate max-w-[95px] sm:max-w-[140px]">
               {product.metalName}
             </span>
-            <div className="flex items-center gap-0.5 sm:gap-1 text-[#1d1d1f]">
-              <Star className="w-2.5 h-2.5 fill-[#c5a059] text-[#c5a059]" />
-              <span className="font-bold text-[9px] sm:text-[10px]">{product.rating.toFixed(1)}</span>
-            </div>
+            <StarRating 
+              rating={product.rating} 
+              count={product.reviewsCount} 
+              size="xs" 
+              countFormat="number"
+            />
           </div>
 
           {/* Product Name */}

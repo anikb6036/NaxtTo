@@ -135,6 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   variant="bronze" 
                   showSubtitle={true} 
                   subtitleText="FINE JEWELLERY" 
+                  showIcon={true}
                 />
               </div>
 
