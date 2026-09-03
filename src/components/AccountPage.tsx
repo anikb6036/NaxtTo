@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ArrowLeft,
   ArrowRight,
@@ -29,7 +29,9 @@ import {
   EyeOff,
   Sparkles,
   LogIn,
-  Sliders
+  Sliders,
+  ChevronDown,
+  LayoutGrid
 } from 'lucide-react';
 import { UserProfile, Order, Address, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
@@ -70,6 +72,24 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [signingIntoService, setSigningIntoService] = useState('Grok');
+  const [showScopeDropdown, setShowScopeDropdown] = useState(false);
+  const [lastLoggedInMethod, setLastLoggedInMethod] = useState<string>(() => {
+    const saved = localStorage.getItem('naxtto_last_login');
+    if (!saved || saved === 'X') return 'GitHub';
+    return saved;
+  });
+  const authInProgressRef = useRef(false);
+
+  useEffect(() => {
+    setUserName(user.name);
+    setUserEmail(user.email);
+    setUserPhone(user.phone || '+44 20 7946 0912');
+  }, [user.name, user.email, user.phone]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,20 +128,12 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       const { auth } = await import('../lib/firebase');
 
       let firebaseUser;
-      try {
+      if (isSignUpMode) {
+        const newRes = await createUserWithEmailAndPassword(auth, identifier, enteredPassword);
+        firebaseUser = newRes.user;
+      } else {
         const result = await signInWithEmailAndPassword(auth, identifier, enteredPassword);
         firebaseUser = result.user;
-      } catch (signInErr: any) {
-        // If account does not exist yet or user is new, attempt account creation
-        if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
-          try {
-            const newRes = await createUserWithEmailAndPassword(auth, identifier, enteredPassword);
-            firebaseUser = newRes.user;
-          } catch (createErr: any) {
-            // If creation also fails due to Firebase rules or settings, fallback to local patron profile
-            console.warn('Firebase creation fallback:', createErr);
-          }
-        }
       }
 
       const patronName = firebaseUser?.displayName || identifier.split('@')[0];
@@ -138,28 +150,40 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       });
       setUserName(patronName);
       setUserEmail(patronEmail);
+      localStorage.setItem('naxtto_last_login', 'email');
+      setLastLoggedInMethod('email');
     } catch (err: any) {
       console.error('Authentication error:', err);
-      // Seamless local patron fallback for preview environments
-      const patronName = identifier.split('@')[0];
-      onUpdateUser({
-        id: `patron-${Date.now()}`,
-        email: identifier,
-        name: patronName,
-        isLoggedIn: true,
-        memberTier: 'NaxtTo Circle',
-        memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      });
-      setUserName(patronName);
-      setUserEmail(identifier);
+      const errorCode = err?.code || '';
+      const errorMessage = err?.message || '';
+
+      if (errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
+        setAuthError('Incorrect password or email. Please verify your login credentials.');
+      } else if (errorCode === 'auth/user-not-found') {
+        setAuthError('No patron account found with this email. Switch to "Sign up" below to create your account.');
+      } else if (errorCode === 'auth/email-already-in-use') {
+        setAuthError('An account with this email address already exists. Please sign in with your password.');
+      } else if (errorCode === 'auth/weak-password') {
+        setAuthError('Password must be at least 6 characters.');
+      } else if (errorCode === 'auth/invalid-email') {
+        setAuthError('Please enter a valid email address.');
+      } else {
+        setAuthError(errorMessage || 'Authentication failed. Please verify your credentials.');
+      }
     } finally {
       setAuthLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (authInProgressRef.current || isGoogleLoading) {
+      return;
+    }
+    authInProgressRef.current = true;
     setIsGoogleLoading(true);
     setAuthError(null);
+    localStorage.setItem('naxtto_last_login', 'Google');
+    setLastLoggedInMethod('Google');
     try {
       const { signInWithPopup } = await import('firebase/auth');
       const { auth, googleAuthProvider } = await import('../lib/firebase');
@@ -178,21 +202,167 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       setUserName(userObj.displayName || userObj.email?.split('@')[0] || 'Patron');
       setUserEmail(userObj.email || '');
     } catch (err: any) {
+      const errorCode = err?.code || '';
+      const errorMessage = err?.message || '';
+
+      // Benign popup dismissals / concurrent click cancellations should not be treated as fatal errors
+      if (errorCode === 'auth/cancelled-popup-request') {
+        // Request was cancelled or replaced by a new popup request; silently ignore
+        return;
+      }
+      if (errorCode === 'auth/popup-closed-by-user') {
+        setAuthError('Google sign-in popup was closed. Please try again.');
+        return;
+      }
+
       console.error('Google Auth Error:', err);
-      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+      if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
         const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
         setAuthError(`Domain authorization required: Firebase has not yet whitelisted "${hostname}". To enable Google Sign-In, add "${hostname}" in your Firebase Console under Authentication > Settings > Authorized domains. You can also sign in directly using email & password below.`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setAuthError('Google Sign-In popup was closed. Please try again.');
-      } else if (err.code === 'auth/popup-blocked') {
-        setAuthError('Pop-up window was blocked. Please allow popups for this site.');
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        // user clicked multiple times
+      } else if (errorCode === 'auth/popup-blocked') {
+        setAuthError('Pop-up window was blocked by your browser. Please allow popups for this site.');
       } else {
-        setAuthError(err.message || 'Google authentication failed. Please try again.');
+        setAuthError(errorMessage || 'Google authentication failed. Please try again.');
       }
     } finally {
+      authInProgressRef.current = false;
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGitHubLogin = async () => {
+    if (authInProgressRef.current || isGitHubLoading) {
+      return;
+    }
+    authInProgressRef.current = true;
+    setAuthError(null);
+    setIsGitHubLoading(true);
+    localStorage.setItem('naxtto_last_login', 'GitHub');
+    setLastLoggedInMethod('GitHub');
+    try {
+      const { GithubAuthProvider, signInWithPopup } = await import('firebase/auth');
+      const { auth } = await import('../lib/firebase');
+      const provider = new GithubAuthProvider();
+      provider.addScope('read:user');
+      provider.addScope('user:email');
+      const res = await signInWithPopup(auth, provider);
+      const userObj = res.user;
+      const patronName = userObj.displayName || userObj.email?.split('@')[0] || 'GitHub Patron';
+      const patronEmail = userObj.email || `${userObj.uid.slice(0, 8)}@github.users.naxtto.com`;
+
+      onUpdateUser({
+        id: userObj.uid,
+        name: patronName,
+        email: patronEmail,
+        isLoggedIn: true,
+        memberTier: 'NaxtTo Circle',
+        memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      });
+      setUserName(patronName);
+      setUserEmail(patronEmail);
+    } catch (err: any) {
+      const errorCode = err?.code || '';
+      const errorMessage = err?.message || '';
+      if (errorCode === 'auth/cancelled-popup-request') {
+        return;
+      }
+      if (errorCode === 'auth/popup-closed-by-user') {
+        setAuthError('GitHub sign-in popup was closed.');
+        return;
+      }
+      if (errorCode === 'auth/popup-blocked') {
+        setAuthError('Pop-up window was blocked by your browser. Please allow popups for this site.');
+        return;
+      }
+      if (errorCode === 'auth/account-exists-with-different-credential') {
+        setAuthError('An account already exists with the same email address using Google or Email. Please sign in with that provider.');
+        return;
+      }
+
+      console.error('GitHub Auth Error:', err);
+      if (errorCode === 'auth/operation-not-allowed' || errorMessage.includes('operation-not-allowed')) {
+        setAuthError('GitHub Sign-In is not enabled in your Firebase project. Please enable the GitHub provider in Firebase Console > Authentication > Sign-in method.');
+      } else if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        setAuthError(`Domain authorization required: Add "${hostname}" to Authorized domains in Firebase Console under Authentication > Settings > Authorized domains.`);
+      } else {
+        setAuthError(errorMessage || 'GitHub authentication failed. Please verify your credentials and try again.');
+      }
+    } finally {
+      authInProgressRef.current = false;
+      setIsGitHubLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (authInProgressRef.current || isAppleLoading) {
+      return;
+    }
+    authInProgressRef.current = true;
+    setAuthError(null);
+    setIsAppleLoading(true);
+    localStorage.setItem('naxtto_last_login', 'Apple');
+    setLastLoggedInMethod('Apple');
+    try {
+      const { OAuthProvider, signInWithPopup } = await import('firebase/auth');
+      const { auth } = await import('../lib/firebase');
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      provider.setCustomParameters({
+        locale: 'en'
+      });
+
+      const res = await signInWithPopup(auth, provider);
+      const userObj = res.user;
+      const patronName = userObj.displayName || (userObj.email ? userObj.email.split('@')[0] : 'Apple Patron');
+      const patronEmail = userObj.email || `${userObj.uid.slice(0, 8)}@privaterelay.appleid.com`;
+
+      onUpdateUser({
+        id: userObj.uid,
+        name: patronName,
+        email: patronEmail,
+        avatar: userObj.photoURL || undefined,
+        isLoggedIn: true,
+        memberTier: 'NaxtTo Circle',
+        memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      });
+      setUserName(patronName);
+      setUserEmail(patronEmail);
+    } catch (err: any) {
+      const errorCode = err?.code || '';
+      const errorMessage = err?.message || '';
+
+      if (errorCode === 'auth/cancelled-popup-request') {
+        return;
+      }
+      if (errorCode === 'auth/popup-closed-by-user') {
+        setAuthError('Apple Sign-In popup was closed before completing verification. Please try again.');
+        return;
+      }
+      if (errorCode === 'auth/popup-blocked') {
+        setAuthError('Pop-up window was blocked by your browser. Please allow popups to sign in with your Apple Account.');
+        return;
+      }
+      if (errorCode === 'auth/operation-not-allowed' || errorCode === 'auth/configuration-not-found' || errorMessage.includes('operation-not-allowed')) {
+        setAuthError('Apple Sign-In is not yet enabled in the Firebase Authentication console. To enable it, navigate to Firebase Console > Authentication > Sign-in method, select Apple, and enter your Apple Developer Services ID and Team ID.');
+        return;
+      }
+      if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        setAuthError(`Domain authorization required: Please add "${hostname}" to Authorized domains under Firebase Console > Authentication > Settings > Authorized domains.`);
+        return;
+      }
+      if (errorCode === 'auth/account-exists-with-different-credential') {
+        setAuthError('An account already exists with the same email address using Google or Email. Please sign in with that provider.');
+        return;
+      }
+
+      console.error('Apple Auth Error:', err);
+      setAuthError(errorMessage || 'Apple authentication failed. Please verify your credentials and try again.');
+    } finally {
+      authInProgressRef.current = false;
+      setIsAppleLoading(false);
     }
   };
   const [addresses, setAddresses] = useState<Address[]>(user.savedAddresses || []);
@@ -318,67 +488,87 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     setTimeout(() => setPasswordSuccess(false), 3000);
   };
 
-  // IF NOT LOGGED IN -> RENDER LOGIN & REGISTRATION SCREEN
+  // IF NOT LOGGED IN -> RENDER MINIMALIST LOGIN & REGISTRATION SCREEN MATCHING REFERENCE IMAGE
   if (!user.isLoggedIn) {
     return (
-      <div id="login-page" className="w-full bg-[#fbfbfa] text-[#1d1d1f] min-h-screen font-sans">
-        {/* Top Header / Breadcrumbs */}
-        <div className="border-b border-[#e5e5ea] bg-white sticky top-16 z-30 shadow-2xs backdrop-blur-md bg-white/95">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-[#6e6e73]">
-              <button
-                onClick={onBackToShop}
-                className="flex items-center gap-1.5 text-[#1d1d1f] hover:text-[#0071e3] font-medium transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Collection</span>
-              </button>
-              <span className="text-[#d2d2d7]">/</span>
-              <span className="text-[#1d1d1f] font-medium">Login</span>
-            </div>
+      <div id="login-page" className="w-full bg-white text-[#0f1419] min-h-screen flex flex-col justify-between font-sans selection:bg-[#f8864b]/20">
+        {/* Top Header Bar */}
+        <header className="w-full px-6 sm:px-12 py-5 flex items-center justify-between">
+          {/* Left: Minimalist Emblem */}
+          <button
+            onClick={onBackToShop}
+            className="group flex items-center gap-2 hover:opacity-75 transition-opacity focus:outline-none"
+            title="Back to boutique"
+          >
+            <svg className="w-9 h-7 text-[#0f1419] fill-current" viewBox="0 0 36 24">
+              <path d="M2.5 19.5C14.2 18.8 26.5 10.4 34.5 4.5C32.2 6.2 22.5 16.5 2.5 19.5Z" />
+              <path d="M7.2 21.2L16.8 6.5H13.6L4.2 21.2H7.2Z" />
+              <path d="M13.5 21.2L23.2 6.5H20L10.5 21.2H13.5Z" />
+            </svg>
+          </button>
 
-            <button
-              onClick={onBackToShop}
-              className="text-xs font-semibold text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
-            >
-              Continue as Guest
-            </button>
-          </div>
-        </div>
-
-        {/* Login & Register Container */}
-        <div className="max-w-md mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="bg-white rounded-3xl border border-[#e5e5ea] p-6 sm:p-8 shadow-xs space-y-7">
-            
-            {/* Header / Brand Title */}
-            <div className="text-center space-y-3">
-              <BrandLogo 
-                layout="vertical" 
-                size="lg" 
-                variant="dark" 
-                showSubtitle={true} 
-                subtitleText="Fine Jewellery Atelier"
-                className="mx-auto" 
-              />
-              <h2 className="font-serif text-xl sm:text-2xl font-light text-[#1d1d1f] pt-1">
-                Sign In to Your Account
-              </h2>
-              <p className="text-xs text-[#6e6e73] max-w-sm mx-auto leading-relaxed">
-                Access your bespoke curations, saved ring sizing, insured orders, and member privileges.
-              </p>
-            </div>
-
-            {/* Google Sign In Button */}
-            <div className="space-y-3 pt-1">
+          {/* Right: "You are signing into" dropdown pill */}
+          <div className="flex items-center gap-2 text-sm text-[#536471]">
+            <span className="hidden sm:inline">You are signing into</span>
+            <div className="relative">
               <button
                 type="button"
-                id="google-login-btn"
+                id="signing-into-dropdown-btn"
+                onClick={() => setShowScopeDropdown(!showScopeDropdown)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-[#cfd9de] text-[#0f1419] font-normal text-sm hover:bg-[#f7f9f9] transition-colors focus:outline-none cursor-pointer"
+              >
+                <span>{signingIntoService}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-[#536471]" />
+              </button>
+
+              {showScopeDropdown && (
+                <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-[#cfd9de] py-1 z-50 text-left animate-fadeIn">
+                  {['Grok', 'NaxtTo', 'Atelier Fine Jewellery', 'Staff Portal'].map((svc) => (
+                    <button
+                      key={svc}
+                      type="button"
+                      onClick={() => {
+                        setSigningIntoService(svc);
+                        setShowScopeDropdown(false);
+                      }}
+                      className="w-full px-3.5 py-2 text-xs font-medium text-[#0f1419] hover:bg-[#f7f9f9] text-left transition-colors cursor-pointer"
+                    >
+                      {svc}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Center Main Login Section */}
+        <main className="flex-1 w-full max-w-[440px] mx-auto px-5 flex flex-col justify-center items-center py-10 sm:py-14">
+          <h1 className="text-3xl sm:text-[34px] font-normal text-[#0f1419] mb-8 tracking-[-0.02em] text-center">
+            {isSignUpMode ? 'Create your account' : 'Log into your account'}
+          </h1>
+
+          {/* Auth Error Banner */}
+          {authError && (
+            <div className="w-full mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl flex items-start gap-2.5 text-left animate-fadeIn">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="flex-1">{authError}</span>
+            </div>
+          )}
+
+          {!showEmailForm ? (
+            /* Primary 4 Pill Buttons Stack matching the image */
+            <div className="w-full space-y-3.5">
+              {/* 1. Login with Google */}
+              <button
+                type="button"
+                id="btn-login-google"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading || authLoading}
-                className="w-full bg-white hover:bg-[#f9f9fb] text-[#3c4043] border border-[#dadce0] hover:border-[#d2d2d7] py-2.5 px-4 rounded-xl text-xs font-medium transition-all shadow-2xs flex items-center justify-center gap-3 relative cursor-pointer"
+                className="w-full h-12 rounded-full border border-[#cfd9de] bg-white hover:bg-[#f7f9f9] active:bg-[#eff3f4] text-[#0f1419] text-sm font-medium transition-all flex items-center justify-center gap-3 cursor-pointer shadow-2xs"
               >
                 {isGoogleLoading ? (
-                  <div className="w-4 h-4 border-2 border-[#1d1d1f] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[#0f1419] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -399,133 +589,223 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                       />
                     </svg>
-                    <span className="font-semibold text-[#1d1d1f]">Continue with Google</span>
+                    <span>{isSignUpMode ? 'Sign up with Google' : 'Login with Google'}</span>
                   </>
                 )}
               </button>
 
-              <div className="relative flex items-center justify-center my-3">
-                <div className="border-t border-[#e5e5ea] w-full" />
-                <span className="bg-white px-3 text-[11px] text-[#86868b] uppercase tracking-wider font-medium absolute">
-                  or sign in with email
-                </span>
+              {/* 2. Login with GitHub - Highlighted with delicate orange outline glow from reference image */}
+              <div className="relative rounded-full p-[1.5px] bg-[#f8864b] shadow-[0_0_0_1.5px_rgba(248,134,75,0.45)]">
+                <button
+                  type="button"
+                  id="btn-login-github"
+                  onClick={handleGitHubLogin}
+                  disabled={authLoading || isGitHubLoading}
+                  className="w-full h-11 sm:h-11.5 rounded-full bg-white hover:bg-[#fafafa] active:bg-[#f5f5f5] text-[#0f1419] text-sm font-medium transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                >
+                  {isGitHubLoading ? (
+                    <div className="w-4 h-4 border-2 border-[#0f1419] border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 shrink-0 fill-current text-[#0f1419]" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                      </svg>
+                      <span>{isSignUpMode ? 'Sign up with GitHub' : 'Login with GitHub'}</span>
+                    </>
+                  )}
+                </button>
               </div>
+
+              {/* 3. Login with Apple */}
+              <button
+                type="button"
+                id="btn-login-apple"
+                onClick={handleAppleLogin}
+                disabled={authLoading || isAppleLoading}
+                className="w-full h-12 rounded-full border border-[#cfd9de] bg-white hover:bg-[#f7f9f9] active:bg-[#eff3f4] text-[#0f1419] text-sm font-medium transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-2xs"
+              >
+                {isAppleLoading ? (
+                  <div className="w-4 h-4 border-2 border-[#0f1419] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 shrink-0 fill-current text-black mb-0.5" viewBox="0 0 24 24">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.93-2.85-.9.04-1.98.6-2.61 1.34-.55.63-1.03 1.67-.9 2.7.99.08 2.01-.5 2.58-1.19z" />
+                    </svg>
+                    <span>{isSignUpMode ? 'Sign up with Apple' : 'Login with Apple'}</span>
+                  </>
+                )}
+              </button>
+
+              {/* 4. Login with email */}
+              <button
+                type="button"
+                id="btn-login-email"
+                onClick={() => setShowEmailForm(true)}
+                className="w-full h-12 rounded-full border border-[#cfd9de] bg-white hover:bg-[#f7f9f9] active:bg-[#eff3f4] text-[#0f1419] text-sm font-medium transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-2xs"
+              >
+                <Mail className="w-4 h-4 text-black stroke-[2]" />
+                <span>{isSignUpMode ? 'Sign up with email' : 'Login with email'}</span>
+              </button>
             </div>
-
-            {/* Error Message */}
-            {authError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2 animate-fadeIn">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            {/* Sign In Form */}
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
+          ) : (
+            /* Email & Password Form in the same clean minimalist aesthetic */
+            <form onSubmit={handleLoginSubmit} className="w-full space-y-4 animate-fadeIn">
               <div>
-                <label className="block text-xs font-medium text-[#1d1d1f] mb-1.5">
-                  Email Address or Staff ID
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] focus:bg-white transition-all"
-                  />
-                  <Mail className="w-4 h-4 text-[#86868b] absolute left-3.5 top-2.5" />
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  placeholder="Email or staff username"
+                  className="w-full h-12 rounded-full border border-[#cfd9de] px-5 text-sm text-[#0f1419] placeholder:text-[#8899a6] focus:outline-none focus:border-[#0f1419] transition-colors"
+                />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-[#1d1d1f]">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!loginEmail.trim()) {
-                        setAuthError('Please enter your email address to receive password reset instructions.');
-                        return;
-                      }
-                      try {
-                        const { sendPasswordResetEmail } = await import('firebase/auth');
-                        const { auth } = await import('../lib/firebase');
-                        await sendPasswordResetEmail(auth, loginEmail.trim());
-                        alert(`Password reset instructions sent to ${loginEmail.trim()}`);
-                      } catch (err: any) {
-                        setAuthError(err.message || 'Failed to send password reset email.');
-                      }
-                    }}
-                    className="text-[11px] text-[#0071e3] hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showLoginPassword ? 'text' : 'password'}
-                    required
-                    value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl pl-10 pr-10 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] focus:bg-white transition-all"
-                  />
-                  <Lock className="w-4 h-4 text-[#86868b] absolute left-3.5 top-2.5" />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    className="absolute right-3.5 top-2.5 text-[#86868b] hover:text-[#1d1d1f]"
-                  >
-                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  required
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full h-12 rounded-full border border-[#cfd9de] pl-5 pr-12 text-sm text-[#0f1419] placeholder:text-[#8899a6] focus:outline-none focus:border-[#0f1419] transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-4 top-3.5 text-[#8899a6] hover:text-[#0f1419] transition-colors"
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-[#6e6e73]">
+              <div className="flex items-center justify-between text-xs px-2 pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer text-[#536471]">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={e => setRememberMe(e.target.checked)}
-                    className="rounded border-[#d2d2d7] text-[#1d1d1f] focus:ring-0"
+                    className="rounded border-[#cfd9de] text-[#0f1419] focus:ring-0"
                   />
-                  <span>Remember this device</span>
+                  <span>Remember me</span>
                 </label>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!loginEmail.trim()) {
+                      setAuthError('Please enter your email to receive password reset instructions.');
+                      return;
+                    }
+                    try {
+                      const { sendPasswordResetEmail } = await import('firebase/auth');
+                      const { auth } = await import('../lib/firebase');
+                      await sendPasswordResetEmail(auth, loginEmail.trim());
+                      alert(`Password reset instructions sent to ${loginEmail.trim()}`);
+                    } catch (err: any) {
+                      setAuthError(err.message || 'Failed to send password reset email.');
+                    }
+                  }}
+                  className="text-[#536471] hover:text-[#0f1419] hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
 
               <button
                 type="submit"
                 id="submit-signin-btn"
-                disabled={authLoading || isGoogleLoading}
-                className="w-full bg-[#E56A85] hover:bg-[#D45974] text-white py-3 rounded-xl text-xs font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 active:scale-[0.99]"
+                disabled={authLoading}
+                className="w-full h-12 rounded-full bg-[#0f1419] hover:bg-[#272c30] text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 {authLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <LogIn className="w-4 h-4" />
-                    <span>Sign In or Register</span>
-                  </>
+                  <span>{isSignUpMode ? 'Create Account' : 'Log In'}</span>
                 )}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEmailForm(false)}
+                className="w-full text-center text-xs text-[#536471] hover:text-[#0f1419] hover:underline pt-2 block cursor-pointer"
+              >
+                Back to all sign-in options
+              </button>
             </form>
+          )}
 
-
-            {/* Security Guarantee */}
-            <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-center gap-3 text-[11px] text-[#86868b]">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                256-Bit Encrypted
-              </span>
-              <span>•</span>
-              <span>Zero Spam Guarantee</span>
-            </div>
-
+          {/* Last logged in with status indicator matching the exact orange ring in the screenshot */}
+          <div className="flex items-center justify-center gap-2 mt-8 text-xs text-[#536471]">
+            <span className="w-3.5 h-3.5 rounded-full border-[1.5px] border-[#f8864b] border-t-transparent inline-block" />
+            <span>You last logged in with {lastLoggedInMethod}</span>
           </div>
+
+          {/* Don't have an account? Sign up */}
+          <div className="mt-5 text-sm text-[#536471]">
+            <span>{isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUpMode(!isSignUpMode);
+                setAuthError(null);
+              }}
+              className="text-[#0f1419] font-medium hover:underline cursor-pointer"
+            >
+              {isSignUpMode ? 'Sign in' : 'Sign up'}
+            </button>
+          </div>
+        </main>
+
+        {/* Bottom Center Legal Disclaimer Footer */}
+        <footer className="w-full px-6 py-6 text-center text-xs text-[#536471]">
+          <span>By continuing, you agree to {signingIntoService}'s </span>
+          <a
+            href="#terms"
+            onClick={(e) => {
+              e.preventDefault();
+              alert('Terms of Service: All bespoke orders and fine jewellery services are insured and protected.');
+            }}
+            className="underline hover:text-[#0f1419]"
+          >
+            Terms of Service
+          </a>
+          <span> and </span>
+          <a
+            href="#privacy"
+            onClick={(e) => {
+              e.preventDefault();
+              alert('Privacy Policy: All patron measurements and gemstone preferences are securely encrypted.');
+            }}
+            className="underline hover:text-[#0f1419]"
+          >
+            Privacy Policy
+          </a>
+          <span>.</span>
+        </footer>
+
+        {/* Floating Controls in Bottom Right Corner matching screenshot */}
+        <div className="fixed bottom-6 right-6 flex items-center gap-3 z-30">
+          <button
+            type="button"
+            onClick={onBackToShop}
+            title="Browse Boutique"
+            className="w-10 h-10 rounded-full bg-white border border-[#cfd9de] shadow-md flex items-center justify-center text-[#536471] hover:text-[#0f1419] hover:bg-[#f7f9f9] transition-all cursor-pointer"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => alert(`Active Service: ${signingIntoService} | Concierge & AI Assistant Ready`)}
+            title="Atelier Assistant"
+            className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#6366f1] via-[#a855f7] to-[#ec4899] p-[2px] shadow-md hover:scale-105 transition-all cursor-pointer"
+          >
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+              <span className="w-3 h-3 rounded-full bg-[#0f1419] flex items-center justify-center text-[8px] text-white font-bold">
+                ✦
+              </span>
+            </div>
+          </button>
         </div>
       </div>
     );
