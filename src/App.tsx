@@ -37,6 +37,16 @@ import { StaffAuthModal } from './components/StaffAuthModal';
 import { LoginPromptModal } from './components/LoginPromptModal';
 import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
 import { apiClient } from './services/api';
+import {
+  getUserStorageKey,
+  loadUserCart,
+  saveUserCart,
+  loadUserWishlist,
+  saveUserWishlist,
+  clearLoggedOutSession,
+  syncUserDataToFirestore,
+  fetchUserDataFromFirestore
+} from './utils/userStorage';
 
 export default function App() {
   // 1. Core State & Local Persistence (Empty by default)
@@ -45,38 +55,12 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
   });
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    try {
-      // Clear legacy sample cart if present from old build
-      if (localStorage.getItem('naxtto_cart')) {
-        localStorage.removeItem('naxtto_cart');
-      }
-      const saved = localStorage.getItem('naxtto_cart_v2');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(() => {
-    try {
-      // Clear legacy sample wishlist if present from old build
-      if (localStorage.getItem('naxtto_wishlist')) {
-        localStorage.removeItem('naxtto_wishlist');
-      }
-      const saved = localStorage.getItem('naxtto_wishlist_v2');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
   const [user, setUser] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem('naxtto_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.email && parsed.email !== 'sophia.montgomery@atelier.com') {
+        if (parsed && parsed.isLoggedIn && parsed.email && parsed.email !== 'sophia.montgomery@atelier.com') {
           return parsed;
         }
       }
@@ -85,6 +69,51 @@ export default function App() {
     }
     return DEMO_USER;
   });
+
+  // Bag / Cart state (strictly user-scoped; empty when logged out)
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const savedUser = localStorage.getItem('naxtto_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed?.isLoggedIn) {
+          const key = getUserStorageKey(parsed);
+          return loadUserCart(key);
+        }
+      }
+    } catch {
+      // ignore
+    }
+    clearLoggedOutSession();
+    return [];
+  });
+
+  // Wishlist state (strictly user-scoped; empty when logged out)
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(() => {
+    try {
+      const savedUser = localStorage.getItem('naxtto_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed?.isLoggedIn) {
+          const key = getUserStorageKey(parsed);
+          return loadUserWishlist(key);
+        }
+      }
+    } catch {
+      // ignore
+    }
+    clearLoggedOutSession();
+    return [];
+  });
+
+  // Active state references to prevent stale closures during login/logout cycles
+  const cartItemsRef = useRef(cartItems);
+  cartItemsRef.current = cartItems;
+
+  const wishlistItemsRef = useRef(wishlistItems);
+  wishlistItemsRef.current = wishlistItems;
+
+  const prevUserKeyRef = useRef<string | null>(getUserStorageKey(user));
 
   // Global store orders (for admin order management and patron sync)
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -98,6 +127,71 @@ export default function App() {
     }
     return [];
   });
+
+  // Synchronize cart and wishlist whenever user login state changes
+  useEffect(() => {
+    const prevKey = prevUserKeyRef.current;
+    const currentKey = getUserStorageKey(user);
+
+    // Case 1: User is logged out -> clear bag and wishlist completely
+    if (!user.isLoggedIn || !currentKey) {
+      if (prevKey) {
+        saveUserCart(prevKey, cartItemsRef.current);
+        saveUserWishlist(prevKey, wishlistItemsRef.current);
+      }
+      clearLoggedOutSession();
+      setCartItems([]);
+      setWishlistItems([]);
+      prevUserKeyRef.current = null;
+      return;
+    }
+
+    // Case 2: User logged in or switched account -> restore that user's bag and wishlist
+    if (currentKey !== prevKey) {
+      if (prevKey) {
+        saveUserCart(prevKey, cartItemsRef.current);
+        saveUserWishlist(prevKey, wishlistItemsRef.current);
+      }
+
+      // 1. Immediately restore patron's items from local storage
+      const userCart = loadUserCart(currentKey);
+      const userWishlist = loadUserWishlist(currentKey);
+      setCartItems(userCart);
+      setWishlistItems(userWishlist);
+      prevUserKeyRef.current = currentKey;
+
+      // 2. Concurrently check Firestore for cloud backups and restore if local was empty
+      fetchUserDataFromFirestore(currentKey).then(remote => {
+        if (!remote) return;
+        if (remote.cartItems && remote.cartItems.length > 0 && userCart.length === 0) {
+          setCartItems(remote.cartItems);
+          saveUserCart(currentKey, remote.cartItems);
+        }
+        if (remote.wishlistItems && remote.wishlistItems.length > 0 && userWishlist.length === 0) {
+          setWishlistItems(remote.wishlistItems);
+          saveUserWishlist(currentKey, remote.wishlistItems);
+        }
+      });
+    }
+  }, [user.isLoggedIn, user.id, user.email]);
+
+  // Persist cart items to user's storage when changed while logged in
+  useEffect(() => {
+    const key = getUserStorageKey(user);
+    if (user.isLoggedIn && key) {
+      saveUserCart(key, cartItems);
+      syncUserDataToFirestore(key, cartItems, wishlistItemsRef.current);
+    }
+  }, [cartItems, user.isLoggedIn, user.id, user.email]);
+
+  // Persist wishlist items to user's storage when changed while logged in
+  useEffect(() => {
+    const key = getUserStorageKey(user);
+    if (user.isLoggedIn && key) {
+      saveUserWishlist(key, wishlistItems);
+      syncUserDataToFirestore(key, cartItemsRef.current, wishlistItems);
+    }
+  }, [wishlistItems, user.isLoggedIn, user.id, user.email]);
 
   // Real Firebase Auth listener
   useEffect(() => {
@@ -134,15 +228,11 @@ export default function App() {
   }, [products]);
 
   useEffect(() => {
-    localStorage.setItem('naxtto_cart_v2', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  useEffect(() => {
-    localStorage.setItem('naxtto_wishlist_v2', JSON.stringify(wishlistItems));
-  }, [wishlistItems]);
-
-  useEffect(() => {
-    localStorage.setItem('naxtto_user', JSON.stringify(user));
+    if (user.isLoggedIn) {
+      localStorage.setItem('naxtto_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('naxtto_user');
+    }
   }, [user]);
 
   useEffect(() => {
@@ -246,6 +336,36 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // User Sign-Out Handler: saves items to user account, then completely clears in-memory bag & wishlist
+  const handleUserSignOut = async () => {
+    const key = getUserStorageKey(user);
+    if (key) {
+      saveUserCart(key, cartItemsRef.current);
+      saveUserWishlist(key, wishlistItemsRef.current);
+    }
+    // Instantly wipe in-memory state so no products show in bag or wishlist
+    setCartItems([]);
+    setWishlistItems([]);
+    clearLoggedOutSession();
+    localStorage.removeItem('naxtto_user');
+    setUser(DEMO_USER);
+    prevUserKeyRef.current = null;
+    setIsCartOpen(false);
+    setIsWishlistOpen(false);
+    if (currentView === 'checkout') {
+      setCurrentView('shop');
+    }
+
+    try {
+      const { auth } = await import('./lib/firebase');
+      const { signOut } = await import('firebase/auth');
+      await signOut(auth);
+    } catch (err) {
+      console.warn('Firebase sign out notice:', err);
+    }
+    showToast('Signed out of your patron account');
   };
 
   // 6. Filtering & Sorting Products
@@ -666,7 +786,14 @@ export default function App() {
       ) : currentView === 'account' ? (
         <AccountPage
           user={user}
-          onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
+          onUpdateUser={(updated) => {
+            if (updated.isLoggedIn === false) {
+              handleUserSignOut();
+            } else {
+              setUser(prev => ({ ...prev, ...updated }));
+            }
+          }}
+          onSignOut={handleUserSignOut}
           onBackToShop={() => {
             setCurrentView('shop');
             setSelectedProduct(null);

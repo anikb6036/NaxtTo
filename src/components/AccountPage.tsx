@@ -44,6 +44,7 @@ interface AccountPageProps {
   onSelectProduct?: (product: Product) => void;
   onNavigateToAdmin?: () => void;
   currencySymbol: string;
+  onSignOut?: () => void;
 }
 
 export const AccountPage: React.FC<AccountPageProps> = ({
@@ -52,13 +53,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onBackToShop,
   onOpenWishlist,
   onNavigateToAdmin,
-  currencySymbol
+  currencySymbol,
+  onSignOut
 }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses' | 'preferences' | 'security'>('profile');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userName, setUserName] = useState(user.name);
   const [userEmail, setUserEmail] = useState(user.email);
-  const [userPhone, setUserPhone] = useState(user.phone || '+44 20 7946 0912');
+  const [userPhone, setUserPhone] = useState(user.phone || '');
   const [preferredRingSize, setPreferredRingSize] = useState(user.preferences.ringSize || 'US 6');
   const [preferredMetal, setPreferredMetal] = useState(user.preferences.metalPreference || '18k-yellow-gold');
   const [newsletterSub, setNewsletterSub] = useState(user.preferences.newsletterSubscribed);
@@ -76,7 +78,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
-  const [signingIntoService, setSigningIntoService] = useState('Grok');
+  const [signingIntoService, setSigningIntoService] = useState('NaxtTo');
   const [showScopeDropdown, setShowScopeDropdown] = useState(false);
   const [lastLoggedInMethod, setLastLoggedInMethod] = useState<string>(() => {
     const saved = localStorage.getItem('naxtto_last_login');
@@ -88,7 +90,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   useEffect(() => {
     setUserName(user.name);
     setUserEmail(user.email);
-    setUserPhone(user.phone || '+44 20 7946 0912');
+    setUserPhone(user.phone || '');
   }, [user.name, user.email, user.phone]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -417,6 +419,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       savedAddresses: [],
       orderHistory: []
     });
+    if (onSignOut) {
+      onSignOut();
+    }
   };
 
   const handleSaveAddress = (e: React.FormEvent) => {
@@ -433,7 +438,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         state: newAddrState,
         postalCode: newAddrZip,
         country: newAddrCountry,
-        phone: userPhone || '+1 555 019 2831',
+        phone: userPhone || '',
         isDefault: newAddrIsDefault
       } : (newAddrIsDefault ? { ...a, isDefault: false } : a));
     } else {
@@ -445,7 +450,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         state: newAddrState,
         postalCode: newAddrZip,
         country: newAddrCountry,
-        phone: userPhone || '+1 555 019 2831',
+        phone: userPhone || '',
         isDefault: newAddrIsDefault || addresses.length === 0
       };
       updatedAddresses = newAddrIsDefault 
@@ -523,7 +528,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
               {showScopeDropdown && (
                 <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-[#cfd9de] py-1 z-50 text-left animate-fadeIn">
-                  {['Grok', 'NaxtTo', 'Atelier Fine Jewellery', 'Staff Portal'].map((svc) => (
+                  {['NaxtTo', 'Atelier Fine Jewellery', 'Staff Portal'].map((svc) => (
                     <button
                       key={svc}
                       type="button"
@@ -848,7 +853,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           {/* Left Navigation Sidebar (3.5 cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* User Profile Card */}
-            <div className="p-6 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] space-y-4">
+            <div className="p-6 rounded-2xl bg-transparent border border-[#e5e5ea] space-y-4">
               <div className="flex items-center gap-4">
                 {user.avatar ? (
                   <img
@@ -884,7 +889,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 onClick={() => setActiveTab('profile')}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
                   activeTab === 'profile' 
-                    ? 'bg-[#1d1d1f] text-white font-semibold shadow-xs' 
+                    ? 'bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold shadow-xs' 
                     : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
                 }`}
               >
@@ -899,7 +904,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 onClick={() => setActiveTab('orders')}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
                   activeTab === 'orders' 
-                    ? 'bg-[#1d1d1f] text-white font-semibold shadow-xs' 
+                    ? 'bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold shadow-xs' 
                     : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
                 }`}
               >
@@ -914,7 +919,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 onClick={() => setActiveTab('addresses')}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
                   activeTab === 'addresses' 
-                    ? 'bg-[#1d1d1f] text-white font-semibold shadow-xs' 
+                    ? 'bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold shadow-xs' 
                     : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
                 }`}
               >
@@ -929,28 +934,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 onClick={() => setActiveTab('preferences')}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
                   activeTab === 'preferences' 
-                    ? 'bg-[#1d1d1f] text-white font-semibold shadow-xs' 
+                    ? 'bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold shadow-xs' 
                     : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Settings className="w-4 h-4" />
                   <span>Personal Details & Preferences</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-50" />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('security')}
-                className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
-                  activeTab === 'security' 
-                    ? 'bg-[#1d1d1f] text-white font-semibold shadow-xs' 
-                    : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Lock className="w-4 h-4" />
-                  <span>Security & Privacy</span>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50" />
               </button>
@@ -1022,7 +1012,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </div>
 
                 {/* Tier Banner */}
-                <div className="p-6 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="p-6 rounded-2xl bg-transparent border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <span className="text-xs uppercase font-semibold text-[#86868b]">
                       Membership Tier
@@ -1094,22 +1084,22 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                    <div className="p-3 bg-transparent rounded-xl border border-[#e5e5ea]">
                       <span className="text-[#86868b] block mb-0.5">Full Name</span>
                       <span className="font-semibold text-[#1d1d1f] text-sm">{user.name}</span>
                     </div>
 
-                    <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                    <div className="p-3 bg-transparent rounded-xl border border-[#e5e5ea]">
                       <span className="text-[#86868b] block mb-0.5">Email Address</span>
                       <span className="font-semibold text-[#1d1d1f] text-sm">{user.email}</span>
                     </div>
 
-                    <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                    <div className="p-3 bg-transparent rounded-xl border border-[#e5e5ea]">
                       <span className="text-[#86868b] block mb-0.5">Preferred Ring Size</span>
                       <span className="font-semibold text-[#1d1d1f] text-sm">{user.preferences.ringSize || 'US 6'}</span>
                     </div>
 
-                    <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                    <div className="p-3 bg-transparent rounded-xl border border-[#e5e5ea]">
                       <span className="text-[#86868b] block mb-0.5">Preferred Precious Metal</span>
                       <span className="font-semibold text-[#1d1d1f] text-sm capitalize">
                         {user.preferences.metalPreference?.replace(/-/g, ' ') || '18K Yellow Gold'}
@@ -1207,7 +1197,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea] space-y-3">
+                  <div className="text-center py-16 bg-transparent rounded-2xl border border-[#e5e5ea] space-y-3">
                     <ShoppingBag className="w-8 h-8 text-[#86868b] mx-auto" />
                     <h3 className="text-base font-semibold text-[#1d1d1f]">No Orders Yet</h3>
                     <p className="text-xs text-[#6e6e73] max-w-sm mx-auto">
@@ -1260,7 +1250,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                 {/* Add / Edit Address Form Modal/Inline */}
                 {showAddressForm && (
-                  <form onSubmit={handleSaveAddress} className="p-6 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] space-y-4 animate-scaleIn">
+                  <form onSubmit={handleSaveAddress} className="p-6 rounded-2xl bg-transparent border border-[#e5e5ea] space-y-4 animate-scaleIn">
                     <h3 className="text-sm font-semibold text-[#1d1d1f]">
                       {editingAddressId ? 'Edit Address' : 'Add New Delivery Address'}
                     </h3>
@@ -1274,7 +1264,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrRecipient}
                           onChange={e => setNewAddrRecipient(e.target.value)}
                           placeholder="e.g. Sophia Montgomery"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1286,7 +1276,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrStreet}
                           onChange={e => setNewAddrStreet(e.target.value)}
                           placeholder="e.g. 742 Evergreen Gardens, Apt 4B"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1298,7 +1288,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrCity}
                           onChange={e => setNewAddrCity(e.target.value)}
                           placeholder="e.g. London"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1309,7 +1299,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrState}
                           onChange={e => setNewAddrState(e.target.value)}
                           placeholder="e.g. Greater London"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1321,7 +1311,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrZip}
                           onChange={e => setNewAddrZip(e.target.value)}
                           placeholder="e.g. W1K 7TH"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1333,7 +1323,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           value={newAddrCountry}
                           onChange={e => setNewAddrCountry(e.target.value)}
                           placeholder="e.g. United Kingdom"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
                     </div>
@@ -1467,7 +1457,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </div>
 
                 <form onSubmit={handleSaveProfile} className="space-y-5">
-                  <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-white space-y-4">
+                  <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-4">
                     <h3 className="text-sm font-semibold text-[#1d1d1f]">Contact Information</h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1478,7 +1468,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           required
                           value={userName}
                           onChange={e => setUserName(e.target.value)}
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1489,7 +1479,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           required
                           value={userEmail}
                           onChange={e => setUserEmail(e.target.value)}
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -1499,56 +1489,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           type="tel"
                           value={userPhone}
                           onChange={e => setUserPhone(e.target.value)}
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          placeholder="+44 20 7946 0912"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-white space-y-4">
-                    <h3 className="text-sm font-semibold text-[#1d1d1f]">Jewellery Defaults</h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <label className="block text-[#1d1d1f] font-medium mb-1">Default Ring Size</label>
-                        <select
-                          value={preferredRingSize}
-                          onChange={e => setPreferredRingSize(e.target.value)}
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                        >
-                          <option value="US 5">US 5 (15.7mm)</option>
-                          <option value="US 6">US 6 (16.5mm)</option>
-                          <option value="US 7">US 7 (17.3mm)</option>
-                          <option value="US 8">US 8 (18.1mm)</option>
-                          <option value="US 9">US 9 (18.9mm)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[#1d1d1f] font-medium mb-1">Preferred Metal Finish</label>
-                        <select
-                          value={preferredMetal}
-                          onChange={e => setPreferredMetal(e.target.value)}
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                        >
-                          <option value="18k-yellow-gold">18K Solid Yellow Gold</option>
-                          <option value="18k-white-gold">18K Solid White Gold</option>
-                          <option value="18k-rose-gold">18K Solid Rose Gold</option>
-                          <option value="platinum-950">Platinum 950</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <label className="flex items-center gap-2 text-xs text-[#1d1d1f] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={newsletterSub}
-                          onChange={e => setNewsletterSub(e.target.checked)}
-                          className="w-4 h-4 rounded text-[#1d1d1f] accent-[#1d1d1f]"
-                        />
-                        <span>Receive weekly private salon announcements and metallurgical releases</span>
-                      </label>
                     </div>
                   </div>
 
@@ -1582,7 +1526,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   )}
                 </div>
 
-                <form onSubmit={handlePasswordSubmit} className="p-6 rounded-2xl border border-[#e5e5ea] bg-white space-y-4">
+                <form onSubmit={handlePasswordSubmit} className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-4">
                   <h3 className="text-sm font-semibold text-[#1d1d1f]">Change Password</h3>
 
                   <div className="space-y-3 max-w-md text-xs">
@@ -1594,7 +1538,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         value={currentPassword}
                         onChange={e => setCurrentPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                        className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
 
@@ -1606,7 +1550,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         value={newPassword}
                         onChange={e => setNewPassword(e.target.value)}
                         placeholder="At least 8 characters"
-                        className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                        className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
 
@@ -1618,7 +1562,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                         placeholder="Repeat new password"
-                        className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                        className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
 
@@ -1631,7 +1575,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                 </form>
 
-                <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-white space-y-3">
+                <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-3">
                   <h3 className="text-sm font-semibold text-[#1d1d1f]">Two-Factor Authentication (2FA)</h3>
                   <p className="text-xs text-[#6e6e73] leading-relaxed">
                     Protect your high-value fine jewellery orders and saved addresses with hardware security or authenticator apps.
