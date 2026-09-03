@@ -735,9 +735,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             </form>
           )}
 
-          {/* Last logged in with status indicator matching the exact orange ring in the screenshot */}
-          <div className="flex items-center justify-center gap-2 mt-8 text-xs text-[#536471]">
-            <span className="w-3.5 h-3.5 rounded-full border-[1.5px] border-[#f8864b] border-t-transparent inline-block" />
+          {/* Last logged in status indicator */}
+          <div className="flex items-center justify-center mt-8 text-xs text-[#536471]">
             <span>You last logged in with {lastLoggedInMethod}</span>
           </div>
 
