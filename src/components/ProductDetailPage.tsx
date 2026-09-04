@@ -15,9 +15,11 @@ import {
   Share2,
   ChevronRight,
   ChevronLeft,
-  X
+  X,
+  Lock,
+  LogIn
 } from 'lucide-react';
-import { Product, MetalType, ProductReview, ProductCategory } from '../types';
+import { Product, MetalType, ProductReview, ProductCategory, UserProfile } from '../types';
 import { StarRating, OrangeStar } from './StarRating';
 
 interface ProductDetailPageProps {
@@ -32,6 +34,9 @@ interface ProductDetailPageProps {
   currencySymbol: string;
   onAddReview: (productId: string, review: Omit<ProductReview, 'id' | 'date' | 'helpfulCount'>) => void;
   onSelectCategory: (category: ProductCategory) => void;
+  user?: UserProfile;
+  onOpenAccount?: () => void;
+  onRequireLogin?: (productName?: string, actionType?: 'bag' | 'wishlist' | 'review') => void;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
@@ -45,7 +50,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   onToggleWishlist,
   currencySymbol,
   onAddReview,
-  onSelectCategory
+  onSelectCategory,
+  user,
+  onOpenAccount,
+  onRequireLogin
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedFinish, setSelectedFinish] = useState<MetalType>(
@@ -69,6 +77,30 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [newReviewTitle, setNewReviewTitle] = useState('');
   const [newReviewComment, setNewReviewComment] = useState('');
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  // Auto-fill author name from logged in user
+  useEffect(() => {
+    if (user?.isLoggedIn && user.name) {
+      setNewReviewAuthor(user.name);
+    }
+  }, [user]);
+
+  const handleOpenWriteReview = () => {
+    if (!user?.isLoggedIn) {
+      if (onRequireLogin) {
+        onRequireLogin(product.name, 'review');
+      } else if (onOpenAccount) {
+        onOpenAccount();
+      } else {
+        setShowReviewForm(true);
+      }
+      return;
+    }
+    if (user.name && !newReviewAuthor) {
+      setNewReviewAuthor(user.name);
+    }
+    setShowReviewForm(true);
+  };
 
   // Gallery sliding carousel state & refs
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -415,7 +447,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             </div>
 
             {/* Verification Strip */}
-            <div className="p-4 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] flex flex-wrap items-center justify-between gap-3 text-xs text-[#6e6e73]">
+            <div className="p-4 rounded-xl bg-transparent border border-[#e5e5ea] flex flex-wrap items-center justify-between gap-3 text-xs text-[#6e6e73]">
               <div className="flex items-center gap-2">
                 <Gem className="w-4 h-4 text-[#c5a059]" />
                 <span><strong>Origin:</strong> {product.origin}</span>
@@ -624,7 +656,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
             {/* Trust Assurance Grid */}
             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#e5e5ea]">
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#f5f5f7]">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-transparent border border-[#e5e5ea]">
                 <Truck className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-semibold text-[#1d1d1f]">Insured Courier Delivery</p>
@@ -632,7 +664,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#f5f5f7]">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-transparent border border-[#e5e5ea]">
                 <RefreshCw className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-semibold text-[#1d1d1f]">30-Day Returns</p>
@@ -640,7 +672,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#f5f5f7]">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-transparent border border-[#e5e5ea]">
                 <ShieldCheck className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-semibold text-[#1d1d1f]">Lifetime Guarantee</p>
@@ -648,7 +680,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#f5f5f7]">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-transparent border border-[#e5e5ea]">
                 <Gift className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-semibold text-[#1d1d1f]">Gift Packaging</p>
@@ -664,10 +696,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveAccordion(activeAccordion === 'craft' ? null : 'craft')}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f]"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f] hover:text-blue-600 transition-colors group cursor-pointer"
                 >
-                  <span>Craftsmanship & Materials</span>
-                  <ChevronRight className={`w-4 h-4 text-[#86868b] transition-transform ${activeAccordion === 'craft' ? 'rotate-90' : ''}`} />
+                  <span className="transition-colors group-hover:text-blue-600">Craftsmanship & Materials</span>
+                  <ChevronRight className={`w-4 h-4 text-[#86868b] group-hover:text-blue-600 transition-all ${activeAccordion === 'craft' ? 'rotate-90 text-blue-600' : ''}`} />
                 </button>
                 {activeAccordion === 'craft' && (
                   <div className="mt-3 text-xs sm:text-sm text-[#6e6e73] space-y-2 leading-relaxed animate-fadeIn">
@@ -687,10 +719,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveAccordion(activeAccordion === 'specs' ? null : 'specs')}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f]"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f] hover:text-blue-600 transition-colors group cursor-pointer"
                 >
-                  <span>Dimensions & Gemstone Details</span>
-                  <ChevronRight className={`w-4 h-4 text-[#86868b] transition-transform ${activeAccordion === 'specs' ? 'rotate-90' : ''}`} />
+                  <span className="transition-colors group-hover:text-blue-600">Dimensions & Gemstone Details</span>
+                  <ChevronRight className={`w-4 h-4 text-[#86868b] group-hover:text-blue-600 transition-all ${activeAccordion === 'specs' ? 'rotate-90 text-blue-600' : ''}`} />
                 </button>
                 {activeAccordion === 'specs' && (
                   <div className="mt-3 text-xs sm:text-sm text-[#6e6e73] space-y-2 leading-relaxed animate-fadeIn">
@@ -709,10 +741,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveAccordion(activeAccordion === 'ethical' ? null : 'ethical')}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f]"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f] hover:text-blue-600 transition-colors group cursor-pointer"
                 >
-                  <span>Ethical Sourcing & Sustainability</span>
-                  <ChevronRight className={`w-4 h-4 text-[#86868b] transition-transform ${activeAccordion === 'ethical' ? 'rotate-90' : ''}`} />
+                  <span className="transition-colors group-hover:text-blue-600">Ethical Sourcing & Sustainability</span>
+                  <ChevronRight className={`w-4 h-4 text-[#86868b] group-hover:text-blue-600 transition-all ${activeAccordion === 'ethical' ? 'rotate-90 text-blue-600' : ''}`} />
                 </button>
                 {activeAccordion === 'ethical' && (
                   <div className="mt-3 text-xs sm:text-sm text-[#6e6e73] space-y-2 leading-relaxed animate-fadeIn">
@@ -728,10 +760,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveAccordion(activeAccordion === 'shipping' ? null : 'shipping')}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f]"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[#1d1d1f] hover:text-blue-600 transition-colors group cursor-pointer"
                 >
-                  <span>Shipping & Returns</span>
-                  <ChevronRight className={`w-4 h-4 text-[#86868b] transition-transform ${activeAccordion === 'shipping' ? 'rotate-90' : ''}`} />
+                  <span className="transition-colors group-hover:text-blue-600">Shipping & Returns</span>
+                  <ChevronRight className={`w-4 h-4 text-[#86868b] group-hover:text-blue-600 transition-all ${activeAccordion === 'shipping' ? 'rotate-90 text-blue-600' : ''}`} />
                 </button>
                 {activeAccordion === 'shipping' && (
                   <div className="mt-3 text-xs sm:text-sm text-[#6e6e73] space-y-2 leading-relaxed animate-fadeIn">
@@ -760,7 +792,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
             <button
               id="write-review-btn"
-              onClick={() => setShowReviewForm(true)}
+              onClick={handleOpenWriteReview}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/50 text-xs font-semibold transition-all flex items-center gap-2 self-start sm:self-auto shadow-xs active:scale-[0.99]"
             >
               <MessageSquarePlus className="w-3.5 h-3.5" />
@@ -823,7 +855,34 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   <p className="text-xs text-[#6e6e73]">Share your experience with {product.name}</p>
                 </div>
 
-                {reviewSubmitted ? (
+                {!user?.isLoggedIn ? (
+                  <div className="py-6 text-center space-y-4">
+                    <div className="w-14 h-14 rounded-full bg-[#FFF0F4] border border-[#FFAEC0]/40 text-[#E56A85] flex items-center justify-center mx-auto shadow-sm">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-base font-semibold text-[#1d1d1f]">Account Login Required</h4>
+                      <p className="text-xs text-[#6e6e73] max-w-sm mx-auto">
+                        Only authenticated patrons can leave a review. Please sign in to your account to share your feedback.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowReviewForm(false);
+                        if (onRequireLogin) {
+                          onRequireLogin(product.name, 'review');
+                        } else if (onOpenAccount) {
+                          onOpenAccount();
+                        }
+                      }}
+                      className="w-full py-3 px-5 rounded-xl bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold text-xs tracking-wide shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Please Login Your Account</span>
+                    </button>
+                  </div>
+                ) : reviewSubmitted ? (
                   <div className="py-8 text-center space-y-3">
                     <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                       <Check className="w-6 h-6" />
@@ -862,7 +921,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                           value={newReviewAuthor}
                           onChange={(e) => setNewReviewAuthor(e.target.value)}
                           placeholder="e.g. Eleanor Vance"
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
                       <div>
@@ -872,7 +931,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                           value={newReviewLocation}
                           onChange={(e) => setNewReviewLocation(e.target.value)}
                           placeholder="e.g. London, UK"
-                          className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
                     </div>
@@ -884,7 +943,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                         value={newReviewTitle}
                         onChange={(e) => setNewReviewTitle(e.target.value)}
                         placeholder="e.g. Excellent quality and weight"
-                        className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                        className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
 
@@ -896,7 +955,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                         value={newReviewComment}
                         onChange={(e) => setNewReviewComment(e.target.value)}
                         placeholder="Describe the feel, finish, packaging, and everyday wear..."
-                        className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl p-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                        className="w-full bg-transparent border border-[#e5e5ea] rounded-xl p-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                       />
                     </div>
 

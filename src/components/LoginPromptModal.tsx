@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { X, LogIn, Lock, ShoppingBag, Heart, ArrowRight } from 'lucide-react';
+import { X, LogIn, Lock, ShoppingBag, Heart, ArrowRight, MessageSquarePlus } from 'lucide-react';
 
 interface LoginPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGoToLogin: () => void;
   productName?: string;
-  actionType?: 'bag' | 'wishlist';
+  actionType?: 'bag' | 'wishlist' | 'review';
 }
 
 export const LoginPromptModal: React.FC<LoginPromptModalProps> = ({
@@ -38,6 +38,7 @@ export const LoginPromptModal: React.FC<LoginPromptModalProps> = ({
   if (!isOpen) return null;
 
   const isWishlist = actionType === 'wishlist';
+  const isReview = actionType === 'review';
 
   return (
     <div
@@ -68,7 +69,9 @@ export const LoginPromptModal: React.FC<LoginPromptModalProps> = ({
           {/* Luxury Badge Icon */}
           <div className="mx-auto w-14 h-14 rounded-full bg-white shadow-md border border-[#FFAEC0]/40 flex items-center justify-center mb-3 text-[#E56A85]">
             <div className="relative">
-              {isWishlist ? (
+              {isReview ? (
+                <MessageSquarePlus className="w-6 h-6 text-[#E56A85]" />
+              ) : isWishlist ? (
                 <Heart className="w-6 h-6 text-[#E56A85] fill-[#E56A85]/20" />
               ) : (
                 <ShoppingBag className="w-6 h-6 text-[#E56A85]" />
@@ -99,16 +102,21 @@ export const LoginPromptModal: React.FC<LoginPromptModalProps> = ({
             <span className="font-medium text-[#1d1d1f]">
               Please login to your account
             </span>{' '}
-            to {isWishlist ? 'save' : 'add'} {productName ? <span className="italic font-serif">"{productName}"</span> : (isWishlist ? 'items' : 'items')} to your {isWishlist ? 'wishlist' : 'bag'} and proceed.
+            {isReview ? (
+              <>to write a review and rate {productName ? <span className="italic font-serif">"{productName}"</span> : 'this piece'}.</>
+            ) : (
+              <>to {isWishlist ? 'save' : 'add'} {productName ? <span className="italic font-serif">"{productName}"</span> : (isWishlist ? 'items' : 'items')} to your {isWishlist ? 'wishlist' : 'bag'} and proceed.</>
+            )}
           </p>
 
-          <div className="mt-4 p-3 rounded-lg bg-[#FAF9F5] border border-[#E8DFD1] text-xs text-[#6e6e73] text-left flex items-start gap-2.5">
-            <span className="text-[#E56A85] text-base leading-none">✦</span>
-            <span>
-              {isWishlist
+          <div className="mt-4 p-3 rounded-lg bg-[#FAF9F5] border border-[#E8DFD1] text-xs text-[#6e6e73] text-left">
+            <p>
+              {isReview
+                ? 'Signing in ensures all reviews and ratings come from verified atelier patrons and genuine owners of fine jewelry.'
+                : isWishlist
                 ? 'Signing in lets you sync your personalized wishlist across all devices, get notified about price drops, and keep your favorite fine jewellery pieces safe.'
                 : 'Signing in lets you securely manage your bag, track orders, unlock member benefits, and save your fine jewelry ring sizes and preferences.'}
-            </span>
+            </p>
           </div>
 
           {/* Action Buttons */}

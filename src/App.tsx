@@ -289,7 +289,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [loginPromptProductName, setLoginPromptProductName] = useState<string | undefined>(undefined);
-  const [loginPromptActionType, setLoginPromptActionType] = useState<'bag' | 'wishlist'>('bag');
+  const [loginPromptActionType, setLoginPromptActionType] = useState<'bag' | 'wishlist' | 'review'>('bag');
 
   // 4. Checkout Promo & Gift Options
   const [appliedPromo, setAppliedPromo] = useState<{
@@ -866,6 +866,13 @@ export default function App() {
           onToggleWishlist={handleToggleWishlist}
           currencySymbol={currencySymbol}
           onAddReview={handleAddReview}
+          user={user}
+          onOpenAccount={handleOpenAccount}
+          onRequireLogin={(productName, actionType) => {
+            setLoginPromptProductName(productName);
+            setLoginPromptActionType(actionType || 'review');
+            setIsLoginPromptOpen(true);
+          }}
           onSelectCategory={(cat) => {
             setSelectedProduct(null);
             setCurrentView('shop');
