@@ -468,7 +468,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             {/* Header: Category, Title, Subtitle, Ratings */}
             <div className="space-y-3 pb-5 border-b border-[#e5e5ea]">
               <div className="flex items-center justify-between text-xs">
-                <span className="inline-block px-3 py-1 bg-[#1d1d1f]/5 text-[#1d1d1f] rounded-full font-medium">
+                <span className="inline-block px-3 py-1 bg-transparent border border-[#e5e5ea] text-[#1d1d1f] rounded-full font-medium">
                   {product.styleName} • {product.category}
                 </span>
 
