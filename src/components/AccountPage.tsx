@@ -45,6 +45,7 @@ interface AccountPageProps {
   onNavigateToAdmin?: () => void;
   currencySymbol: string;
   onSignOut?: () => void;
+  onLoginSuccess?: () => void;
 }
 
 export const AccountPage: React.FC<AccountPageProps> = ({
@@ -54,7 +55,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onOpenWishlist,
   onNavigateToAdmin,
   currencySymbol,
-  onSignOut
+  onSignOut,
+  onLoginSuccess
 }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses' | 'preferences' | 'security'>('profile');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -154,6 +156,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       setUserEmail(patronEmail);
       localStorage.setItem('naxtto_last_login', 'email');
       setLastLoggedInMethod('email');
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        onBackToShop();
+      }
     } catch (err: any) {
       console.error('Authentication error:', err);
       const errorCode = err?.code || '';
@@ -203,6 +210,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       });
       setUserName(userObj.displayName || userObj.email?.split('@')[0] || 'Patron');
       setUserEmail(userObj.email || '');
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        onBackToShop();
+      }
     } catch (err: any) {
       const errorCode = err?.code || '';
       const errorMessage = err?.message || '';
@@ -262,6 +274,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       });
       setUserName(patronName);
       setUserEmail(patronEmail);
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        onBackToShop();
+      }
     } catch (err: any) {
       const errorCode = err?.code || '';
       const errorMessage = err?.message || '';
@@ -331,6 +348,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       });
       setUserName(patronName);
       setUserEmail(patronEmail);
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        onBackToShop();
+      }
     } catch (err: any) {
       const errorCode = err?.code || '';
       const errorMessage = err?.message || '';

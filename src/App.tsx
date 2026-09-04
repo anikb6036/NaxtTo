@@ -200,16 +200,28 @@ export default function App() {
       import('firebase/auth').then(({ onAuthStateChanged }) => {
         unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
           if (firebaseUser) {
-            setUser(prev => ({
-              ...prev,
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || prev.name || firebaseUser.email?.split('@')[0] || 'Patron',
-              email: firebaseUser.email || prev.email || '',
-              avatar: firebaseUser.photoURL || prev.avatar || undefined,
-              isLoggedIn: true,
-              memberTier: prev.memberTier || 'NaxtTo Circle',
-              memberSince: prev.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-            }));
+            setUser(prev => {
+              const wasLoggedOut = !prev.isLoggedIn;
+              if (wasLoggedOut) {
+                setCurrentView(curr => {
+                  if (curr === 'account') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return 'shop';
+                  }
+                  return curr;
+                });
+              }
+              return {
+                ...prev,
+                id: firebaseUser.uid,
+                name: firebaseUser.displayName || prev.name || firebaseUser.email?.split('@')[0] || 'Patron',
+                email: firebaseUser.email || prev.email || '',
+                avatar: firebaseUser.photoURL || prev.avatar || undefined,
+                isLoggedIn: true,
+                memberTier: prev.memberTier || 'NaxtTo Circle',
+                memberSince: prev.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+              };
+            });
           }
         });
       });
@@ -790,14 +802,26 @@ export default function App() {
             if (updated.isLoggedIn === false) {
               handleUserSignOut();
             } else {
+              const wasLoggedOut = !user.isLoggedIn;
               setUser(prev => ({ ...prev, ...updated }));
+              if (wasLoggedOut && updated.isLoggedIn) {
+                setCurrentView('shop');
+                setSelectedProduct(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast(`Welcome back, ${updated.name || 'Patron'}!`);
+              }
             }
+          }}
+          onLoginSuccess={() => {
+            setCurrentView('shop');
+            setSelectedProduct(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onSignOut={handleUserSignOut}
           onBackToShop={() => {
             setCurrentView('shop');
             setSelectedProduct(null);
-            scrollToCatalog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onOpenWishlist={handleOpenWishlist}
           onNavigateToAdmin={handleRequestStaffAccess}
