@@ -193,6 +193,9 @@ export default function App() {
     }
   }, [wishlistItems, user.isLoggedIn, user.id, user.email]);
 
+  // Redirect tracking when logging in from checkout or shop
+  const postLoginRedirectRef = useRef<'shop' | 'checkout'>('shop');
+
   // Real Firebase Auth listener
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -203,10 +206,12 @@ export default function App() {
             setUser(prev => {
               const wasLoggedOut = !prev.isLoggedIn;
               if (wasLoggedOut) {
+                const target = postLoginRedirectRef.current === 'checkout' ? 'checkout' : 'shop';
+                postLoginRedirectRef.current = 'shop';
                 setCurrentView(curr => {
                   if (curr === 'account') {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return 'shop';
+                    return target;
                   }
                   return curr;
                 });
@@ -476,6 +481,16 @@ export default function App() {
   };
 
   const handleGoToLogin = () => {
+    setIsLoginPromptOpen(false);
+    setSelectedProduct(null);
+    setIsCartOpen(false);
+    setIsWishlistOpen(false);
+    setCurrentView('account');
+    window.scrollTo(0, 0);
+  };
+
+  const handleCheckoutLogin = () => {
+    postLoginRedirectRef.current = 'checkout';
     setIsLoginPromptOpen(false);
     setSelectedProduct(null);
     setIsCartOpen(false);
@@ -805,17 +820,28 @@ export default function App() {
               const wasLoggedOut = !user.isLoggedIn;
               setUser(prev => ({ ...prev, ...updated }));
               if (wasLoggedOut && updated.isLoggedIn) {
-                setCurrentView('shop');
+                const target = postLoginRedirectRef.current === 'checkout' ? 'checkout' : 'shop';
+                postLoginRedirectRef.current = 'shop';
+                setCurrentView(target);
                 setSelectedProduct(null);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                showToast(`Welcome back, ${updated.name || 'Patron'}!`);
+                if (target === 'checkout') {
+                  showToast(`Signed in! Fetched email (${updated.email}) for your order.`);
+                } else {
+                  showToast(`Welcome back, ${updated.name || 'Patron'}!`);
+                }
               }
             }
           }}
           onLoginSuccess={() => {
-            setCurrentView('shop');
+            const target = postLoginRedirectRef.current === 'checkout' ? 'checkout' : 'shop';
+            postLoginRedirectRef.current = 'shop';
+            setCurrentView(target);
             setSelectedProduct(null);
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (target === 'checkout') {
+              showToast(`Signed in! Fetched email (${user.email}) for your order.`);
+            }
           }}
           onSignOut={handleUserSignOut}
           onBackToShop={() => {
@@ -845,6 +871,7 @@ export default function App() {
           onApplyPromo={handleApplyPromo}
           onRemovePromo={handleRemovePromo}
           onSaveNewAddress={handleSaveNewAddress}
+          onGoToLogin={handleCheckoutLogin}
         />
       ) : currentView === 'product-detail' && selectedProduct ? (
         <ProductDetailPage
@@ -985,6 +1012,7 @@ export default function App() {
 
           {/* Email Signup Form for Newsletters */}
           <NewsletterSignup
+            userEmail={user.isLoggedIn ? user.email : undefined}
             onSubscribed={(email) => {
               showToast(`Welcome to the Circle! Invitation sent to ${email}`);
               setUser(prev => ({

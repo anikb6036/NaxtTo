@@ -48,12 +48,13 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     const isAdminIdentifier = 
       cleanEmail === 'anik' ||
       cleanEmail === 'anik@naxtto.com' ||
+      cleanEmail === 'baidyaanik18@gmail.com' ||
       cleanEmail === 'admin' ||
       cleanEmail === 'admin@naxtto.com' ||
       cleanEmail === 'atelier@naxtto.com';
 
     if (isAdminIdentifier) {
-      if (cleanPassword === 'anik' || cleanPassword === 'admin123') {
+      if (cleanPassword === 'anik' || cleanPassword === 'admin123' || cleanPassword === 'naxtto2026') {
         return res.json({
           success: true,
           role: 'admin',

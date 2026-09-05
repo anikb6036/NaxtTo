@@ -345,6 +345,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             id="mobile-drawer-menu"
             className="lg:hidden border-t border-[#eeeae4] bg-[#fdfcfb] px-6 py-6 space-y-4 shadow-lg animate-fadeIn font-sans"
           >
+            {/* Mobile Drawer Brand Emblem */}
+            <div className="flex justify-center pb-2 border-b border-[#eeeae4]">
+              <BrandLogo 
+                layout="horizontal" 
+                size="sm" 
+                variant="bronze" 
+                showSubtitle={true} 
+                subtitleText="MILAN & ANTWERP" 
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3 text-sm font-normal text-[#2d2a26]">
               {navLinks.map(link => (
                 <button

@@ -15,10 +15,12 @@ export interface BrandLogoProps {
 /**
  * Geometric Luxury Lotus Emblem matching the official reference logo provided by user
  * Features:
- * - Clean solid chocolate bronze linework with precise sacred geometric curves
- * - Pointed gothic central petal with apex and bottom intersection
- * - Stepped dual-tier outer petals with sharp geometric tips
- * - Central vertical opening at the grounded base
+ * - Sacred geometric curves matching official NaxtTo metallic emblem (NaxtTo - Copy.png)
+ * - Pointed gothic central petal with apex and bottom junction
+ * - Stepped dual-tier outer petals with sharp geometric tips (mid tips and horizontal wing tips)
+ * - Sweeping bowl contour arching down to grounded base
+ * - Central vertical opening and flame stems at the base
+ * - Metallic bronze polished gradient with subtle ambient elevation
  */
 export const LotusEmblem: React.FC<{
   className?: string;
@@ -31,80 +33,120 @@ export const LotusEmblem: React.FC<{
   sizeClass, 
   strokeWidth = 26,
   color = "#54280E",
-  embossed = false
+  embossed = true
 }) => {
+  const gradientId = React.useId().replace(/:/g, '');
+
   return (
     <svg
-      viewBox="0 0 1000 680"
+      viewBox="0 0 1000 960"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`${sizeClass || className} shrink-0 transition-transform duration-300`}
       aria-label="NaxtTo Official Lotus Emblem"
     >
+      <defs>
+        {/* Luxury Metallic Bronze Gradient matching official emblem photo */}
+        <linearGradient id={`bronze-${gradientId}`} x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor="#7E4A28" />
+          <stop offset="25%" stopColor="#B3865B" />
+          <stop offset="50%" stopColor="#5E2C10" />
+          <stop offset="75%" stopColor="#8C5832" />
+          <stop offset="100%" stopColor="#3F1B07" />
+        </linearGradient>
+
+        {/* 18k Champagne Gold Gradient */}
+        <linearGradient id={`gold-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#D4AF37" />
+          <stop offset="35%" stopColor="#F5E2A8" />
+          <stop offset="70%" stopColor="#B8860B" />
+          <stop offset="100%" stopColor="#8B6914" />
+        </linearGradient>
+
+        {/* Soft Ambient Occlusion Shadow filter */}
+        <filter id={`shadow-${gradientId}`} x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#281105" floodOpacity="0.28" />
+        </filter>
+      </defs>
+
       <g
-        stroke={color}
+        stroke={
+          color === '#54280E' || color === 'bronze' 
+            ? `url(#bronze-${gradientId})` 
+            : color === '#C5A059' || color === '#D4AF37'
+            ? `url(#gold-${gradientId})`
+            : color
+        }
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="miter"
-        strokeMiterlimit={10}
+        strokeMiterlimit={8}
+        filter={embossed && (color === '#54280E' || color === 'bronze') ? `url(#shadow-${gradientId})` : undefined}
       >
-        {/* Top Central Pointed Petal */}
+        {/* 1. Top Central Pointed Gothic Petal */}
         <path
-          d="M 500 32 
-             C 425 115, 370 180, 370 250 
-             C 370 345, 440 415, 500 445 
-             C 560 415, 630 345, 630 250 
-             C 630 180, 575 115, 500 32 Z"
+          d="M 500 96 
+             C 420 180, 365 265, 365 360 
+             C 365 450, 430 515, 500 545 
+             C 570 515, 635 450, 635 360 
+             C 635 265, 580 180, 500 96 Z"
         />
 
-        {/* Upper Left Petal with Sharp Point (tip at 250, 195) */}
+        {/* 2. Lower Central Inner Stems (flanking the bottom central vertical gap) */}
+        {/* Left inner stem */}
         <path
-          d="M 370 250 
-             C 330 225, 290 205, 250 195 
-             C 255 240, 255 290, 250 340"
+          d="M 500 545 
+             C 455 620, 440 730, 478 930"
+        />
+        {/* Right inner stem */}
+        <path
+          d="M 500 545 
+             C 545 620, 560 730, 522 930"
         />
 
-        {/* Upper Right Petal with Sharp Point (tip at 750, 195) */}
+        {/* 3. Mid-Tier Petals with Sharp Pointed Tips */}
+        {/* Upper Left Mid Petal (sharp tip at 265, 320) */}
         <path
-          d="M 630 250 
-             C 670 225, 710 205, 750 195 
-             C 745 240, 745 290, 750 340"
+          d="M 365 360 
+             C 330 340, 295 330, 265 320 
+             C 270 375, 270 425, 265 480"
+        />
+        {/* Upper Right Mid Petal (sharp tip at 735, 320) */}
+        <path
+          d="M 635 360 
+             C 670 340, 705 330, 735 320 
+             C 730 375, 730 425, 735 480"
         />
 
-        {/* Outermost Lower Left Petal (tip at 120, 340, sweeping to base) */}
+        {/* 4. Mid-Tier Downward Arcs to Base */}
+        {/* Left mid-tier inner sweep */}
         <path
-          d="M 250 340 
-             C 205 338, 160 338, 120 340 
-             C 165 470, 260 590, 450 648 
-             L 480 648"
+          d="M 265 480 
+             C 335 570, 410 700, 460 930"
+        />
+        {/* Right mid-tier inner sweep */}
+        <path
+          d="M 735 480 
+             C 665 570, 590 700, 540 930"
         />
 
-        {/* Outermost Lower Right Petal (tip at 880, 340, sweeping to base) */}
+        {/* 5. Outermost Wing Petals with Sharp Horizontal Tips & Sweeping Bowl */}
+        {/* Outermost Lower Left Wing (horizontal sharp tip at 142, 465 sweeping to base) */}
         <path
-          d="M 750 340 
-             C 795 338, 840 338, 880 340 
-             C 835 470, 740 590, 550 648 
-             L 520 648"
+          d="M 265 480 
+             C 220 475, 178 470, 142 465 
+             C 185 645, 275 825, 460 930"
+        />
+        {/* Outermost Lower Right Wing (horizontal sharp tip at 858, 465 sweeping to base) */}
+        <path
+          d="M 735 480 
+             C 780 475, 822 470, 858 465 
+             C 815 645, 725 825, 540 930"
         />
 
-        {/* Inner Left Mid-Tier Arc */}
-        <path
-          d="M 250 340 
-             C 330 440, 410 550, 465 648"
-        />
-
-        {/* Inner Right Mid-Tier Arc */}
-        <path
-          d="M 750 340 
-             C 670 440, 590 550, 535 648"
-        />
-
-        {/* Central Lower Flame Void */}
-        <path
-          d="M 480 648 
-             C 445 540, 460 470, 500 445 
-             C 540 470, 555 540, 520 648"
-        />
+        {/* 6. Base Grounding Caps (framing the central vertical void) */}
+        <path d="M 460 930 L 478 930" />
+        <path d="M 522 930 L 540 930" />
       </g>
     </svg>
   );
@@ -169,7 +211,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       text: 'text-[#3E271D]',
       subtitle: 'text-[#5E4234]',
       divider: '#3E271D',
-      embossed: false
+      embossed: true
     },
     dark: {
       icon: '#2A1810',
@@ -183,7 +225,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       text: 'text-[#3E271D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]',
       subtitle: 'text-[#5E4234]',
       divider: '#3E271D',
-      embossed: false
+      embossed: true
     },
     light: {
       icon: '#FDFCFB',

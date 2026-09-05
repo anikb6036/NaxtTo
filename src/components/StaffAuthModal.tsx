@@ -82,7 +82,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
 
       // 2. Client verification check fallback
       const lowerInput = cleanInput.toLowerCase();
-      const isAnikAuth = (lowerInput === 'anik' || lowerInput === 'anik@naxtto.com' || lowerInput === 'admin' || lowerInput === 'admin@naxtto.com') && (cleanPass === 'anik' || cleanPass === 'admin123' || cleanPass === 'naxtto2026');
+      const isAnikAuth = (lowerInput === 'anik' || lowerInput === 'anik@naxtto.com' || lowerInput === 'baidyaanik18@gmail.com' || lowerInput === 'admin' || lowerInput === 'admin@naxtto.com') && (cleanPass === 'anik' || cleanPass === 'admin123' || cleanPass === 'naxtto2026');
       const isGeneralStaffAuth = (lowerInput.includes('staff') || lowerInput.includes('naxtto') || lowerInput.includes('director') || lowerInput.includes('admin') || lowerInput.length >= 3) && (validPasscodes.includes(cleanPass) || cleanPass.length >= 6);
 
       if (serverVerified || isAnikAuth || isGeneralStaffAuth) {
@@ -139,14 +139,18 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
             <X className="w-5 h-5" />
           </button>
 
+          <div className="flex items-center justify-between mb-3">
+            <BrandLogo layout="horizontal" size="xs" variant="gold" showSubtitle subtitleText="STAFF ATELIER" />
+            <span className="text-[9px] uppercase tracking-[0.25em] text-[#d4af37] font-semibold bg-white/5 px-2 py-0.5 rounded border border-white/10">
+              Security Gate
+            </span>
+          </div>
+
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37] border border-white/10">
+            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37] border border-white/10 shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] tracking-[0.25em] uppercase text-[#d4af37] font-semibold block">
-                Privé Atelier Security Gate
-              </span>
               <h3 className="font-serif text-lg text-white font-medium">
                 Staff Authentication
               </h3>

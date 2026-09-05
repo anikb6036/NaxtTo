@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Check, Copy, ArrowRight, ShieldCheck } from 'lucide-react';
 import { apiClient } from '../services/api';
 
 interface NewsletterSignupProps {
   onSubscribed?: (email: string) => void;
+  userEmail?: string;
 }
 
-export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ onSubscribed }) => {
-  const [email, setEmail] = useState('');
+export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ onSubscribed, userEmail }) => {
+  const [email, setEmail] = useState(userEmail || '');
+  const [userEdited, setUserEdited] = useState(false);
   const [preferences, setPreferences] = useState<string[]>(['18K Solid Gold', 'New Archetypes']);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Automatically fetch & prefill email when user logs in or userEmail is provided
+  useEffect(() => {
+    if (userEmail && (!email || !userEdited)) {
+      setEmail(userEmail);
+    }
+  }, [userEmail, userEdited]);
 
   const availableInterests = [
     '18K Solid Gold',
@@ -74,16 +83,26 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ onSubscribed
           <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-5 font-sans">
             {/* Input & Action */}
             <div className="flex flex-col sm:flex-row gap-2 bg-[#f5f5f7] p-1.5 rounded-full border border-[#e5e5ea] shadow-xs focus-within:border-[#1d1d1f] focus-within:bg-white transition-all">
-              <div className="relative flex-1">
+              <div className="relative flex-1 flex items-center">
                 <input
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address..."
+                  onChange={(e) => {
+                    setUserEdited(true);
+                    setEmail(e.target.value);
+                  }}
+                  placeholder={userEmail || "Enter your email address..."}
                   className="w-full bg-transparent px-4 py-3 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none font-sans"
                 />
-                <Mail className="w-4 h-4 text-[#86868b] absolute right-3 top-1/2 -translate-y-1/2 hidden sm:block" />
+                {userEmail && email === userEmail ? (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 mr-3 shrink-0">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    Auto-filled
+                  </span>
+                ) : (
+                  <Mail className="w-4 h-4 text-[#86868b] absolute right-3 top-1/2 -translate-y-1/2 hidden sm:block" />
+                )}
               </div>
               <button
                 type="submit"

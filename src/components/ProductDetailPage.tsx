@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Product, MetalType, ProductReview, ProductCategory, UserProfile } from '../types';
 import { StarRating, OrangeStar } from './StarRating';
+import { BrandLogo } from './BrandLogo';
 
 interface ProductDetailPageProps {
   product: Product;
@@ -262,15 +263,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       {/* Top Breadcrumbs & Back Navigation Bar */}
       <div className="border-b border-[#e5e5ea] bg-white sticky top-16 z-30 shadow-2xs backdrop-blur-md bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-[#6e6e73]">
+          <div className="flex items-center gap-2.5 text-sm text-[#6e6e73]">
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 text-[#1d1d1f] hover:text-[#0071e3] font-medium transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Collection</span>
+              <span>Back</span>
             </button>
             <span className="text-[#d2d2d7]">/</span>
+            <BrandLogo layout="horizontal" size="xs" variant="bronze" onClick={onBack} className="cursor-pointer" />
+            <span className="text-[#d2d2d7] hidden sm:inline">/</span>
             <button 
               onClick={() => { onSelectCategory('all'); onBack(); }}
               className="hover:text-[#1d1d1f] hidden sm:inline"
@@ -467,6 +470,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           <div className="lg:col-span-5 space-y-6">
             {/* Header: Category, Title, Subtitle, Ratings */}
             <div className="space-y-3 pb-5 border-b border-[#e5e5ea]">
+              {/* Official Brand Atelier Badge */}
+              <div className="mb-1">
+                <BrandLogo layout="horizontal" size="xs" variant="bronze" showSubtitle subtitleText="AUTHENTICATED HEIRLOOM" />
+              </div>
+
               <div className="flex items-center justify-between text-xs">
                 <span className="inline-block px-3 py-1 bg-transparent border border-[#e5e5ea] text-[#1d1d1f] rounded-full font-medium">
                   {product.styleName} • {product.category}

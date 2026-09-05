@@ -184,6 +184,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {/* Right Product Details & Buy Column (5 cols) */}
           <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6">
             <div>
+              {/* Official Atelier Brand Emblem */}
+              <div className="mb-3">
+                <BrandLogo layout="horizontal" size="xs" variant="bronze" showSubtitle subtitleText="CERTIFIED ATELIER" />
+              </div>
+
               {/* Category & Rating */}
               <div className="flex items-center justify-between text-xs text-[#8C7E70] mb-2">
                 <span className="tracking-[0.16em] uppercase font-semibold text-[#8C5D3B]">

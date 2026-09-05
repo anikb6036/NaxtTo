@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft,
   ShieldCheck, 
@@ -17,6 +17,7 @@ import {
   Plus,
   AlertCircle,
   Home,
+  User,
   Sparkles as UnusedSparkles
 } from 'lucide-react';
 import { CartItem, Address, Order, UserProfile } from '../types';
@@ -35,7 +36,22 @@ interface CheckoutPageProps {
   onApplyPromo?: (code: string) => boolean;
   onRemovePromo?: () => void;
   onSaveNewAddress?: (address: Address) => void;
+  onGoToLogin?: () => void;
 }
+
+// Helper to restrict and format Indian 10-digit mobile number
+export const formatIndianMobile = (value: string): string => {
+  let digits = value.replace(/\D/g, '');
+  // If user pasted with 91 country code (12 digits)
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  }
+  // If user pasted with leading trunk 0 (11 digits)
+  if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, 10);
+};
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   cartItems,
@@ -49,7 +65,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   user,
   onApplyPromo,
   onRemovePromo,
-  onSaveNewAddress
+  onSaveNewAddress,
+  onGoToLogin
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [copiedTracking, setCopiedTracking] = useState(false);
@@ -65,18 +82,49 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     return defaultAddr?.id || (savedAddresses.length > 0 ? (savedAddresses[0].id || 'addr-0') : null);
   });
 
+  // Track if customer explicitly typed in a custom email/name/phone
+  const [userEditedEmail, setUserEditedEmail] = useState(false);
+  const [userEditedName, setUserEditedName] = useState(false);
+  const [userEditedPhone, setUserEditedPhone] = useState(false);
+
   // Form State initialized from default saved address or user info
-  const [email, setEmail] = useState(user?.email || '');
+  const [email, setEmail] = useState(user?.email || 'baidyaanik18@gmail.com');
   const [fullName, setFullName] = useState(defaultAddr?.fullName || user?.name || '');
   const [addressLine1, setAddressLine1] = useState(defaultAddr?.addressLine1 || '');
   const [addressLine2, setAddressLine2] = useState(defaultAddr?.addressLine2 || '');
   const [city, setCity] = useState(defaultAddr?.city || '');
   const [state, setState] = useState(defaultAddr?.state || '');
   const [postalCode, setPostalCode] = useState(defaultAddr?.postalCode || '');
-  const [country, setCountry] = useState(defaultAddr?.country || 'United Kingdom');
-  const [phone, setPhone] = useState(defaultAddr?.phone || user?.phone || '');
+  const [country, setCountry] = useState(defaultAddr?.country || 'India');
+  const [phone, setPhone] = useState(() => formatIndianMobile(defaultAddr?.phone || user?.phone || ''));
   const [saveToAccount, setSaveToAccount] = useState(true);
   const [step1Error, setStep1Error] = useState<string | null>(null);
+
+  // Auto-fetch and sync user's email ID and account details when logged in or when auth resolves
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+    if (user?.name && (!fullName || !userEditedName)) {
+      setFullName(user.name);
+      setCardName(prev => prev || user.name);
+    }
+    if (user?.phone && (!phone || !userEditedPhone)) {
+      setPhone(formatIndianMobile(user.phone));
+    }
+  }, [user?.email, user?.name, user?.phone, user?.isLoggedIn, userEditedName, userEditedPhone]);
+
+  // Sync saved addresses if user logs in during checkout or profile hydrates
+  useEffect(() => {
+    if (savedAddresses && savedAddresses.length > 0) {
+      if (!selectedAddressId) {
+        const defaultA = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+        setSelectedAddressId(defaultA.id || 'addr-0');
+        setAddressMode('saved');
+        handleApplySavedAddress(defaultA);
+      }
+    }
+  }, [savedAddresses]);
 
   // Shipping Method
   const [shippingMethod, setShippingMethod] = useState<'express'>('express');
@@ -122,15 +170,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setCity(addr.city || '');
     setState(addr.state || '');
     setPostalCode(addr.postalCode || (addr as any).zip || '');
-    setCountry(addr.country || 'United Kingdom');
-    setPhone(addr.phone || '');
+    setCountry(addr.country || 'India');
+    setPhone(formatIndianMobile(addr.phone || ''));
     setStep1Error(null);
   };
 
   const handleProceedToStep2 = () => {
-    if (!email.trim() || !email.includes('@')) {
-      setStep1Error('Please provide a valid email address for delivery tracking.');
-      return;
+    // Automatically guarantee a valid patron email for order receipts
+    if (!email.trim()) {
+      setEmail(user?.email || 'baidyaanik18@gmail.com');
     }
 
     if (addressMode === 'new' || !hasSavedAddresses) {
@@ -147,11 +195,21 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         return;
       }
       if (!postalCode.trim()) {
-        setStep1Error('Please enter the postal or ZIP code.');
+        setStep1Error('Please enter the postal or PIN code.');
         return;
       }
-      if (!phone.trim()) {
-        setStep1Error('Please provide a contact phone number for secure courier handoff.');
+      
+      const cleanedPhone = formatIndianMobile(phone);
+      if (!cleanedPhone) {
+        setStep1Error('Please enter a 10-digit Indian mobile number for courier handoff.');
+        return;
+      }
+      if (cleanedPhone.length !== 10) {
+        setStep1Error(`Please enter a complete 10-digit Indian mobile number (${cleanedPhone.length}/10 digits entered).`);
+        return;
+      }
+      if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+        setStep1Error('Indian mobile numbers must be 10 digits starting with 6, 7, 8, or 9.');
         return;
       }
 
@@ -165,8 +223,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
           city: city.trim(),
           state: state.trim(),
           postalCode: postalCode.trim(),
-          country: country.trim() || 'United Kingdom',
-          phone: phone.trim(),
+          country: country.trim() || 'India',
+          phone: `+91 ${cleanedPhone}`,
           isDefault: savedAddresses.length === 0
         };
         onSaveNewAddress(newAddressObj);
@@ -218,11 +276,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         fullName: fullName || 'Valued Client',
         addressLine1: addressLine1 || '100 Luxury Way',
         addressLine2: addressLine2,
-        city: city || 'New York',
-        state: state || 'NY',
-        postalCode: postalCode || '10001',
-        country: country || 'United States',
-        phone: phone || '+1 555 019 2831',
+        city: city || 'Mumbai',
+        state: state || 'MH',
+        postalCode: postalCode || '400001',
+        country: country || 'India',
+        phone: phone ? (phone.startsWith('+91') ? phone : `+91 ${formatIndianMobile(phone)}`) : '+91 9876543210',
         isDefault: true
       },
       items: [...cartItems]
@@ -339,7 +397,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                     {/* Mode Switcher Tabs if user has saved addresses */}
                     {hasSavedAddresses && (
-                      <div className="flex items-center gap-1.5 p-1 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] self-start">
+                      <div className="flex items-center gap-1.5 p-1 bg-transparent rounded-xl border border-[#e5e5ea] self-start">
                         <button
                           type="button"
                           onClick={() => {
@@ -348,7 +406,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             addressMode === 'saved'
-                              ? 'bg-white text-[#1d1d1f] shadow-xs'
+                              ? 'bg-[#1d1d1f] text-white shadow-xs'
                               : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                           }`}
                         >
@@ -362,7 +420,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
                             addressMode === 'new'
-                              ? 'bg-white text-[#1d1d1f] shadow-xs'
+                              ? 'bg-[#1d1d1f] text-white shadow-xs'
                               : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                           }`}
                         >
@@ -372,6 +430,46 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Account Login / Sync status banner */}
+                  {!user?.isLoggedIn ? (
+                    <div className="p-4 rounded-2xl border border-[#e5e5ea] bg-transparent flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl border border-[#e5e5ea] flex items-center justify-center shrink-0 text-[#1d1d1f]">
+                          <User className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#1d1d1f]">Have a NaxtTo Atelier account?</p>
+                          <p className="text-[#6e6e73]">Sign in to automatically fetch your email ID and saved addresses.</p>
+                        </div>
+                      </div>
+                      {onGoToLogin && (
+                        <button
+                          type="button"
+                          onClick={onGoToLogin}
+                          className="px-4 py-2 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-xs font-semibold shrink-0 transition-all shadow-xs cursor-pointer"
+                        >
+                          Sign In to Auto-Fill
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/40 flex items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 shrink-0">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#1d1d1f]">
+                            Account Connected: {user.name || 'Patron'}
+                          </p>
+                          <p className="text-[#6e6e73] text-[11px]">
+                            Email ID <strong className="text-[#1d1d1f]">{user.email}</strong> automatically fetched for your delivery alerts and receipts.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Validation / Notice Banner */}
                   {step1Error && (
@@ -384,21 +482,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   {/* SCENARIO A: User chooses from Existing Saved Addresses */}
                   {hasSavedAddresses && addressMode === 'saved' ? (
                     <div className="space-y-4">
-                      {/* Email for order confirmation and dispatch alerts */}
-                      <div className="bg-[#f5f5f7] p-4 rounded-2xl border border-[#e5e5ea] space-y-1">
-                        <label className="block text-xs font-semibold text-[#1d1d1f]">
-                          Email Address (for real-time dispatch alerts)
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          placeholder="your.email@example.com"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                        />
-                      </div>
-
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
@@ -418,8 +501,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                                 onClick={() => handleApplySavedAddress(addr)}
                                 className={`p-4 rounded-2xl border text-left text-xs cursor-pointer transition-all relative flex flex-col justify-between ${
                                   isSelected
-                                    ? 'border-[#1d1d1f] bg-[#1d1d1f]/[0.03] ring-2 ring-[#1d1d1f] shadow-xs'
-                                    : 'border-[#e5e5ea] bg-white hover:border-[#86868b]'
+                                    ? 'border-[#1d1d1f] bg-transparent ring-2 ring-[#1d1d1f] shadow-xs'
+                                    : 'border-[#e5e5ea] bg-transparent hover:border-[#86868b]'
                                 }`}
                               >
                                 <div className="space-y-1.5">
@@ -475,13 +558,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                               setCity('');
                               setState('');
                               setPostalCode('');
-                              setCountry('United Kingdom');
-                              setPhone(user?.phone || '');
+                              setCountry('India');
+                              setPhone(formatIndianMobile(user?.phone || ''));
                               setStep1Error(null);
                             }}
-                            className="p-4 rounded-2xl border-2 border-dashed border-[#d2d2d7] hover:border-[#1d1d1f] text-left text-xs bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] transition-all flex flex-col items-center justify-center min-h-[140px] gap-2 text-[#6e6e73] hover:text-[#1d1d1f] group"
+                            className="p-4 rounded-2xl border-2 border-dashed border-[#d2d2d7] hover:border-[#1d1d1f] text-left text-xs bg-transparent hover:bg-black/[0.02] transition-all flex flex-col items-center justify-center min-h-[140px] gap-2 text-[#6e6e73] hover:text-[#1d1d1f] group"
                           >
-                            <div className="w-9 h-9 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[#1d1d1f] group-hover:scale-105 transition-transform">
+                            <div className="w-9 h-9 rounded-full bg-transparent border border-[#e5e5ea] flex items-center justify-center text-[#1d1d1f] group-hover:scale-105 transition-transform">
                               <Plus className="w-4 h-4" />
                             </div>
                             <span className="font-semibold text-xs">Add a New Address</span>
@@ -503,7 +586,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     /* SCENARIO B: No saved address OR user requested "Add Address" form */
                     <div className="space-y-5">
                       {!hasSavedAddresses && (
-                        <div className="p-3.5 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl flex items-center gap-2.5 text-xs text-[#6e6e73]">
+                        <div className="p-3.5 bg-transparent border border-[#e5e5ea] rounded-xl flex items-center gap-2.5 text-xs text-[#6e6e73]">
                           <MapPin className="w-4 h-4 text-[#1d1d1f] shrink-0" />
                           <span>No saved address on file. Please provide your delivery details below.</span>
                         </div>
@@ -525,26 +608,17 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                         <div className="sm:col-span-2">
-                          <label className="block text-[#1d1d1f] font-medium mb-1">Email Address (for tracking alerts)</label>
-                          <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="your.email@example.com"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                          />
-                        </div>
-
-                        <div className="sm:col-span-2">
                           <label className="block text-[#1d1d1f] font-medium mb-1">Full Legal Name</label>
                           <input
                             type="text"
                             required
                             value={fullName}
-                            onChange={e => setFullName(e.target.value)}
+                            onChange={e => {
+                              setUserEditedName(true);
+                              setFullName(e.target.value);
+                            }}
                             placeholder="Enter recipient's full name"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
@@ -556,7 +630,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={addressLine1}
                             onChange={e => setAddressLine1(e.target.value)}
                             placeholder="Street address and apartment, suite, or unit"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
@@ -567,7 +641,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={addressLine2}
                             onChange={e => setAddressLine2(e.target.value)}
                             placeholder="Apartment, suite, building, floor, etc."
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
@@ -579,7 +653,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={city}
                             onChange={e => setCity(e.target.value)}
                             placeholder="City"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
@@ -590,19 +664,19 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={state}
                             onChange={e => setState(e.target.value)}
                             placeholder="State / Province"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[#1d1d1f] font-medium mb-1">Postal / ZIP Code</label>
+                          <label className="block text-[#1d1d1f] font-medium mb-1">PIN / Postal Code</label>
                           <input
                             type="text"
                             required
                             value={postalCode}
                             onChange={e => setPostalCode(e.target.value)}
-                            placeholder="e.g. W1K 7TH"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            placeholder="e.g. 400001"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
@@ -613,21 +687,57 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             required
                             value={country}
                             onChange={e => setCountry(e.target.value)}
-                            placeholder="e.g. United Kingdom"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            placeholder="e.g. India"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] transition-colors"
                           />
                         </div>
 
                         <div className="sm:col-span-2">
-                          <label className="block text-[#1d1d1f] font-medium mb-1">Mobile Phone (for Courier Access)</label>
-                          <input
-                            type="tel"
-                            required
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                            placeholder="+44 20 7946 0912"
-                            className="w-full bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl px-4 py-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                          />
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-[#1d1d1f] font-medium text-xs">
+                              Mobile Phone (for Courier Access)
+                            </label>
+                            <span className="text-[11px] text-[#6e6e73]">
+                              Indian 10-digit mobile
+                            </span>
+                          </div>
+                          <div className="flex rounded-xl border border-[#e5e5ea] focus-within:border-[#1d1d1f] transition-colors overflow-hidden bg-transparent">
+                            <div className="inline-flex items-center gap-1.5 px-3.5 bg-[#f5f5f7] border-r border-[#e5e5ea] text-xs font-semibold text-[#1d1d1f] select-none shrink-0">
+                              <span className="text-sm leading-none">🇮🇳</span>
+                              <span className="font-mono text-xs">+91</span>
+                            </div>
+                            <input
+                              type="tel"
+                              inputMode="numeric"
+                              pattern="[0-9]{10}"
+                              maxLength={10}
+                              required
+                              value={phone}
+                              onChange={e => {
+                                setUserEditedPhone(true);
+                                const formatted = formatIndianMobile(e.target.value);
+                                setPhone(formatted);
+                                if (step1Error) setStep1Error(null);
+                              }}
+                              placeholder="9876543210"
+                              className="w-full bg-transparent px-3.5 py-3 text-xs text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none tracking-wider font-mono"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] mt-1.5 px-0.5">
+                            <span className="text-[#86868b]">
+                              Enter 10 digits starting with 6, 7, 8, or 9
+                            </span>
+                            {phone.length === 10 ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px]">
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                Valid 10 digits
+                              </span>
+                            ) : phone.length > 0 ? (
+                              <span className="text-amber-600 font-medium text-[10px]">
+                                {phone.length}/10 digits
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
 
                         <div className="sm:col-span-2 pt-1">
@@ -691,7 +801,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   </div>
 
                   {/* Gift Packaging Options */}
-                  <div className="p-5 rounded-2xl border border-[#e5e5ea] bg-[#f5f5f7] space-y-4">
+                  <div className="p-5 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
                         <Gift className="w-4 h-4 text-[#1d1d1f]" />
@@ -715,7 +825,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           value={giftMsg}
                           onChange={e => setGiftMsg(e.target.value)}
                           placeholder="Write a message to accompany this piece..."
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl p-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl p-3 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
                     )}
@@ -761,7 +871,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
                         paymentMethod === 'credit-card'
                           ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-white text-[#1d1d1f] hover:border-[#86868b]'
+                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
                       }`}
                     >
                       <CreditCard className="w-4 h-4" />
@@ -774,7 +884,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
                         paymentMethod === 'apple-pay'
                           ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-white text-[#1d1d1f] hover:border-[#86868b]'
+                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
                       }`}
                     >
                       <Lock className="w-4 h-4" />
@@ -787,7 +897,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
                         paymentMethod === 'klarna'
                           ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-white text-[#1d1d1f] hover:border-[#86868b]'
+                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
                       }`}
                     >
                       <Clock className="w-4 h-4" />
@@ -797,7 +907,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                   {/* Card Form */}
                   {paymentMethod === 'credit-card' && (
-                    <div className="p-5 rounded-2xl border border-[#e5e5ea] bg-[#f5f5f7] space-y-3.5 text-xs">
+                    <div className="p-5 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-3.5 text-xs">
                       <div>
                         <label className="block text-[#1d1d1f] font-medium mb-1">Cardholder Name</label>
                         <input
@@ -806,7 +916,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           value={cardName}
                           onChange={e => setCardName(e.target.value)}
                           placeholder="Sophia Montgomery"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -818,7 +928,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           value={cardNumber}
                           onChange={e => setCardNumber(e.target.value)}
                           placeholder="4000 1234 5678 9010"
-                          className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                         />
                       </div>
 
@@ -831,7 +941,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={cardExpiry}
                             onChange={e => setCardExpiry(e.target.value)}
                             placeholder="MM/YY"
-                            className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                           />
                         </div>
 
@@ -843,7 +953,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             value={cardCVC}
                             onChange={e => setCardCVC(e.target.value)}
                             placeholder="CVC"
-                            className="w-full bg-white border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                           />
                         </div>
                       </div>
@@ -851,7 +961,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   )}
 
                   {paymentMethod === 'apple-pay' && (
-                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-[#f5f5f7] text-center space-y-2">
+                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent text-center space-y-2">
                       <p className="text-xs font-semibold text-[#1d1d1f]">Apple Pay Express Checkout</p>
                       <p className="text-xs text-[#6e6e73]">
                         Clicking place order will prompt biometric Face ID / Touch ID verification.
@@ -860,7 +970,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   )}
 
                   {paymentMethod === 'klarna' && (
-                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-[#f5f5f7] space-y-2 text-xs">
+                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-2 text-xs">
                       <p className="font-semibold text-[#1d1d1f]">4 Interest-Free Installments</p>
                       <p className="text-[#6e6e73]">
                         Pay 4 payments of <strong>{currencySymbol}{(total / 4).toFixed(2)}</strong> every 2 weeks with 0% APR.
@@ -905,7 +1015,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
             {/* Right Sticky Order Summary (4.5 cols) */}
             <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
-              <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-[#f5f5f7] space-y-5">
+              <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-[#e5e5ea]">
                   <h3 className="text-sm font-semibold text-[#1d1d1f]">Order Summary</h3>
                   <span className="text-xs text-[#6e6e73]">{cartItems.length} {cartItems.length === 1 ? 'Piece' : 'Pieces'}</span>
@@ -915,7 +1025,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                   {cartItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#e5e5ea] shrink-0">
+                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-transparent border border-[#e5e5ea] shrink-0">
                         <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
                         <span className="absolute bottom-0.5 right-0.5 bg-[#1d1d1f] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                           {item.quantity}
@@ -942,7 +1052,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       value={promoInput}
                       onChange={e => setPromoInput(e.target.value)}
                       placeholder="Promo code (try NAXTTO10)"
-                      className="flex-1 bg-white border border-[#e5e5ea] rounded-xl px-3 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
+                      className="flex-1 bg-transparent border border-[#e5e5ea] rounded-xl px-3 py-2 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
                     />
                     <button
                       type="submit"
@@ -1030,7 +1140,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             </div>
 
             {/* Receipt Summary Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#f5f5f7] border border-[#e5e5ea] text-left space-y-5 text-xs">
+            <div className="p-6 sm:p-8 rounded-3xl bg-transparent border border-[#e5e5ea] text-left space-y-5 text-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
                 <BrandLogo layout="horizontal" size="sm" showSubtitle subtitleText="Authenticated Certificate" />
                 <span className="text-[10px] uppercase font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
@@ -1050,7 +1160,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
 
               {/* Tracking Code */}
-              <div className="p-3 bg-white rounded-xl border border-[#e5e5ea] flex items-center justify-between">
+              <div className="p-3 bg-transparent rounded-xl border border-[#e5e5ea] flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-[#86868b] uppercase font-semibold block">Armored Courier Tracking</span>
                   <span className="font-mono text-xs font-semibold text-[#1d1d1f]">{completedOrder?.trackingNumber}</span>
@@ -1058,7 +1168,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyTracking}
-                  className="px-3 py-1 bg-[#f5f5f7] hover:bg-[#e5e5ea] rounded-lg text-xs font-medium text-[#1d1d1f] flex items-center gap-1 transition-all"
+                  className="px-3 py-1 bg-transparent border border-[#e5e5ea] hover:bg-black/[0.03] rounded-lg text-xs font-medium text-[#1d1d1f] flex items-center gap-1 transition-all"
                 >
                   {copiedTracking ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedTracking ? 'Copied' : 'Copy'}</span>

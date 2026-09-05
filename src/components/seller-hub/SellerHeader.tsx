@@ -8,6 +8,7 @@ import {
   LogOut,
   Sparkles
 } from 'lucide-react';
+import { BrandLogo } from '../BrandLogo';
 
 interface SellerHeaderProps {
   searchQuery: string;
@@ -30,17 +31,16 @@ export const SellerHeader: React.FC<SellerHeaderProps> = ({
 
   return (
     <header className="bg-white border-b border-[#e5e5ea] sticky top-0 z-40 h-14 px-4 sm:px-6 flex items-center justify-between shadow-xs">
-      {/* Left: Brand Logo */}
+      {/* Left: Official Brand Logo with Lotus Emblem */}
       <div className="flex items-center gap-3 sm:gap-6 min-w-[200px]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={onExitToStorefront}>
-          <div className="flex flex-col leading-tight">
-            <span className="text-[14px] font-bold tracking-tight text-[#2874f0]">
-              NaxtTo
-            </span>
-            <span className="text-[12px] font-bold tracking-tight text-[#2874f0] -mt-1">
-              Seller Hub
-            </span>
-          </div>
+        <div className="cursor-pointer" onClick={onExitToStorefront} title="Back to NaxtTo Storefront">
+          <BrandLogo 
+            layout="horizontal" 
+            size="sm" 
+            variant="bronze" 
+            showSubtitle={true} 
+            subtitleText="SELLER HUB" 
+          />
         </div>
       </div>
 
