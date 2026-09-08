@@ -10,7 +10,6 @@ import {
   CheckCircle2, 
   Eye, 
   EyeOff, 
-  Sparkles,
   Fingerprint
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
@@ -110,12 +109,6 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
     }
   };
 
-  const handleQuickFillDemo = () => {
-    setEmailOrId('anik');
-    setPasscode('anik');
-    setErrorMsg(null);
-  };
-
   return (
     <div 
       id="staff-auth-modal-overlay"
@@ -209,14 +202,9 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#2d2a26]">
-                    Security Passkey / Password
-                  </label>
-                  <span className="text-[10px] text-[#86868b] font-medium">
-                    Credentials: <code className="bg-[#f5f5f7] px-1 py-0.5 rounded text-[#1d1d1f]">anik / anik</code>
-                  </span>
-                </div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#2d2a26] mb-1.5">
+                  Security Passkey / Password
+                </label>
                 <div className="relative">
                   <input
                     id="staff-auth-passcode-input"
@@ -262,15 +250,6 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
                   )}
                 </button>
 
-                <button
-                  id="staff-auth-quickfill-btn"
-                  type="button"
-                  onClick={handleQuickFillDemo}
-                  className="w-full py-2 bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] text-xs font-medium rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Auto-Fill Admin Credentials (anik / anik)</span>
-                </button>
               </div>
             </form>
           )}
