@@ -1316,10 +1316,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           </p>
                         </div>
                       </div>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Key Configured & Active
-                      </span>
                     </div>
 
                     <div className="space-y-2">
@@ -1327,21 +1323,21 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         Accepted Payment Channels (Powered by Razorpay)
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
-                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-transparent flex items-center gap-2.5">
                           <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-[#1d1d1f] block">Instant UPI</span>
                             <span className="text-[#6e6e73] text-[10px]">Google Pay, PhonePe, Paytm, QR</span>
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-transparent flex items-center gap-2.5">
                           <CreditCard className="w-4 h-4 text-sky-600 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-[#1d1d1f] block">Cards</span>
                             <span className="text-[#6e6e73] text-[10px]">RuPay, Visa, MasterCard, Amex</span>
                           </div>
                         </div>
-                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-transparent flex items-center gap-2.5">
                           <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-[#1d1d1f] block">50+ NetBanking</span>
@@ -1351,15 +1347,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       </div>
                     </div>
 
-                    <div className="bg-[#f5f5f7]/80 rounded-xl p-3 text-[11px] text-[#6e6e73] space-y-1.5">
-                      <div className="flex items-center justify-between text-[#1d1d1f] font-medium">
-                        <span className="flex items-center gap-1.5">
-                          <Lock className="w-3.5 h-3.5 text-[#1d1d1f]" />
-                          Merchant Key ID
-                        </span>
-                        <span className="font-mono text-[10px] text-[#54280E] font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                          rzp_test_TZC5OuxpUn3JdQ
-                        </span>
+                    <div className="bg-transparent border border-[#e5e5ea] rounded-xl p-3 text-[11px] text-[#6e6e73] space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[#1d1d1f] font-medium">
+                        <Lock className="w-3.5 h-3.5 text-[#1d1d1f]" />
+                        <span>Secure Checkout</span>
                       </div>
                       <p className="text-[10px] text-[#86868b] leading-relaxed">
                         Clicking &ldquo;Pay with Razorpay&rdquo; launches the official Razorpay checkout modal where you can complete authentication with one-click UPI, biometric passkey, or bank OTP.
