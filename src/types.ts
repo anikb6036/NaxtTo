@@ -53,6 +53,9 @@ export interface Product {
   features: string[];
   dimensions: string;
   caratWeight?: string;
+  weightGrams?: number | string;
+  gemstone?: string;
+  sku?: string;
   karatPurity: string;
   origin: string;
   inStock: boolean;
@@ -167,6 +170,7 @@ export interface UserProfile {
   orderHistory: Order[];
   preferences: {
     metalPreferences: string[];
+    metalPreference?: string;
     ringSize?: string;
     newsletterSubscribed: boolean;
   };

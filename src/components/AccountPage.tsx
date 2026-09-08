@@ -554,7 +554,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         isDefault: newAddrIsDefault || addresses.length === 0
       };
       updatedAddresses = newAddrIsDefault 
-        ? addresses.map(a => ({ ...a, isDefault: false })).concat(newAddress)
+        ? [...addresses.map(a => ({ ...a, isDefault: false })), newAddress]
         : [...addresses, newAddress];
     }
 

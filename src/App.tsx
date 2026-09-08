@@ -43,9 +43,14 @@ import {
   saveUserCart,
   loadUserWishlist,
   saveUserWishlist,
+  loadUserAddresses,
+  saveUserAddresses,
   clearLoggedOutSession,
   syncUserDataToFirestore,
-  fetchUserDataFromFirestore
+  fetchUserDataFromFirestore,
+  safeSetItem,
+  saveUserProfile,
+  sanitizeOrderForStorage
 } from './utils/userStorage';
 
 export default function App() {
@@ -61,7 +66,12 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.isLoggedIn && parsed.email && parsed.email !== 'sophia.montgomery@atelier.com') {
-          return parsed;
+          const key = getUserStorageKey(parsed);
+          const loadedAddresses = loadUserAddresses(key);
+          return {
+            ...parsed,
+            savedAddresses: loadedAddresses.length > 0 ? loadedAddresses : (parsed.savedAddresses || [])
+          };
         }
       }
     } catch {
@@ -146,7 +156,7 @@ export default function App() {
       return;
     }
 
-    // Case 2: User logged in or switched account -> restore that user's bag and wishlist
+    // Case 2: User logged in or switched account -> restore that user's bag, wishlist, and addresses
     if (currentKey !== prevKey) {
       if (prevKey) {
         saveUserCart(prevKey, cartItemsRef.current);
@@ -156,11 +166,18 @@ export default function App() {
       // 1. Immediately restore patron's items from local storage
       const userCart = loadUserCart(currentKey);
       const userWishlist = loadUserWishlist(currentKey);
+      const userAddresses = loadUserAddresses(currentKey);
       setCartItems(userCart);
       setWishlistItems(userWishlist);
+      if (userAddresses.length > 0) {
+        setUser(prev => ({
+          ...prev,
+          savedAddresses: userAddresses
+        }));
+      }
       prevUserKeyRef.current = currentKey;
 
-      // 2. Concurrently check Firestore for cloud backups and restore if local was empty
+      // 2. Concurrently check Firestore for cloud backups and restore
       fetchUserDataFromFirestore(currentKey).then(remote => {
         if (!remote) return;
         if (remote.cartItems && remote.cartItems.length > 0 && userCart.length === 0) {
@@ -171,6 +188,27 @@ export default function App() {
           setWishlistItems(remote.wishlistItems);
           saveUserWishlist(currentKey, remote.wishlistItems);
         }
+        if (remote.savedAddresses && remote.savedAddresses.length > 0) {
+          setUser(prev => {
+            const currentSaved = prev.savedAddresses || [];
+            const merged = [...currentSaved];
+            remote.savedAddresses!.forEach(r => {
+              const exists = merged.some(
+                m => m.id === r.id ||
+                     (m.addressLine1.toLowerCase().trim() === r.addressLine1.toLowerCase().trim() &&
+                      m.postalCode.trim() === r.postalCode.trim())
+              );
+              if (!exists) {
+                merged.push(r);
+              }
+            });
+            saveUserAddresses(currentKey, merged);
+            return {
+              ...prev,
+              savedAddresses: merged
+            };
+          });
+        }
       });
     }
   }, [user.isLoggedIn, user.id, user.email]);
@@ -180,7 +218,7 @@ export default function App() {
     const key = getUserStorageKey(user);
     if (user.isLoggedIn && key) {
       saveUserCart(key, cartItems);
-      syncUserDataToFirestore(key, cartItems, wishlistItemsRef.current);
+      syncUserDataToFirestore(key, cartItems, wishlistItemsRef.current, user.savedAddresses, user);
     }
   }, [cartItems, user.isLoggedIn, user.id, user.email]);
 
@@ -189,9 +227,20 @@ export default function App() {
     const key = getUserStorageKey(user);
     if (user.isLoggedIn && key) {
       saveUserWishlist(key, wishlistItems);
-      syncUserDataToFirestore(key, cartItemsRef.current, wishlistItems);
+      syncUserDataToFirestore(key, cartItemsRef.current, wishlistItems, user.savedAddresses, user);
     }
   }, [wishlistItems, user.isLoggedIn, user.id, user.email]);
+
+  // Persist savedAddresses to user's storage and Firestore whenever changed
+  useEffect(() => {
+    const key = getUserStorageKey(user);
+    if (user.savedAddresses && user.savedAddresses.length > 0) {
+      saveUserAddresses(key, user.savedAddresses);
+      if (user.isLoggedIn && key) {
+        syncUserDataToFirestore(key, cartItemsRef.current, wishlistItemsRef.current, user.savedAddresses, user);
+      }
+    }
+  }, [user.savedAddresses, user.isLoggedIn, user.id, user.email]);
 
   // Redirect tracking when logging in from checkout or shop
   const postLoginRedirectRef = useRef<'shop' | 'checkout'>('shop');
@@ -203,6 +252,10 @@ export default function App() {
       import('firebase/auth').then(({ onAuthStateChanged }) => {
         unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
           if (firebaseUser) {
+            const uid = firebaseUser.uid;
+            const userKey = uid || (firebaseUser.email ? firebaseUser.email.toLowerCase().trim() : null);
+            const localAddresses = loadUserAddresses(userKey);
+
             setUser(prev => {
               const wasLoggedOut = !prev.isLoggedIn;
               if (wasLoggedOut) {
@@ -224,7 +277,8 @@ export default function App() {
                 avatar: firebaseUser.photoURL || prev.avatar || undefined,
                 isLoggedIn: true,
                 memberTier: prev.memberTier || 'NaxtTo Circle',
-                memberSince: prev.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                memberSince: prev.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                savedAddresses: localAddresses.length > 0 ? localAddresses : (prev.savedAddresses || [])
               };
             });
           }
@@ -234,26 +288,24 @@ export default function App() {
       console.warn('Firebase auth listener notice:', err);
     });
 
+
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  // Save to LocalStorage on updates
+  // Save to LocalStorage on updates with quota safety
   useEffect(() => {
-    localStorage.setItem('naxtto_products', JSON.stringify(products));
+    safeSetItem('naxtto_products', JSON.stringify(products));
   }, [products]);
 
   useEffect(() => {
-    if (user.isLoggedIn) {
-      localStorage.setItem('naxtto_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('naxtto_user');
-    }
+    saveUserProfile(user.isLoggedIn ? user : null);
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('naxtto_all_orders', JSON.stringify(orders));
+    const compactOrders = (Array.isArray(orders) ? orders.slice(0, 15) : []).map(sanitizeOrderForStorage);
+    safeSetItem('naxtto_all_orders', JSON.stringify(compactOrders));
   }, [orders]);
 
   // 2. Currency State (Default: INR)
@@ -643,28 +695,109 @@ export default function App() {
 
   // 11. Order Completed Handler
   const handleOrderCompleted = (newOrder: Order) => {
-    // Add to user order history and all store orders, then empty cart
-    setUser(prev => ({
-      ...prev,
-      orderHistory: [newOrder, ...prev.orderHistory]
-    }));
-    setOrders(prev => [newOrder, ...prev]);
-    setCartItems([]);
-    apiClient.createOrder(newOrder);
+    try {
+      const key = getUserStorageKey(user);
+      // Add to user order history, store orders, and ensure delivery address is retained
+      setUser(prev => {
+        const existingAddresses = Array.isArray(prev?.savedAddresses) ? prev.savedAddresses : [];
+        const orderAddr = newOrder?.shippingAddress;
+        const alreadyExists = orderAddr ? existingAddresses.some(
+          a => (a.addressLine1 || '').toLowerCase().trim() === (orderAddr.addressLine1 || '').toLowerCase().trim() &&
+               (a.postalCode || '').trim() === (orderAddr.postalCode || '').trim()
+        ) : false;
+        const updatedAddresses = orderAddr && !alreadyExists ? [
+          ...existingAddresses,
+          { ...orderAddr, id: orderAddr.id || `addr-${Date.now()}`, isDefault: existingAddresses.length === 0 }
+        ] : existingAddresses;
+        
+        try {
+          saveUserAddresses(key, updatedAddresses);
+        } catch {
+          // ignore
+        }
+        
+        if (user.isLoggedIn && key) {
+          try {
+            syncUserDataToFirestore(key, [], wishlistItemsRef.current, updatedAddresses, prev);
+          } catch {
+            // ignore
+          }
+        }
+        
+        const existingHistory = Array.isArray(prev?.orderHistory) ? prev.orderHistory : [];
+        return {
+          ...prev,
+          savedAddresses: updatedAddresses,
+          orderHistory: [newOrder, ...existingHistory]
+        };
+      });
+
+      setOrders(prev => [newOrder, ...(Array.isArray(prev) ? prev : [])]);
+      setCartItems([]);
+      
+      try {
+        if (key) {
+          localStorage.removeItem(`naxtto_user_cart_${key}`);
+        }
+        sessionStorage.setItem('naxtto_completed_order', JSON.stringify(newOrder));
+        safeSetItem('naxtto_last_order', JSON.stringify(sanitizeOrderForStorage(newOrder)));
+      } catch {
+        // ignore
+      }
+
+      apiClient.createOrder(newOrder).catch(err => {
+        console.warn('Backend order recording notice:', err);
+      });
+    } catch (err) {
+      console.error('Error handling completed order in App:', err);
+    }
   };
 
-  const handleSaveNewAddress = (newAddr: Address) => {
+  const handleDeleteAddress = (addressId: string) => {
+    const key = getUserStorageKey(user);
     setUser(prev => {
       const existing = prev.savedAddresses || [];
-      const withId = { ...newAddr, id: newAddr.id || `addr-${Date.now()}` };
-      const updated = newAddr.isDefault
-        ? existing.map(a => ({ ...a, isDefault: false })).concat(withId)
-        : [...existing, withId];
+      const updated = existing.filter(a => a.id !== addressId && `${a.fullName}-${a.addressLine1}` !== addressId);
+      saveUserAddresses(key, updated);
+      if (user.isLoggedIn && key) {
+        syncUserDataToFirestore(key, cartItemsRef.current, wishlistItemsRef.current, updated, prev);
+      }
       return {
         ...prev,
         savedAddresses: updated
       };
     });
+    showToast('Address removed from your address book.');
+  };
+
+  const handleSaveNewAddress = (newAddr: Address) => {
+    const key = getUserStorageKey(user);
+    setUser(prev => {
+      const existing = prev.savedAddresses || [];
+      const withId = { ...newAddr, id: newAddr.id || `addr-${Date.now()}` };
+      const existingIndex = existing.findIndex(
+        a => a.id === withId.id ||
+             (a.addressLine1.toLowerCase().trim() === withId.addressLine1.toLowerCase().trim() &&
+              a.postalCode.trim() === withId.postalCode.trim())
+      );
+      let updated: Address[];
+      if (existingIndex >= 0) {
+        updated = existing.map((a, i) => i === existingIndex ? withId : (newAddr.isDefault ? { ...a, isDefault: false } : a));
+      } else {
+        updated = newAddr.isDefault
+          ? [...existing.map(a => ({ ...a, isDefault: false })), withId]
+          : [...existing, withId];
+      }
+      saveUserAddresses(key, updated);
+      if (user.isLoggedIn && key) {
+        syncUserDataToFirestore(key, cartItemsRef.current, wishlistItemsRef.current, updated, prev);
+      }
+      return {
+        ...prev,
+        savedAddresses: updated
+      };
+    });
+    showToast('Delivery address saved to your account.');
   };
 
   // 12. Admin CRUD Handlers
@@ -818,7 +951,20 @@ export default function App() {
               handleUserSignOut();
             } else {
               const wasLoggedOut = !user.isLoggedIn;
-              setUser(prev => ({ ...prev, ...updated }));
+              const targetKey = updated.id || (updated.email ? updated.email.toLowerCase().trim() : null);
+              const loadedAddresses = targetKey ? loadUserAddresses(targetKey) : [];
+              setUser(prev => {
+                const finalAddresses = updated.savedAddresses || (loadedAddresses.length > 0 ? loadedAddresses : prev.savedAddresses);
+                const nextUser = {
+                  ...prev,
+                  ...updated,
+                  savedAddresses: finalAddresses
+                };
+                if (targetKey && finalAddresses.length > 0) {
+                  saveUserAddresses(targetKey, finalAddresses);
+                }
+                return nextUser;
+              });
               if (wasLoggedOut && updated.isLoggedIn) {
                 const target = postLoginRedirectRef.current === 'checkout' ? 'checkout' : 'shop';
                 postLoginRedirectRef.current = 'shop';
@@ -871,7 +1017,10 @@ export default function App() {
           onApplyPromo={handleApplyPromo}
           onRemovePromo={handleRemovePromo}
           onSaveNewAddress={handleSaveNewAddress}
+          onDeleteAddress={handleDeleteAddress}
           onGoToLogin={handleCheckoutLogin}
+          onRemoveItem={handleRemoveFromCart}
+          onUpdateQuantity={handleUpdateQuantity}
         />
       ) : currentView === 'product-detail' && selectedProduct ? (
         <ProductDetailPage

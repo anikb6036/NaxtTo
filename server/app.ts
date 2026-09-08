@@ -5,6 +5,7 @@ import { ordersRouter } from './routes/orders';
 import { authRouter } from './routes/auth';
 import { newsletterRouter } from './routes/newsletter';
 import { aiRouter } from './routes/ai';
+import { paymentRouter } from './routes/payment';
 
 export function createExpressApp(): Express {
   const app = express();
@@ -35,6 +36,7 @@ export function createExpressApp(): Express {
   app.use('/api/auth', authRouter);
   app.use('/api/newsletter', newsletterRouter);
   app.use('/api/ai', aiRouter);
+  app.use('/api/payment', paymentRouter);
 
   // Global API 404 handler
   app.all('/api/*', (req: Request, res: Response) => {

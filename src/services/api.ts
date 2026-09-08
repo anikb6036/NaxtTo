@@ -166,5 +166,38 @@ export const apiClient = {
         response: 'Our atelier master jewellers recommend classic 18k solid gold bands paired with certified solar diamonds for enduring elegance.'
       };
     }
+  },
+
+  // Razorpay Payment Integration
+  async createRazorpayOrder(amount: number, currency: string = 'INR', receipt?: string, notes?: Record<string, string>) {
+    try {
+      const res = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, currency, receipt, notes })
+      });
+      return await res.json();
+    } catch (err) {
+      console.error('Failed to create Razorpay order:', err);
+      return { success: false, message: 'Could not connect to payment gateway' };
+    }
+  },
+
+  async verifyRazorpayPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) {
+    try {
+      const res = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err) {
+      console.error('Failed to verify Razorpay payment:', err);
+      return { success: false, message: 'Could not verify payment signature' };
+    }
   }
 };

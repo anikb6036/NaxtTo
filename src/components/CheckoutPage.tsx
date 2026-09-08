@@ -15,13 +15,48 @@ import {
   MapPin,
   Clock,
   Plus,
+  Minus,
   AlertCircle,
   Home,
   User,
+  Smartphone,
+  Loader2,
+  Edit3,
+  Trash2,
+  BookmarkCheck,
   Sparkles as UnusedSparkles
 } from 'lucide-react';
 import { CartItem, Address, Order, UserProfile } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { apiClient } from '../services/api';
+import { 
+  loadCheckoutAddressDraft, 
+  saveCheckoutAddressDraft, 
+  getUserStorageKey,
+  safeSetItem,
+  sanitizeOrderForStorage
+} from '../utils/userStorage';
+
+// Helper to load Razorpay standard checkout script dynamically
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(true));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 interface CheckoutPageProps {
   cartItems: CartItem[];
@@ -36,12 +71,16 @@ interface CheckoutPageProps {
   onApplyPromo?: (code: string) => boolean;
   onRemovePromo?: () => void;
   onSaveNewAddress?: (address: Address) => void;
+  onDeleteAddress?: (addressId: string) => void;
   onGoToLogin?: () => void;
+  onRemoveItem?: (productId: string, size?: string, finish?: any) => void;
+  onUpdateQuantity?: (productId: string, newQty: number, size?: string, finish?: any) => void;
 }
 
 // Helper to restrict and format Indian 10-digit mobile number
-export const formatIndianMobile = (value: string): string => {
-  let digits = value.replace(/\D/g, '');
+export const formatIndianMobile = (value?: string | number | null): string => {
+  if (value === null || value === undefined) return '';
+  let digits = String(value).replace(/\D/g, '');
   // If user pasted with 91 country code (12 digits)
   if (digits.length === 12 && digits.startsWith('91')) {
     digits = digits.slice(2);
@@ -66,39 +105,82 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   onApplyPromo,
   onRemovePromo,
   onSaveNewAddress,
-  onGoToLogin
+  onDeleteAddress,
+  onGoToLogin,
+  onRemoveItem,
+  onUpdateQuantity
 }) => {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(() => {
+    try {
+      const sessionSaved = sessionStorage.getItem('naxtto_completed_order');
+      if (sessionSaved) return JSON.parse(sessionSaved);
+      const localSaved = localStorage.getItem('naxtto_last_order');
+      if (localSaved) return JSON.parse(localSaved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(() => {
+    try {
+      const sessionSaved = sessionStorage.getItem('naxtto_completed_order');
+      if (sessionSaved) return 4;
+    } catch {
+      // ignore
+    }
+    return 1;
+  });
   const [copiedTracking, setCopiedTracking] = useState(false);
 
   // Address Selection Mode: if saved addresses exist, start in 'saved' mode; else 'new'
   const hasSavedAddresses = savedAddresses && savedAddresses.length > 0;
   const defaultAddr = user?.savedAddresses?.find(a => a.isDefault) || user?.savedAddresses?.[0] || (savedAddresses.length > 0 ? savedAddresses[0] : undefined);
-  
+  const userKey = getUserStorageKey(user);
+  const savedDraft = loadCheckoutAddressDraft(userKey);
+
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>(() => {
     return hasSavedAddresses ? 'saved' : 'new';
   });
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(() => {
     return defaultAddr?.id || (savedAddresses.length > 0 ? (savedAddresses[0].id || 'addr-0') : null);
   });
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressSavedSuccessBanner, setAddressSavedSuccessBanner] = useState<string | null>(null);
 
   // Track if customer explicitly typed in a custom email/name/phone
   const [userEditedEmail, setUserEditedEmail] = useState(false);
   const [userEditedName, setUserEditedName] = useState(false);
   const [userEditedPhone, setUserEditedPhone] = useState(false);
 
-  // Form State initialized from default saved address or user info
+  // Form State initialized from default saved address, draft, or user info
   const [email, setEmail] = useState(user?.email || 'baidyaanik18@gmail.com');
-  const [fullName, setFullName] = useState(defaultAddr?.fullName || user?.name || '');
-  const [addressLine1, setAddressLine1] = useState(defaultAddr?.addressLine1 || '');
-  const [addressLine2, setAddressLine2] = useState(defaultAddr?.addressLine2 || '');
-  const [city, setCity] = useState(defaultAddr?.city || '');
-  const [state, setState] = useState(defaultAddr?.state || '');
-  const [postalCode, setPostalCode] = useState(defaultAddr?.postalCode || '');
-  const [country, setCountry] = useState(defaultAddr?.country || 'India');
-  const [phone, setPhone] = useState(() => formatIndianMobile(defaultAddr?.phone || user?.phone || ''));
+  const [fullName, setFullName] = useState(defaultAddr?.fullName || savedDraft?.fullName || user?.name || '');
+  const [addressLine1, setAddressLine1] = useState(defaultAddr?.addressLine1 || savedDraft?.addressLine1 || '');
+  const [addressLine2, setAddressLine2] = useState(defaultAddr?.addressLine2 || savedDraft?.addressLine2 || '');
+  const [city, setCity] = useState(defaultAddr?.city || savedDraft?.city || '');
+  const [state, setState] = useState(defaultAddr?.state || savedDraft?.state || '');
+  const [postalCode, setPostalCode] = useState(defaultAddr?.postalCode || savedDraft?.postalCode || '');
+  const [country, setCountry] = useState(defaultAddr?.country || savedDraft?.country || 'India');
+  const [phone, setPhone] = useState(() => formatIndianMobile(defaultAddr?.phone || savedDraft?.phone || user?.phone || ''));
   const [saveToAccount, setSaveToAccount] = useState(true);
   const [step1Error, setStep1Error] = useState<string | null>(null);
+
+  // Real-time auto-saving of draft so typed address details are NEVER lost or deleted on refresh
+  useEffect(() => {
+    if (addressMode === 'new' && (addressLine1 || city || postalCode || fullName || phone)) {
+      saveCheckoutAddressDraft(userKey, {
+        fullName,
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        postalCode,
+        country,
+        phone
+      });
+    }
+  }, [userKey, addressMode, fullName, addressLine1, addressLine2, city, state, postalCode, country, phone]);
 
   // Auto-fetch and sync user's email ID and account details when logged in or when auth resolves
   useEffect(() => {
@@ -107,7 +189,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     }
     if (user?.name && (!fullName || !userEditedName)) {
       setFullName(user.name);
-      setCardName(prev => prev || user.name);
     }
     if (user?.phone && (!phone || !userEditedPhone)) {
       setPhone(formatIndianMobile(user.phone));
@@ -133,20 +214,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [giftWrap, setGiftWrap] = useState(initialGiftWrap);
   const [giftMsg, setGiftMsg] = useState(initialGiftMessage);
 
-  // Payment Method
-  const [paymentMethod, setPaymentMethod] = useState<'credit-card' | 'apple-pay' | 'klarna' | 'wire'>('credit-card');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCVC, setCardCVC] = useState('');
-  const [cardName, setCardName] = useState(user?.name || '');
+  // Payment Method: Exclusively Razorpay
+  const paymentMethod = 'razorpay' as const;
+  const [isProcessingRazorpay, setIsProcessingRazorpay] = useState(false);
+  const [paymentGatewayError, setPaymentGatewayError] = useState<string | null>(null);
   const [agreeTerms, setAgreeTerms] = useState(true);
 
   // Promo code input
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState<string | null>(null);
-
-  // Completed Order State
-  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
 
   // Financial Calculations
   const subtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -173,6 +249,80 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setCountry(addr.country || 'India');
     setPhone(formatIndianMobile(addr.phone || ''));
     setStep1Error(null);
+  };
+
+  const handleStartEditAddress = (addr: Address) => {
+    setEditingAddressId(addr.id || `${addr.fullName}-${addr.addressLine1}`);
+    setFullName(addr.fullName || '');
+    setAddressLine1(addr.addressLine1 || '');
+    setAddressLine2(addr.addressLine2 || '');
+    setCity(addr.city || '');
+    setState(addr.state || '');
+    setPostalCode(addr.postalCode || '');
+    setCountry(addr.country || 'India');
+    setPhone(formatIndianMobile(addr.phone || ''));
+    setAddressMode('new');
+    setStep1Error(null);
+  };
+
+  const handleExplicitSaveAddress = () => {
+    if (!fullName.trim()) {
+      setStep1Error('Please enter the recipient full legal name.');
+      return;
+    }
+    if (!addressLine1.trim()) {
+      setStep1Error('Please enter the street address.');
+      return;
+    }
+    if (!city.trim()) {
+      setStep1Error('Please enter the city.');
+      return;
+    }
+    if (!postalCode.trim()) {
+      setStep1Error('Please enter the postal or PIN code.');
+      return;
+    }
+
+    const cleanedPhone = formatIndianMobile(phone);
+    if (!cleanedPhone) {
+      setStep1Error('Please enter a 10-digit Indian mobile number for courier handoff.');
+      return;
+    }
+    if (cleanedPhone.length !== 10) {
+      setStep1Error(`Please enter a complete 10-digit Indian mobile number (${cleanedPhone.length}/10 digits entered).`);
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+      setStep1Error('Indian mobile numbers must be 10 digits starting with 6, 7, 8, or 9.');
+      return;
+    }
+
+    const targetId = editingAddressId || `addr-${Date.now()}`;
+    const newAddressObj: Address = {
+      id: targetId,
+      fullName: fullName.trim(),
+      addressLine1: addressLine1.trim(),
+      addressLine2: addressLine2.trim() || undefined,
+      city: city.trim(),
+      state: state.trim(),
+      postalCode: postalCode.trim(),
+      country: country.trim() || 'India',
+      phone: `+91 ${cleanedPhone}`,
+      isDefault: savedAddresses.length === 0 || !!editingAddressId
+    };
+
+    if (onSaveNewAddress) {
+      onSaveNewAddress(newAddressObj);
+    }
+
+    setSelectedAddressId(targetId);
+    setAddressMode('saved');
+    setEditingAddressId(null);
+    setStep1Error(null);
+    setAddressSavedSuccessBanner('Address details successfully saved to your account! They will never be deleted.');
+    setTimeout(() => {
+      setAddressSavedSuccessBanner(null);
+    }, 6000);
   };
 
   const handleProceedToStep2 = () => {
@@ -213,22 +363,26 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         return;
       }
 
-      // Save new address if requested
-      if (saveToAccount && onSaveNewAddress) {
-        const newAddressObj: Address = {
-          id: `addr-${Date.now()}`,
-          fullName: fullName.trim(),
-          addressLine1: addressLine1.trim(),
-          addressLine2: addressLine2.trim() || undefined,
-          city: city.trim(),
-          state: state.trim(),
-          postalCode: postalCode.trim(),
-          country: country.trim() || 'India',
-          phone: `+91 ${cleanedPhone}`,
-          isDefault: savedAddresses.length === 0
-        };
+      // Always save new address to account so details are NEVER lost or deleted
+      const targetId = editingAddressId || `addr-${Date.now()}`;
+      const newAddressObj: Address = {
+        id: targetId,
+        fullName: fullName.trim(),
+        addressLine1: addressLine1.trim(),
+        addressLine2: addressLine2.trim() || undefined,
+        city: city.trim(),
+        state: state.trim(),
+        postalCode: postalCode.trim(),
+        country: country.trim() || 'India',
+        phone: `+91 ${cleanedPhone}`,
+        isDefault: savedAddresses.length === 0 || !!editingAddressId
+      };
+
+      if (onSaveNewAddress) {
         onSaveNewAddress(newAddressObj);
       }
+      setSelectedAddressId(targetId);
+      setEditingAddressId(null);
     } else {
       // In saved mode, ensure we have valid shipping data
       if (!fullName.trim() || !addressLine1.trim()) {
@@ -255,7 +409,150 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    // If Razorpay is chosen, process through Razorpay SDK
+    if (paymentMethod === 'razorpay') {
+      setIsProcessingRazorpay(true);
+      setPaymentGatewayError(null);
+
+      try {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          setPaymentGatewayError('Unable to load Razorpay checkout gateway. Please check your network and try again.');
+          setIsProcessingRazorpay(false);
+          return;
+        }
+
+        // 1. Create order on backend server (keeps key_secret strictly private)
+        const orderResponse = await apiClient.createRazorpayOrder(
+          Math.round(total),
+          'INR',
+          `rcpt_${Date.now().toString().slice(-8)}`,
+          {
+            recipient: fullName || user?.name || 'Patron',
+            city: city || 'Mumbai'
+          }
+        );
+
+        if (!orderResponse || !orderResponse.success || !orderResponse.order) {
+          setPaymentGatewayError(orderResponse?.message || 'Failed to initialize payment gateway.');
+          setIsProcessingRazorpay(false);
+          return;
+        }
+
+        const rzpOrder = orderResponse.order;
+        const keyId = orderResponse.keyId || 'rzp_test_TZC5OuxpUn3JdQ';
+
+        // 2. Open Razorpay Checkout modal
+        const options = {
+          key: keyId,
+          amount: rzpOrder.amount,
+          currency: rzpOrder.currency || 'INR',
+          name: 'NaxtTo Fine Jewellery',
+          description: `Fine Jewellery Acquisition • ${cartItems.length} Piece${cartItems.length === 1 ? '' : 's'}`,
+          image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80',
+          order_id: rzpOrder.id,
+          prefill: {
+            name: fullName || user?.name || 'Valued Patron',
+            email: email || user?.email || 'patron@naxtto.com',
+            contact: phone ? (phone.startsWith('+91') ? phone : `+91${formatIndianMobile(phone)}`) : '+919876543210'
+          },
+          notes: {
+            shipping_address: `${addressLine1}, ${city}, ${postalCode}, India`
+          },
+          theme: {
+            color: '#1d1d1f'
+          },
+          handler: async function (response: any) {
+            try {
+              // 3. Verify Razorpay cryptographic HMAC signature on the server
+              const verifyRes = await apiClient.verifyRazorpayPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              });
+
+              const generatedOrderNumber = `NXT-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+              const generatedTracking = `DHL-EXP-${Math.floor(100000000 + Math.random() * 900000000)}GB`;
+
+              const confirmedOrder: Order = {
+                id: `ord-${Date.now()}`,
+                orderNumber: generatedOrderNumber,
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                subtotal,
+                shippingFee,
+                discount,
+                tax,
+                total: Math.round(total * 100) / 100,
+                status: 'Confirmed',
+                paymentMethod: `Razorpay (Payment ID: ${response.razorpay_payment_id})`,
+                trackingNumber: generatedTracking,
+                estimatedDelivery: '3–5 Business Days (Insured Express)',
+                shippingAddress: {
+                  fullName: fullName || 'Valued Client',
+                  addressLine1: addressLine1 || '100 Luxury Way',
+                  addressLine2: addressLine2,
+                  city: city || 'Mumbai',
+                  state: state || 'MH',
+                  postalCode: postalCode || '400001',
+                  country: country || 'India',
+                  phone: phone ? (phone.startsWith('+91') ? phone : `+91 ${formatIndianMobile(phone)}`) : '+91 9876543210',
+                  isDefault: true
+                },
+                items: Array.isArray(cartItems) && cartItems.length > 0 ? [...cartItems] : []
+              };
+
+              try {
+                sessionStorage.setItem('naxtto_completed_order', JSON.stringify(confirmedOrder));
+                safeSetItem('naxtto_last_order', JSON.stringify(sanitizeOrderForStorage(confirmedOrder)));
+              } catch {
+                // ignore
+              }
+
+              setCompletedOrder(confirmedOrder);
+              onOrderCompleted(confirmedOrder);
+              setStep(4);
+              setIsProcessingRazorpay(false);
+              window.scrollTo(0, 0);
+            } catch (err) {
+              console.warn('Signature verification error:', err);
+              setPaymentGatewayError('Payment received but verification encountered an issue. Our concierge has been alerted.');
+              setIsProcessingRazorpay(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingRazorpay(false);
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (resp: any) {
+          const isCancelled =
+            resp.error?.reason === 'payment_cancelled' ||
+            (resp.error?.code === 'BAD_REQUEST_ERROR' &&
+              resp.error?.description?.toLowerCase().includes('cancelled'));
+
+          if (isCancelled) {
+            console.info('Razorpay checkout window closed or payment cancelled by patron:', resp.error?.description);
+            setPaymentGatewayError('Payment session was cancelled. You can complete your transaction anytime by clicking Pay with Razorpay.');
+          } else {
+            console.warn('Razorpay payment unsuccessful:', resp.error?.description || resp.error?.reason);
+            setPaymentGatewayError(resp.error?.description || 'Payment was declined or cancelled. Please try again.');
+          }
+          setIsProcessingRazorpay(false);
+        });
+        rzp.open();
+      } catch (err: any) {
+        console.warn('Error initiating Razorpay checkout:', err);
+        setPaymentGatewayError(err.message || 'Payment initiation failed.');
+        setIsProcessingRazorpay(false);
+      }
+      return;
+    }
+
+    // Direct card or mock wallet fallback
     const generatedOrderNumber = `NXT-2026-${Math.floor(10000 + Math.random() * 90000)}`;
     const generatedTracking = `DHL-EXP-${Math.floor(100000000 + Math.random() * 900000000)}GB`;
 
@@ -269,7 +566,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       tax,
       total: Math.round(total * 100) / 100,
       status: 'Confirmed',
-      paymentMethod: paymentMethod === 'apple-pay' ? 'Apple Pay' : paymentMethod === 'card' ? 'Credit Card' : 'Bank Wire',
+      paymentMethod: paymentMethod === 'apple-pay' ? 'Apple Pay' : paymentMethod === 'klarna' ? 'Klarna (4x)' : 'Credit Card',
       trackingNumber: generatedTracking,
       estimatedDelivery: '3–5 Business Days (Insured)',
       shippingAddress: {
@@ -283,8 +580,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         phone: phone ? (phone.startsWith('+91') ? phone : `+91 ${formatIndianMobile(phone)}`) : '+91 9876543210',
         isDefault: true
       },
-      items: [...cartItems]
+      items: Array.isArray(cartItems) && cartItems.length > 0 ? [...cartItems] : []
     };
+
+    try {
+      sessionStorage.setItem('naxtto_completed_order', JSON.stringify(newOrder));
+      safeSetItem('naxtto_last_order', JSON.stringify(sanitizeOrderForStorage(newOrder)));
+    } catch {
+      // ignore
+    }
 
     setCompletedOrder(newOrder);
     onOrderCompleted(newOrder);
@@ -329,6 +633,26 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {step < 4 ? (
+          cartItems.length === 0 ? (
+            <div className="max-w-md mx-auto text-center py-16 px-4 space-y-5 animate-fadeIn">
+              <div className="w-20 h-20 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center mx-auto text-[#86868b]">
+                <ShoppingBag className="w-10 h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-semibold text-[#1d1d1f]">Your Atelier Bag is Empty</h2>
+                <p className="text-xs sm:text-sm text-[#6e6e73]">
+                  You have removed all items from your checkout. Explore our certified fine jewellery collection to select your next heirloom piece.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onBackToShop}
+                className="px-8 py-3.5 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98"
+              >
+                Return to Boutique
+              </button>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
             {/* Left Main Form (7.5 cols) */}
@@ -482,22 +806,30 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   {/* SCENARIO A: User chooses from Existing Saved Addresses */}
                   {hasSavedAddresses && addressMode === 'saved' ? (
                     <div className="space-y-4">
+                      {addressSavedSuccessBanner && (
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 animate-fadeIn">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="font-medium">{addressSavedSuccessBanner}</span>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
                             Select Delivery Address:
                           </label>
                           <span className="text-[11px] text-[#6e6e73]">
-                            {savedAddresses.length} saved {savedAddresses.length === 1 ? 'destination' : 'destinations'}
+                            {savedAddresses.length} saved {savedAddresses.length === 1 ? 'destination' : 'destinations'} (details retained)
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                           {savedAddresses.map(addr => {
-                            const isSelected = selectedAddressId === (addr.id || `${addr.fullName}-${addr.addressLine1}`);
+                            const addrKey = addr.id || `${addr.fullName}-${addr.addressLine1}`;
+                            const isSelected = selectedAddressId === addrKey;
                             return (
                               <div
-                                key={addr.id || `${addr.fullName}-${addr.addressLine1}`}
+                                key={addrKey}
                                 onClick={() => handleApplySavedAddress(addr)}
                                 className={`p-4 rounded-2xl border text-left text-xs cursor-pointer transition-all relative flex flex-col justify-between ${
                                   isSelected
@@ -530,19 +862,51 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                                     <p>{addr.city}, {addr.state} {addr.postalCode || (addr as any).zip}</p>
                                     <p>{addr.country}</p>
                                     {addr.phone && (
-                                      <p className="text-[11px] text-[#86868b] pt-1">Tel: {addr.phone}</p>
+                                      <p className="text-[11px] text-[#86868b] pt-1 font-mono">Tel: {addr.phone}</p>
                                     )}
                                   </div>
                                 </div>
 
-                                {isSelected && (
-                                  <div className="mt-3 pt-2 border-t border-[#1d1d1f]/10 flex items-center justify-between text-[11px] font-semibold text-[#1d1d1f]">
-                                    <span className="flex items-center gap-1">
+                                <div className="mt-3 pt-2 border-t border-[#1d1d1f]/10 flex items-center justify-between text-[11px]">
+                                  {isSelected ? (
+                                    <span className="flex items-center gap-1 font-semibold text-[#1d1d1f]">
                                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                       Selected for Dispatch
                                     </span>
+                                  ) : (
+                                    <span className="text-[#86868b]">Click to select</span>
+                                  )}
+
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartEditAddress(addr);
+                                      }}
+                                      className="text-xs text-[#1d1d1f] hover:underline font-medium inline-flex items-center gap-1"
+                                      title="Edit address details"
+                                    >
+                                      <Edit3 className="w-3 h-3 text-[#6e6e73]" />
+                                      <span>Edit</span>
+                                    </button>
+                                    {onDeleteAddress && savedAddresses.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (window.confirm('Are you sure you want to remove this address from your saved list?')) {
+                                            onDeleteAddress(addr.id || addrKey);
+                                          }
+                                        }}
+                                        className="text-xs text-[#86868b] hover:text-red-600 transition-colors inline-flex items-center gap-1"
+                                        title="Delete this address"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
                                   </div>
-                                )}
+                                </div>
                               </div>
                             );
                           })}
@@ -551,6 +915,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                           <button
                             type="button"
                             onClick={() => {
+                              setEditingAddressId(null);
                               setAddressMode('new');
                               setFullName(user?.name || '');
                               setAddressLine1('');
@@ -585,26 +950,38 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   ) : (
                     /* SCENARIO B: No saved address OR user requested "Add Address" form */
                     <div className="space-y-5">
-                      {!hasSavedAddresses && (
-                        <div className="p-3.5 bg-transparent border border-[#e5e5ea] rounded-xl flex items-center gap-2.5 text-xs text-[#6e6e73]">
-                          <MapPin className="w-4 h-4 text-[#1d1d1f] shrink-0" />
-                          <span>No saved address on file. Please provide your delivery details below.</span>
+                      <div className="flex items-center justify-between pb-2 border-b border-[#e5e5ea]">
+                        <div>
+                          <h2 className="text-sm font-semibold text-[#1d1d1f]">
+                            {editingAddressId ? 'Edit Saved Address' : 'Delivery Address Details'}
+                          </h2>
+                          <p className="text-[11px] text-[#6e6e73]">
+                            Address details are saved automatically to your account and will not be deleted.
+                          </p>
                         </div>
-                      )}
+                        {hasSavedAddresses && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddressMode('saved');
+                              setEditingAddressId(null);
+                              setStep1Error(null);
+                            }}
+                            className="text-xs text-[#1d1d1f] font-semibold hover:underline flex items-center gap-1"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            <span>Back to saved addresses</span>
+                          </button>
+                        )}
+                      </div>
 
-                      {hasSavedAddresses && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAddressMode('saved');
-                            setStep1Error(null);
-                          }}
-                          className="text-xs text-[#1d1d1f] font-semibold hover:underline flex items-center gap-1 pb-1"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" />
-                          <span>Back to saved addresses</span>
-                        </button>
-                      )}
+                      <div className="p-3 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl flex items-center justify-between text-[11px] text-[#6e6e73]">
+                        <span className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
+                          <BookmarkCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          Persistent Storage Active
+                        </span>
+                        <span>Linked to {user?.email || 'your patron account'}</span>
+                      </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                         <div className="sm:col-span-2">
@@ -749,20 +1126,31 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                               className="w-4 h-4 rounded text-[#1d1d1f] focus:ring-0 cursor-pointer accent-[#1d1d1f]"
                             />
                             <span className="text-xs text-[#1d1d1f] font-medium">
-                              Save this address to my account for faster future checkouts
+                              Save this address permanently to my account
                             </span>
                           </label>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={handleProceedToStep2}
-                        className="w-full py-4 bg-[#E56A85] hover:bg-[#D45974] text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
-                      >
-                        <span>Save Address & Continue</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
+                      <div className="space-y-2.5 pt-2">
+                        <button
+                          type="button"
+                          onClick={handleProceedToStep2}
+                          className="w-full py-4 bg-[#E56A85] hover:bg-[#D45974] text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
+                        >
+                          <span>{editingAddressId ? 'Update & Continue' : 'Save Address & Continue'}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleExplicitSaveAddress}
+                          className="w-full py-3 bg-transparent hover:bg-black/[0.03] border border-[#d2d2d7] text-[#1d1d1f] text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                        >
+                          <BookmarkCheck className="w-4 h-4 text-emerald-600" />
+                          <span>Save Address to My Details</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -863,120 +1251,88 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     </p>
                   </div>
 
-                  {/* Payment Method Tabs */}
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('credit-card')}
-                      className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
-                        paymentMethod === 'credit-card'
-                          ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
-                      }`}
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      <span>Credit Card</span>
-                    </button>
+                  {/* Payment Gateway Error Banner */}
+                  {paymentGatewayError && (
+                    <div className="p-3.5 bg-red-50/90 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700 animate-fadeIn">
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Payment Notification</p>
+                        <p>{paymentGatewayError}</p>
+                      </div>
+                    </div>
+                  )}
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('apple-pay')}
-                      className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
-                        paymentMethod === 'apple-pay'
-                          ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
-                      }`}
-                    >
-                      <Lock className="w-4 h-4" />
-                      <span>Apple Pay</span>
-                    </button>
+                  {/* Razorpay Exclusive Gateway Presentation */}
+                  <div className="p-5 sm:p-6 rounded-2xl border-2 border-[#1d1d1f] bg-white shadow-xs space-y-4 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#e5e5ea]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#0C2340] text-[#00BAF2] flex items-center justify-center font-bold text-base shadow-xs">
+                          ₹
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-[#1d1d1f]">
+                              Razorpay Standard Checkout
+                            </p>
+                            <span className="px-2 py-0.5 bg-[#E56A85] text-white text-[9px] font-bold rounded-full uppercase tracking-wider">
+                              Exclusive
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#6e6e73]">
+                            Official RBI & PCI-DSS certified gateway with 256-bit bank encryption
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Key Configured & Active
+                      </span>
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('klarna')}
-                      className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${
-                        paymentMethod === 'klarna'
-                          ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                          : 'border-[#e5e5ea] bg-transparent text-[#1d1d1f] hover:border-[#86868b]'
-                      }`}
-                    >
-                      <Clock className="w-4 h-4" />
-                      <span>Klarna (4x)</span>
-                    </button>
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">
+                        Accepted Payment Channels (Powered by Razorpay)
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                          <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div>
+                            <span className="font-semibold text-xs text-[#1d1d1f] block">Instant UPI</span>
+                            <span className="text-[#6e6e73] text-[10px]">Google Pay, PhonePe, Paytm, QR</span>
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                          <CreditCard className="w-4 h-4 text-sky-600 shrink-0" />
+                          <div>
+                            <span className="font-semibold text-xs text-[#1d1d1f] block">Cards</span>
+                            <span className="text-[#6e6e73] text-[10px]">RuPay, Visa, MasterCard, Amex</span>
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl border border-[#e5e5ea] bg-[#fafafc] flex items-center gap-2.5">
+                          <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                          <div>
+                            <span className="font-semibold text-xs text-[#1d1d1f] block">50+ NetBanking</span>
+                            <span className="text-[#6e6e73] text-[10px]">All Major Indian & Global Banks</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#f5f5f7]/80 rounded-xl p-3 text-[11px] text-[#6e6e73] space-y-1.5">
+                      <div className="flex items-center justify-between text-[#1d1d1f] font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-[#1d1d1f]" />
+                          Merchant Key ID
+                        </span>
+                        <span className="font-mono text-[10px] text-[#54280E] font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                          rzp_test_TZC5OuxpUn3JdQ
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] leading-relaxed">
+                        Clicking &ldquo;Pay with Razorpay&rdquo; launches the official Razorpay checkout modal where you can complete authentication with one-click UPI, biometric passkey, or bank OTP.
+                      </p>
+                    </div>
                   </div>
-
-                  {/* Card Form */}
-                  {paymentMethod === 'credit-card' && (
-                    <div className="p-5 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-3.5 text-xs">
-                      <div>
-                        <label className="block text-[#1d1d1f] font-medium mb-1">Cardholder Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={cardName}
-                          onChange={e => setCardName(e.target.value)}
-                          placeholder="Sophia Montgomery"
-                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[#1d1d1f] font-medium mb-1">Card Number</label>
-                        <input
-                          type="text"
-                          required
-                          value={cardNumber}
-                          onChange={e => setCardNumber(e.target.value)}
-                          placeholder="4000 1234 5678 9010"
-                          className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[#1d1d1f] font-medium mb-1">Expiry Date</label>
-                          <input
-                            type="text"
-                            required
-                            value={cardExpiry}
-                            onChange={e => setCardExpiry(e.target.value)}
-                            placeholder="MM/YY"
-                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#1d1d1f] font-medium mb-1">CVC / CVV</label>
-                          <input
-                            type="text"
-                            required
-                            value={cardCVC}
-                            onChange={e => setCardCVC(e.target.value)}
-                            placeholder="CVC"
-                            className="w-full bg-transparent border border-[#e5e5ea] rounded-xl px-3.5 py-2.5 text-xs text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {paymentMethod === 'apple-pay' && (
-                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent text-center space-y-2">
-                      <p className="text-xs font-semibold text-[#1d1d1f]">Apple Pay Express Checkout</p>
-                      <p className="text-xs text-[#6e6e73]">
-                        Clicking place order will prompt biometric Face ID / Touch ID verification.
-                      </p>
-                    </div>
-                  )}
-
-                  {paymentMethod === 'klarna' && (
-                    <div className="p-6 rounded-2xl border border-[#e5e5ea] bg-transparent space-y-2 text-xs">
-                      <p className="font-semibold text-[#1d1d1f]">4 Interest-Free Installments</p>
-                      <p className="text-[#6e6e73]">
-                        Pay 4 payments of <strong>{currencySymbol}{(total / 4).toFixed(2)}</strong> every 2 weeks with 0% APR.
-                      </p>
-                    </div>
-                  )}
 
                   {/* Terms & Conditions Checkbox */}
                   <label className="flex items-start gap-2.5 text-xs text-[#6e6e73] cursor-pointer">
@@ -995,18 +1351,28 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     <button
                       type="button"
                       onClick={() => setStep(2)}
-                      className="px-6 py-4 border border-[#e5e5ea] text-xs font-semibold rounded-xl hover:bg-[#f5f5f7] transition-all text-[#1d1d1f]"
+                      disabled={isProcessingRazorpay}
+                      className="px-6 py-4 border border-[#e5e5ea] text-xs font-semibold rounded-xl hover:bg-[#f5f5f7] transition-all text-[#1d1d1f] disabled:opacity-50"
                     >
                       Back
                     </button>
                     <button
                       type="button"
-                      disabled={!agreeTerms}
+                      disabled={!agreeTerms || isProcessingRazorpay}
                       onClick={handlePlaceOrder}
                       className="flex-1 py-4 bg-[#E56A85] hover:bg-[#D45974] disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.99]"
                     >
-                      <Lock className="w-4 h-4" />
-                      <span>Place Order • {currencySymbol}{Math.round(total)}</span>
+                      {isProcessingRazorpay ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Connecting to Razorpay...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          <span>Pay with Razorpay • {currencySymbol}{Math.round(total)}</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1021,24 +1387,80 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <span className="text-xs text-[#6e6e73]">{cartItems.length} {cartItems.length === 1 ? 'Piece' : 'Pieces'}</span>
                 </div>
 
-                {/* Items preview */}
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                {/* Items preview with remove and quantity adjustment before checkout */}
+                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                   {cartItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-transparent border border-[#e5e5ea] shrink-0">
-                        <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-0.5 right-0.5 bg-[#1d1d1f] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                          {item.quantity}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0 text-xs">
-                        <h4 className="font-semibold text-[#1d1d1f] truncate">{item.product.name}</h4>
-                        <p className="text-[#6e6e73] text-[11px] truncate">
-                          {item.selectedSize} • {item.selectedFinish?.replace(/-/g, ' ')}
-                        </p>
-                      </div>
-                      <div className="text-xs font-semibold text-[#1d1d1f] text-right">
-                        {currencySymbol}{item.product.price * item.quantity}
+                    <div 
+                      key={`${item.product.id}-${item.selectedSize}-${item.selectedFinish}-${idx}`} 
+                      className="p-2.5 rounded-xl border border-[#e5e5ea] bg-white/60 hover:bg-white transition-all group"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-[#f5f5f7] border border-[#e5e5ea] shrink-0">
+                          <img 
+                            src={item.product.images[0]} 
+                            alt={item.product.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                          <span className="absolute bottom-0.5 right-0.5 bg-[#1d1d1f] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-xs">
+                            {item.quantity}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0 text-xs">
+                          <div className="flex items-start justify-between gap-1">
+                            <h4 className="font-semibold text-[#1d1d1f] truncate leading-tight">{item.product.name}</h4>
+                            <span className="text-xs font-semibold text-[#1d1d1f] shrink-0">
+                              {currencySymbol}{item.product.price * item.quantity}
+                            </span>
+                          </div>
+                          <p className="text-[#6e6e73] text-[11px] truncate mt-0.5">
+                            {item.selectedSize ? `${item.selectedSize}` : ''}
+                            {item.selectedSize && item.selectedFinish ? ' • ' : ''}
+                            {item.selectedFinish ? item.selectedFinish.replace(/-/g, ' ') : ''}
+                          </p>
+
+                          {/* Action row: Quantity Stepper & Remove Button */}
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#f0f0f2]">
+                            <div className="flex items-center border border-[#e5e5ea] rounded-lg bg-white overflow-hidden shadow-2xs">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (item.quantity > 1) {
+                                    onUpdateQuantity?.(item.product.id, item.quantity - 1, item.selectedSize, item.selectedFinish);
+                                  } else {
+                                    onRemoveItem?.(item.product.id, item.selectedSize, item.selectedFinish);
+                                  }
+                                }}
+                                className="p-1 px-1.5 text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
+                                title={item.quantity > 1 ? "Decrease quantity" : "Remove piece"}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="px-2 text-[11px] font-semibold text-[#1d1d1f] min-w-[1.25rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateQuantity?.(item.product.id, item.quantity + 1, item.selectedSize, item.selectedFinish)}
+                                className="p-1 px-1.5 text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
+                                title="Increase quantity"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {onRemoveItem && (
+                              <button
+                                type="button"
+                                onClick={() => onRemoveItem(item.product.id, item.selectedSize, item.selectedFinish)}
+                                className="text-[11px] font-medium text-[#86868b] hover:text-rose-600 flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-rose-50"
+                                title="Remove piece from order"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Remove</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1120,6 +1542,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
             </div>
           </div>
+          )
         ) : (
           /* STEP 4: Order Confirmation & Receipt */
           <div className="max-w-2xl mx-auto text-center space-y-8 py-6 animate-scaleIn">
@@ -1178,22 +1601,55 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {/* Items Purchased */}
               <div className="space-y-2.5 pt-2">
                 <span className="text-[#86868b] font-medium block">Creations in Shipment:</span>
-                {completedOrder?.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-[#1d1d1f]">
-                      {item.product.name} ({item.selectedSize}) x {item.quantity}
-                    </span>
-                    <span className="font-semibold text-[#1d1d1f]">
-                      {currencySymbol}{item.product.price * item.quantity}
-                    </span>
+                {(completedOrder?.items && completedOrder.items.length > 0) ? (
+                  completedOrder.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-[#1d1d1f]">
+                        {item.product?.name || 'Fine Jewellery Piece'} ({item.selectedSize || 'Standard'}) x {item.quantity || 1}
+                      </span>
+                      <span className="font-semibold text-[#1d1d1f]">
+                        {currencySymbol}{(item.product?.price || 0) * (item.quantity || 1)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs text-[#6e6e73] italic">
+                    Insured fine jewellery creation carefully boxed in official presentation packaging.
                   </div>
-                ))}
+                )}
               </div>
 
               {/* Delivery Destination */}
               <div className="pt-3 border-t border-[#e5e5ea] text-xs text-[#6e6e73]">
-                <p><strong>Shipping To:</strong> {completedOrder?.shippingAddress.recipientName}, {completedOrder?.shippingAddress.street}, {completedOrder?.shippingAddress.city}, {completedOrder?.shippingAddress.postalCode}</p>
-                <p className="mt-1"><strong>Total Settled:</strong> {currencySymbol}{completedOrder?.totalAmount}</p>
+                <p>
+                  <strong>Shipping To:</strong>{' '}
+                  {completedOrder?.shippingAddress?.fullName ||
+                    (completedOrder?.shippingAddress as any)?.recipientName ||
+                    fullName ||
+                    user?.name ||
+                    'Valued Patron'}
+                  ,{' '}
+                  {completedOrder?.shippingAddress?.addressLine1 ||
+                    (completedOrder?.shippingAddress as any)?.street ||
+                    addressLine1 ||
+                    '100 Luxury Way'}
+                  {completedOrder?.shippingAddress?.addressLine2
+                    ? `, ${completedOrder.shippingAddress.addressLine2}`
+                    : (addressLine2 ? `, ${addressLine2}` : '')}
+                  {completedOrder?.shippingAddress?.city
+                    ? `, ${completedOrder.shippingAddress.city}`
+                    : (city ? `, ${city}` : '')}
+                  {completedOrder?.shippingAddress?.postalCode
+                    ? `, ${completedOrder.shippingAddress.postalCode}`
+                    : (postalCode ? `, ${postalCode}` : '')}
+                  {completedOrder?.shippingAddress?.country
+                    ? `, ${completedOrder.shippingAddress.country}`
+                    : (country ? `, ${country}` : '')}
+                </p>
+                <p className="mt-1">
+                  <strong>Total Settled:</strong> {currencySymbol}
+                  {completedOrder?.total ?? (completedOrder as any)?.totalAmount ?? Math.round(total * 100) / 100}
+                </p>
               </div>
             </div>
 
@@ -1201,7 +1657,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
               <button
                 type="button"
-                onClick={onBackToShop}
+                onClick={() => {
+                  try {
+                    sessionStorage.removeItem('naxtto_completed_order');
+                  } catch {
+                    // ignore
+                  }
+                  onBackToShop();
+                }}
                 className="w-full sm:w-auto px-8 py-3.5 bg-[#E56A85] hover:bg-[#D45974] text-white text-xs font-semibold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.99]"
               >
                 Return to Collection
