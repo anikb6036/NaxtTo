@@ -11,9 +11,13 @@ import {
   ShoppingBag,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  Printer,
+  PackageCheck,
+  Sparkles
 } from 'lucide-react';
 import { Order } from '../../types';
+import { ShippingLabelModal } from './ShippingLabelModal';
 
 interface SellerOrdersTableProps {
   orders: Order[];
@@ -30,9 +34,10 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
   currencySymbol,
   onRefreshOrders
 }) => {
-  const [orderStatusTab, setOrderStatusTab] = useState<'all' | 'pending' | 'ready_to_dispatch' | 'shipped' | 'delivered'>('all');
+  const [orderStatusTab, setOrderStatusTab] = useState<'all' | 'pending' | 'accepted' | 'shipped' | 'delivered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [labelOrder, setLabelOrder] = useState<Order | null>(null);
 
   const handleRefreshClick = () => {
     if (onRefreshOrders) {
@@ -51,11 +56,31 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
       if (!match) return false;
     }
     if (orderStatusTab === 'pending' && o.status !== 'Confirmed') return false;
-    if (orderStatusTab === 'ready_to_dispatch' && o.status !== 'Crafting') return false;
-    if (orderStatusTab === 'shipped' && o.status !== 'Dispatched') return false;
+    if (orderStatusTab === 'accepted' && (o.status !== 'Accepted' && o.status !== 'Crafting')) return false;
+    if (orderStatusTab === 'shipped' && (o.status !== 'Dispatched' && o.status !== 'Out for Delivery')) return false;
     if (orderStatusTab === 'delivered' && o.status !== 'Delivered') return false;
     return true;
   });
+
+  const getStatusBadge = (status: Order['status']) => {
+    switch (status) {
+      case 'Delivered':
+        return 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]';
+      case 'Out for Delivery':
+        return 'bg-[#e8f0fe] text-[#1a73e8] border-[#c2e7ff]';
+      case 'Dispatched':
+        return 'bg-[#e8f0fe] text-[#1967d2] border-[#d2e3fc]';
+      case 'Accepted':
+        return 'bg-[#f3e8fd] text-[#7627bb] border-[#e9d2fd]';
+      case 'Crafting':
+        return 'bg-[#fef7e0] text-[#b06000] border-[#feefc3]';
+      case 'Cancelled':
+        return 'bg-[#fce8e6] text-[#c5221f] border-[#fad2cf]';
+      case 'Confirmed':
+      default:
+        return 'bg-[#fff0d4] text-[#b25e02] border-[#ffdca8]';
+    }
+  };
 
   return (
     <div className="space-y-4 font-sans text-[#212121]">
@@ -84,7 +109,7 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
             <button
               type="button"
               onClick={handleRefreshClick}
-              title="Refresh orders from ledger"
+              title="Refresh orders from live ledger"
               className="border border-[#dadce0] rounded-lg px-3 py-2 text-xs font-medium text-[#212121] hover:bg-[#f5f5f7] flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#717478] ${isRefreshing ? 'animate-spin text-[#2874f0]' : ''}`} />
@@ -129,14 +154,14 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
 
         <button
           type="button"
-          onClick={() => setOrderStatusTab('ready_to_dispatch')}
+          onClick={() => setOrderStatusTab('accepted')}
           className={`py-3.5 border-b-2 transition-all ${
-            orderStatusTab === 'ready_to_dispatch'
+            orderStatusTab === 'accepted'
               ? 'border-[#2874f0] text-[#2874f0] font-bold'
               : 'border-transparent text-[#717478] hover:text-[#212121]'
           }`}
         >
-          In Crafting ({orders.filter(o => o.status === 'Crafting').length})
+          Accepted & Crafting ({orders.filter(o => o.status === 'Accepted' || o.status === 'Crafting').length})
         </button>
 
         <button
@@ -148,7 +173,7 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
               : 'border-transparent text-[#717478] hover:text-[#212121]'
           }`}
         >
-          In Transit ({orders.filter(o => o.status === 'Dispatched').length})
+          In Transit / Out for Delivery ({orders.filter(o => o.status === 'Dispatched' || o.status === 'Out for Delivery').length})
         </button>
 
         <button
@@ -170,14 +195,14 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#e5e5ea] bg-[#fafafa] text-[11px] font-semibold text-[#717478]">
-                <th className="py-3 px-4 min-w-[160px]">Order ID & Date</th>
-                <th className="py-3 px-4 min-w-[180px]">Patron / Recipient</th>
-                <th className="py-3 px-4 min-w-[200px]">Items</th>
-                <th className="py-3 px-4 min-w-[120px]">Total Amount</th>
-                <th className="py-3 px-4 min-w-[120px]">Delivery Status</th>
-                <th className="py-3 px-4 min-w-[150px]">Tracking Code</th>
-                <th className="py-3 px-4 min-w-[140px]">Manage Status</th>
-                <th className="py-3 px-4 min-w-[60px] text-right">View</th>
+                <th className="py-3 px-4 min-w-[150px]">Order ID & Date</th>
+                <th className="py-3 px-4 min-w-[170px]">Patron / Recipient</th>
+                <th className="py-3 px-4 min-w-[180px]">Items</th>
+                <th className="py-3 px-4 min-w-[110px]">Total Amount</th>
+                <th className="py-3 px-4 min-w-[130px]">Delivery Status</th>
+                <th className="py-3 px-4 min-w-[140px]">Tracking Code</th>
+                <th className="py-3 px-4 min-w-[150px]">Accept & Manage</th>
+                <th className="py-3 px-4 min-w-[100px] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e5e5ea] text-xs">
@@ -186,6 +211,7 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                   <td colSpan={8} className="py-12 text-center text-[#878787]">
                     <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#2874f0]" />
                     <p className="font-semibold text-sm text-[#212121]">No orders in this queue</p>
+                    <p className="text-xs text-[#717478] mt-1">Orders placed by customers will automatically stream here in real time.</p>
                   </td>
                 </tr>
               ) : (
@@ -218,45 +244,65 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                     </td>
 
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        ord.status === 'Delivered'
-                          ? 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]'
-                          : ord.status === 'Dispatched'
-                          ? 'bg-[#e8f0fe] text-[#1a73e8] border-[#d2e3fc]'
-                          : 'bg-[#fef7e0] text-[#b06000] border-[#feefc3]'
-                      }`}>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border capitalize ${getStatusBadge(ord.status)}`}>
                         {ord.status || 'Confirmed'}
                       </span>
                     </td>
 
                     <td className="py-3 px-4">
-                      <span className="font-mono text-[11px] text-[#717478]">
+                      <span className="font-mono text-[11px] text-[#717478] block truncate max-w-[130px]">
                         {ord.trackingNumber || 'N/A'}
                       </span>
                     </td>
 
                     <td className="py-3 px-4">
-                      <select
-                        value={ord.status}
-                        onChange={(e) => onUpdateOrderStatus(ord.id, e.target.value as Order['status'])}
-                        className="bg-[#f5f5f7] border border-[#dadce0] rounded-md px-2 py-1 text-xs text-[#212121] font-medium outline-none focus:border-[#2874f0]"
-                      >
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Crafting">Crafting</option>
-                        <option value="Dispatched">Dispatched</option>
-                        <option value="Delivered">Delivered</option>
-                      </select>
+                      <div className="flex flex-col gap-1.5">
+                        {ord.status === 'Confirmed' && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdateOrderStatus(ord.id, 'Accepted')}
+                            className="bg-[#e6f4ea] hover:bg-[#ceead6] text-[#137333] border border-[#ceead6] px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                            title="Accept this order to begin crafting"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Accept Order</span>
+                          </button>
+                        )}
+                        <select
+                          value={ord.status}
+                          onChange={(e) => onUpdateOrderStatus(ord.id, e.target.value as Order['status'])}
+                          className="bg-[#f5f5f7] border border-[#dadce0] rounded-md px-2 py-1 text-xs text-[#212121] font-medium outline-none focus:border-[#2874f0] cursor-pointer"
+                        >
+                          <option value="Confirmed">Confirmed (New)</option>
+                          <option value="Accepted">Accepted</option>
+                          <option value="Crafting">Crafting</option>
+                          <option value="Dispatched">Dispatched</option>
+                          <option value="Out for Delivery">Out for Delivery</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
                     </td>
 
                     <td className="py-3 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => onSelectOrder(ord)}
-                        className="p-1.5 rounded-md hover:bg-[#e8f0fe] text-[#717478] hover:text-[#2874f0] transition-colors"
-                        title="View Full Order Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setLabelOrder(ord)}
+                          className="p-1.5 rounded-md hover:bg-[#e8f0fe] text-[#717478] hover:text-[#1a73e8] transition-colors cursor-pointer"
+                          title="Print Shipping Label / Airway Bill"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onSelectOrder(ord)}
+                          className="p-1.5 rounded-md hover:bg-[#e8f0fe] text-[#717478] hover:text-[#2874f0] transition-colors cursor-pointer"
+                          title="View Full Order Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -266,6 +312,16 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
         </div>
       </div>
 
+      {/* Shipping Label Modal */}
+      {labelOrder && (
+        <ShippingLabelModal
+          order={labelOrder}
+          onClose={() => setLabelOrder(null)}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
     </div>
   );
 };
+

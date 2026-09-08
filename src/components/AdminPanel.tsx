@@ -14,7 +14,9 @@ import {
   Users,
   HelpCircle,
   Clock,
-  Truck
+  Truck,
+  Printer,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   Product, 
@@ -28,6 +30,7 @@ import { SellerSidebar, SellerNavTab } from './seller-hub/SellerSidebar';
 import { ListingsTable } from './seller-hub/ListingsTable';
 import { SellerOrdersTable } from './seller-hub/SellerOrdersTable';
 import { ProductFormView } from './seller-hub/ProductFormView';
+import { ShippingLabelModal } from './seller-hub/ShippingLabelModal';
 
 interface AdminPanelProps {
   products: Product[];
@@ -66,6 +69,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Selected order for detailed modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [labelOrder, setLabelOrder] = useState<Order | null>(null);
 
   // Toast notifications
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -323,8 +327,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <span className={`px-2.5 py-0.5 rounded-full font-medium text-[11px] border ${
                     selectedOrder.status === 'Delivered'
                       ? 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]'
-                      : selectedOrder.status === 'Dispatched'
+                      : selectedOrder.status === 'Dispatched' || selectedOrder.status === 'Out for Delivery'
                       ? 'bg-[#e8f0fe] text-[#1a73e8] border-[#d2e3fc]'
+                      : selectedOrder.status === 'Accepted'
+                      ? 'bg-[#f3e8fd] text-[#7627bb] border-[#e9d2fd]'
                       : 'bg-[#fef7e0] text-[#b06000] border-[#feefc3]'
                   }`}>
                     {selectedOrder.status}
@@ -332,37 +338,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </h3>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="p-1.5 rounded-lg hover:bg-[#f5f5f7] text-[#717478] hover:text-[#212121]"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLabelOrder(selectedOrder)}
+                  className="bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  title="Print Shipping Label / Airway Bill"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Label</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-1.5 rounded-lg hover:bg-[#f5f5f7] text-[#717478] hover:text-[#212121] cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Quick Status Control */}
+            {/* Quick Status Control & Action Bar */}
             <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-xs font-semibold text-[#212121]">Update Delivery Status:</span>
-                <p className="text-[11px] text-[#717478]">Synchronizes with patron dispatch alerts.</p>
+                <span className="text-xs font-semibold text-[#212121]">Manage Order Lifecycle:</span>
+                <p className="text-[11px] text-[#717478]">Update status to notify customer in real time.</p>
               </div>
 
-              <select
-                value={selectedOrder.status}
-                onChange={(e) => {
-                  const newStatus = e.target.value as Order['status'];
-                  onUpdateOrderStatus(selectedOrder.id, newStatus);
-                  setSelectedOrder({ ...selectedOrder, status: newStatus });
-                  showToast(`Status updated to "${newStatus}"`);
-                }}
-                className="bg-white border border-[#dadce0] rounded-lg px-3 py-1.5 text-xs text-[#212121] font-semibold"
-              >
-                <option value="Confirmed">Confirmed</option>
-                <option value="Crafting">Crafting</option>
-                <option value="Dispatched">Dispatched</option>
-                <option value="Delivered">Delivered</option>
-              </select>
+              <div className="flex items-center gap-2">
+                {selectedOrder.status === 'Confirmed' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onUpdateOrderStatus(selectedOrder.id, 'Accepted');
+                      setSelectedOrder({ ...selectedOrder, status: 'Accepted' });
+                      showToast('Order accepted by Atelier master artisans.');
+                    }}
+                    className="bg-[#e6f4ea] hover:bg-[#ceead6] text-[#137333] border border-[#ceead6] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Accept Order</span>
+                  </button>
+                )}
+
+                <select
+                  value={selectedOrder.status}
+                  onChange={(e) => {
+                    const newStatus = e.target.value as Order['status'];
+                    onUpdateOrderStatus(selectedOrder.id, newStatus);
+                    setSelectedOrder({ ...selectedOrder, status: newStatus });
+                    showToast(`Status updated to "${newStatus}"`);
+                  }}
+                  className="bg-white border border-[#dadce0] rounded-lg px-3 py-1.5 text-xs text-[#212121] font-semibold cursor-pointer outline-none focus:border-[#2874f0]"
+                >
+                  <option value="Confirmed">Confirmed (New)</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Crafting">Crafting</option>
+                  <option value="Dispatched">Dispatched</option>
+                  <option value="Out for Delivery">Out for Delivery</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
             </div>
 
             {/* Items List */}
@@ -441,6 +478,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           </div>
         </div>
+      )}
+
+      {/* Shipping Label Modal */}
+      {labelOrder && (
+        <ShippingLabelModal
+          order={labelOrder}
+          onClose={() => setLabelOrder(null)}
+          currencySymbol={currencySymbol}
+        />
       )}
 
     </div>

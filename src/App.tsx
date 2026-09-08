@@ -50,7 +50,10 @@ import {
   fetchUserDataFromFirestore,
   safeSetItem,
   saveUserProfile,
-  sanitizeOrderForStorage
+  sanitizeOrderForStorage,
+  saveOrderToFirestore,
+  updateOrderStatusInFirestore,
+  subscribeToAllOrders
 } from './utils/userStorage';
 
 export default function App() {
@@ -123,6 +126,9 @@ export default function App() {
   const wishlistItemsRef = useRef(wishlistItems);
   wishlistItemsRef.current = wishlistItems;
 
+  const userRef = useRef(user);
+  userRef.current = user;
+
   const prevUserKeyRef = useRef<string | null>(getUserStorageKey(user));
 
   // Global store orders (for admin order management and patron sync)
@@ -172,6 +178,54 @@ export default function App() {
   useEffect(() => {
     refreshOrders();
   }, [refreshOrders]);
+
+  // Real-time Firestore cloud orders listener for Admin Panel & Patron tracking
+  useEffect(() => {
+    const unsubscribe = subscribeToAllOrders((remoteOrders) => {
+      if (remoteOrders && remoteOrders.length > 0) {
+        setOrders(prev => {
+          const map = new Map<string, Order>();
+          (prev || []).forEach(o => {
+            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
+          });
+          remoteOrders.forEach(o => {
+            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
+          });
+          const combined = Array.from(map.values()).sort((a, b) => {
+            const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+            const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+            return timeB - timeA;
+          });
+          safeSetItem('naxtto_all_orders', JSON.stringify(combined.slice(0, 50).map(sanitizeOrderForStorage)));
+          return combined;
+        });
+
+        // Sync order status updates to current patron user.orderHistory in real time
+        setUser(prev => {
+          if (!prev || !prev.orderHistory || prev.orderHistory.length === 0) return prev;
+          let changed = false;
+          const updatedHistory = prev.orderHistory.map(localOrd => {
+            const match = remoteOrders.find(r => r.id === localOrd.id || r.orderNumber === localOrd.orderNumber);
+            if (match && (match.status !== localOrd.status || match.trackingNumber !== localOrd.trackingNumber)) {
+              changed = true;
+              return { 
+                ...localOrd, 
+                status: match.status, 
+                trackingNumber: match.trackingNumber, 
+                statusUpdates: match.statusUpdates 
+              };
+            }
+            return localOrd;
+          });
+          return changed ? { ...prev, orderHistory: updatedHistory } : prev;
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Listen to cross-window storage updates and local dispatch events
   useEffect(() => {
@@ -831,6 +885,9 @@ export default function App() {
         // ignore
       }
 
+      // Persist directly to Firestore permanent database so all devices and admin see it immediately
+      saveOrderToFirestore(newOrder, key || undefined, user.email || undefined);
+
       apiClient.createOrder(newOrder).then(() => {
         refreshOrders();
       }).catch(err => {
@@ -920,8 +977,10 @@ export default function App() {
       ...prev,
       orderHistory: prev.orderHistory.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
     }));
+    // Persist real-time update in Firestore cloud storage
+    updateOrderStatusInFirestore(orderId, newStatus);
     apiClient.updateOrderStatus(orderId, newStatus);
-    showToast(`Order #${orderId.slice(-6)} status updated to ${newStatus}.`);
+    showToast(`Order #${orderId.slice(-6)} status updated to "${newStatus}".`);
   };
 
   const handleAdminSignOut = () => {
@@ -1035,6 +1094,7 @@ export default function App() {
       ) : currentView === 'account' ? (
         <AccountPage
           user={user}
+          allOrders={orders}
           onUpdateUser={(updated) => {
             if (updated.isLoggedIn === false) {
               handleUserSignOut();

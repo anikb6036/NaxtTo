@@ -1,5 +1,5 @@
 import { CartItem, WishlistItem, UserProfile, Address, Order, Product } from '../types';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy, getDocs, deleteDoc } from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
 
 /**
@@ -447,4 +447,237 @@ export async function fetchUserDataFromFirestore(
   }
   return null;
 }
+
+/**
+ * Persist an order to Firestore permanent cloud storage with full metadata and timeline
+ */
+export async function saveOrderToFirestore(order: Order, userId?: string, patronEmail?: string): Promise<void> {
+  if (!order || !order.id) return;
+  try {
+    const orderDocRef = doc(firestore, 'orders', order.id);
+    const sanitized = sanitizeOrderForStorage(order);
+    const orderPayload = {
+      ...sanitized,
+      userId: userId || order.userId || 'guest',
+      customerEmail: patronEmail || order.customerEmail || '',
+      createdAt: order.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      statusUpdates: order.statusUpdates || [
+        {
+          status: order.status || 'Confirmed',
+          timestamp: new Date().toISOString(),
+          note: 'Order successfully placed by patron and acknowledged in atelier ledger.'
+        }
+      ]
+    };
+    await setDoc(orderDocRef, orderPayload, { merge: true });
+
+    // Also link to user's private orderHistory in Firestore if userId is present
+    if (userId && userId !== 'guest') {
+      try {
+        const userDocRef = doc(firestore, 'users', userId);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const existingHistory: Order[] = Array.isArray(userData.orderHistory) ? userData.orderHistory : [];
+          const updatedHistory = [
+            orderPayload,
+            ...existingHistory.filter(o => o.id !== order.id)
+          ].slice(0, 15);
+          await setDoc(userDocRef, { orderHistory: updatedHistory }, { merge: true });
+        }
+      } catch (userErr) {
+        console.warn('Notice updating user order history in Firestore:', userErr);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to save order to Firestore:', err);
+  }
+}
+
+/**
+ * Update an order's lifecycle status in Firestore and record chronological event log
+ */
+export async function updateOrderStatusInFirestore(
+  orderId: string, 
+  newStatus: Order['status'], 
+  note?: string
+): Promise<void> {
+  if (!orderId) return;
+  try {
+    const orderDocRef = doc(firestore, 'orders', orderId);
+    const snap = await getDoc(orderDocRef);
+    const now = new Date().toISOString();
+    
+    let existingUpdates: any[] = [];
+    let userId: string | undefined = undefined;
+
+    if (snap.exists()) {
+      const data = snap.data();
+      existingUpdates = Array.isArray(data.statusUpdates) ? data.statusUpdates : [];
+      userId = data.userId;
+    }
+
+    const defaultNotes: Record<string, string> = {
+      Confirmed: 'Order confirmed and registered in ledger.',
+      Accepted: 'Order accepted by Atelier master artisans.',
+      Crafting: 'Jewellery is being handcrafted, set, and hallmarked in the atelier.',
+      Dispatched: 'Package inspected, sealed in tamper-evident vault box, and handed to courier.',
+      'Out for Delivery': 'Courier out for final secure delivery to patron destination.',
+      Delivered: 'Package successfully delivered and signed for by patron.',
+      Cancelled: 'Order cancelled by atelier.'
+    };
+
+    const newUpdateEntry = {
+      status: newStatus,
+      timestamp: now,
+      note: note || defaultNotes[newStatus] || `Status updated to ${newStatus}`
+    };
+
+    const updatedTimeline = [...existingUpdates, newUpdateEntry];
+
+    await setDoc(orderDocRef, {
+      status: newStatus,
+      updatedAt: now,
+      statusUpdates: updatedTimeline
+    }, { merge: true });
+
+    // Sync back to user's orderHistory if linked
+    if (userId && userId !== 'guest') {
+      try {
+        const userDocRef = doc(firestore, 'users', userId);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const existingHistory: Order[] = Array.isArray(userData.orderHistory) ? userData.orderHistory : [];
+          const updatedHistory = existingHistory.map(o => {
+            if (o.id === orderId) {
+              return { ...o, status: newStatus, statusUpdates: updatedTimeline };
+            }
+            return o;
+          });
+          await setDoc(userDocRef, { orderHistory: updatedHistory }, { merge: true });
+        }
+      } catch (err) {
+        console.warn('Notice updating user doc with new status:', err);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to update order status in Firestore:', err);
+  }
+}
+
+/**
+ * Real-time subscription to all orders in Firestore for Admin Panel / Seller Hub
+ */
+export function subscribeToAllOrders(callback: (orders: Order[]) => void): () => void {
+  try {
+    const ordersCol = collection(firestore, 'orders');
+    return onSnapshot(ordersCol, (snapshot) => {
+      const ordersList: Order[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d && (d.id || d.orderNumber)) {
+          ordersList.push({
+            id: d.id || docSnap.id,
+            orderNumber: d.orderNumber || d.id || docSnap.id,
+            date: d.date || new Date().toISOString().split('T')[0],
+            status: d.status || 'Confirmed',
+            items: Array.isArray(d.items) ? d.items : [],
+            subtotal: Number(d.subtotal) || 0,
+            shippingFee: Number(d.shippingFee) || 0,
+            discount: Number(d.discount) || 0,
+            tax: Number(d.tax) || 0,
+            total: Number(d.total) || 0,
+            shippingAddress: d.shippingAddress || {
+              fullName: 'Valued Patron',
+              addressLine1: 'Atelier Destination',
+              city: 'Mumbai',
+              state: 'MH',
+              postalCode: '400001',
+              country: 'India',
+              phone: ''
+            },
+            trackingNumber: d.trackingNumber || `TRACK-NXT-${docSnap.id.slice(-6).toUpperCase()}`,
+            paymentMethod: d.paymentMethod || 'Razorpay Online',
+            estimatedDelivery: d.estimatedDelivery || '3–5 Business Days',
+            userId: d.userId,
+            customerEmail: d.customerEmail,
+            createdAt: d.createdAt,
+            statusUpdates: d.statusUpdates || []
+          });
+        }
+      });
+
+      // Sort by creation time descending (newest first)
+      ordersList.sort((a, b) => {
+        const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+        const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+        return timeB - timeA;
+      });
+
+      callback(ordersList);
+    }, (error) => {
+      console.warn('Firestore orders subscription notice:', error);
+    });
+  } catch (err) {
+    console.warn('Firestore orders onSnapshot failed to initialize:', err);
+    return () => {};
+  }
+}
+
+/**
+ * Fetch all orders once from Firestore directly
+ */
+export async function fetchAllOrdersFromFirestore(): Promise<Order[]> {
+  try {
+    const snap = await getDocs(collection(firestore, 'orders'));
+    const ordersList: Order[] = [];
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      if (d && (d.id || d.orderNumber)) {
+        ordersList.push({
+          id: d.id || docSnap.id,
+          orderNumber: d.orderNumber || d.id || docSnap.id,
+          date: d.date || new Date().toISOString().split('T')[0],
+          status: d.status || 'Confirmed',
+          items: Array.isArray(d.items) ? d.items : [],
+          subtotal: Number(d.subtotal) || 0,
+          shippingFee: Number(d.shippingFee) || 0,
+          discount: Number(d.discount) || 0,
+          tax: Number(d.tax) || 0,
+          total: Number(d.total) || 0,
+          shippingAddress: d.shippingAddress || {
+            fullName: 'Valued Patron',
+            addressLine1: 'Atelier Destination',
+            city: 'Mumbai',
+            state: 'MH',
+            postalCode: '400001',
+            country: 'India',
+            phone: ''
+          },
+          trackingNumber: d.trackingNumber || `TRACK-NXT-${docSnap.id.slice(-6).toUpperCase()}`,
+          paymentMethod: d.paymentMethod || 'Razorpay Online',
+          estimatedDelivery: d.estimatedDelivery || '3–5 Business Days',
+          userId: d.userId,
+          customerEmail: d.customerEmail,
+          createdAt: d.createdAt,
+          statusUpdates: d.statusUpdates || []
+        });
+      }
+    });
+
+    ordersList.sort((a, b) => {
+      const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+      const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+
+    return ordersList;
+  } catch (err) {
+    console.warn('Fetch all orders from Firestore notice:', err);
+    return [];
+  }
+}
+
 

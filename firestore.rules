@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User private profiles and synchronization data
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Orders collection:
+    // Anyone can create an order (guests and logged-in patrons)
+    // Anyone can read orders (for order confirmation, tracking, and atelier admin management)
+    // Admin or patron can update order status (such as status, tracking, or delivery updates)
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+
+    // Newsletter subscribers
+    match /newsletterSubscribers/{subId} {
+      allow read, write: if true;
+    }
+
+    // Test connection doc
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

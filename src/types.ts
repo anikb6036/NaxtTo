@@ -150,11 +150,19 @@ export interface Order {
   discount: number;
   tax: number;
   total: number;
-  status: 'Confirmed' | 'Crafting' | 'Dispatched' | 'Delivered';
+  status: 'Confirmed' | 'Accepted' | 'Crafting' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   shippingAddress: Address;
   paymentMethod: string;
   trackingNumber: string;
   estimatedDelivery: string;
+  userId?: string;
+  customerEmail?: string;
+  createdAt?: string;
+  statusUpdates?: {
+    status: string;
+    timestamp: string;
+    note?: string;
+  }[];
 }
 
 export interface UserProfile {

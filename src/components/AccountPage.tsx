@@ -31,7 +31,13 @@ import {
   LogIn,
   Sliders,
   ChevronDown,
-  LayoutGrid
+  LayoutGrid,
+  CheckCircle2,
+  PackageCheck,
+  Home,
+  Printer,
+  Search,
+  RefreshCw
 } from 'lucide-react';
 import { UserProfile, Order, Address, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
@@ -39,6 +45,7 @@ import { apiClient } from '../services/api';
 
 interface AccountPageProps {
   user: UserProfile;
+  allOrders?: Order[];
   onUpdateUser: (updated: Partial<UserProfile>) => void;
   onBackToShop: () => void;
   onOpenWishlist: () => void;
@@ -51,6 +58,7 @@ interface AccountPageProps {
 
 export const AccountPage: React.FC<AccountPageProps> = ({
   user,
+  allOrders = [],
   onUpdateUser,
   onBackToShop,
   onOpenWishlist,
@@ -90,6 +98,46 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     return saved;
   });
   const authInProgressRef = useRef(false);
+
+  // Order tracking and search states
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [copiedTrackingId, setCopiedTrackingId] = useState<string | null>(null);
+  const [expandedTimelineOrderId, setExpandedTimelineOrderId] = useState<string | null>(null);
+
+  const handleCopyTracking = (text: string, id: string) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedTrackingId(id);
+      setTimeout(() => setCopiedTrackingId(null), 2000);
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleTrackOrderSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSearchError(null);
+    const query = orderSearchQuery.trim().toLowerCase();
+    if (!query) {
+      setTrackedOrder(null);
+      return;
+    }
+    const pool = [...(user.orderHistory || []), ...(allOrders || [])];
+    const match = pool.find(o => 
+      (o.id && o.id.toLowerCase() === query) ||
+      (o.orderNumber && o.orderNumber.toLowerCase() === query) ||
+      (o.trackingNumber && o.trackingNumber.toLowerCase() === query)
+    );
+    if (match) {
+      setTrackedOrder(match);
+      setSearchError(null);
+    } else {
+      setTrackedOrder(null);
+      setSearchError(`No order found matching "${orderSearchQuery.trim()}". Please verify the Order ID or Tracking Number.`);
+    }
+  };
 
   useEffect(() => {
     setUserName(user.name);
@@ -937,6 +985,364 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     );
   }
 
+  // Helper to render rich, real-time order tracking card
+  const renderOrderCard = (order: Order, isHighlighted = false) => {
+    const isCancelled = order.status === 'Cancelled';
+    const isOutForDelivery = order.status === 'Out for Delivery';
+    const isDelivered = order.status === 'Delivered';
+    const isDispatched = order.status === 'Dispatched';
+    const isAccepted = order.status === 'Accepted';
+    const isCrafting = order.status === 'Crafting';
+
+    let currentStep = 0;
+    if (order.status === 'Accepted') currentStep = 1;
+    else if (order.status === 'Crafting') currentStep = 2;
+    else if (isDispatched) currentStep = 3;
+    else if (isOutForDelivery) currentStep = 3.5;
+    else if (isDelivered) currentStep = 4;
+
+    const steps = [
+      { id: 'confirmed', label: 'Order Placed', sub: 'Verified & Logged', icon: PackageCheck },
+      { id: 'accepted', label: 'Atelier Accepted', sub: 'Artisan Assigned', icon: CheckCircle2 },
+      { id: 'crafting', label: 'In Handcrafting', sub: 'Hallmarking & Polish', icon: Sparkles },
+      { 
+        id: 'dispatch', 
+        label: isOutForDelivery ? 'Out for Delivery' : 'In Transit', 
+        sub: isOutForDelivery ? 'Arriving Today' : 'Insured Courier', 
+        icon: Truck 
+      },
+      { id: 'delivered', label: 'Delivered', sub: 'Signed by Patron', icon: Home }
+    ];
+
+    return (
+      <div 
+        key={order.id}
+        className={`p-6 sm:p-7 rounded-2xl border bg-white space-y-6 shadow-xs hover:shadow-md transition-all ${
+          isHighlighted ? 'border-[#0071e3]/40 ring-2 ring-[#0071e3]/10' : 'border-[#e5e5ea]'
+        }`}
+      >
+        {/* Header: Order ID, Date & Dynamic Status Badge */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#e5e5ea] text-xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#86868b]">
+              Atelier Consignment
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm sm:text-base text-[#1d1d1f] font-mono">
+                {order.orderNumber}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleCopyTracking(order.orderNumber, `ord-${order.id}`)}
+                className="text-[#86868b] hover:text-[#1d1d1f] transition-colors p-1"
+                title="Copy Order ID"
+              >
+                {copiedTrackingId === `ord-${order.id}` ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[#86868b]">Placed: {order.date}</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 ${
+              isDelivered
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : isOutForDelivery
+                ? 'bg-indigo-50 text-indigo-900 border-indigo-300 ring-2 ring-indigo-200 shadow-2xs'
+                : isDispatched
+                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                : isCrafting
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : isAccepted
+                ? 'bg-purple-50 text-purple-800 border-purple-200'
+                : isCancelled
+                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}>
+              {isOutForDelivery && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600" />
+                </span>
+              )}
+              {isCrafting && <Sparkles className="w-3 h-3 text-amber-600" />}
+              {isAccepted && <CheckCircle2 className="w-3 h-3 text-purple-600" />}
+              {isDispatched && <Truck className="w-3 h-3 text-blue-600" />}
+              {isDelivered && <Check className="w-3 h-3 text-emerald-600" />}
+              <span>{order.status}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* 5-Step Visual Milestone Stepper */}
+        {!isCancelled && (
+          <div className="py-2">
+            <div className="relative">
+              {/* Connecting background bar */}
+              <div className="absolute top-4 left-4 right-4 h-0.5 bg-[#e5e5ea] -z-0" />
+              {/* Filled progress bar */}
+              <div 
+                className="absolute top-4 left-4 h-0.5 bg-[#1d1d1f] transition-all duration-500 -z-0"
+                style={{ 
+                  width: `${Math.min(100, Math.max(0, (currentStep / 4) * 100))}%` 
+                }}
+              />
+
+              <div className="grid grid-cols-5 relative z-10 text-center">
+                {steps.map((step, idx) => {
+                  const Icon = step.icon;
+                  const isCompleted = currentStep > idx;
+                  const isCurrent = (currentStep === idx) || (idx === 3 && isOutForDelivery);
+                  
+                  return (
+                    <div key={step.id} className="flex flex-col items-center group">
+                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${
+                        isCompleted
+                          ? 'bg-[#1d1d1f] text-white ring-4 ring-white shadow-xs'
+                          : isCurrent
+                          ? isOutForDelivery
+                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-md animate-pulse'
+                            : 'bg-[#1d1d1f] text-white ring-4 ring-gray-100 shadow-xs'
+                          : 'bg-white border-2 border-[#e5e5ea] text-[#86868b]'
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className={`mt-2 text-[10px] sm:text-xs font-semibold leading-tight ${
+                        isCurrent ? (isOutForDelivery ? 'text-indigo-900 font-bold' : 'text-[#1d1d1f]') : isCompleted ? 'text-[#1d1d1f]' : 'text-[#86868b]'
+                      }`}>
+                        {step.label}
+                      </span>
+                      <span className="text-[9px] text-[#86868b] hidden sm:block">
+                        {step.sub}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Live Milestone Explanatory Card */}
+        <div className={`p-4 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isOutForDelivery
+            ? 'bg-indigo-50/80 border border-indigo-200 text-indigo-950'
+            : isDelivered
+            ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950'
+            : isDispatched
+            ? 'bg-blue-50/80 border border-blue-200 text-blue-950'
+            : isCrafting
+            ? 'bg-amber-50/80 border border-amber-200 text-amber-950'
+            : isAccepted
+            ? 'bg-purple-50/80 border border-purple-200 text-purple-950'
+            : 'bg-[#f5f5f7] border border-[#e5e5ea] text-[#555]'
+        }`}>
+          <div className="space-y-0.5">
+            <div className="font-semibold flex items-center gap-1.5">
+              {isOutForDelivery ? (
+                <>
+                  <Truck className="w-4 h-4 text-indigo-700 animate-bounce" />
+                  <span>Out with Express Courier for Personal Handover</span>
+                </>
+              ) : isDelivered ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Consignment Delivered & Signed</span>
+                </>
+              ) : isDispatched ? (
+                <>
+                  <Truck className="w-4 h-4 text-blue-700" />
+                  <span>Handed to Armored Express Carrier</span>
+                </>
+              ) : isCrafting ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-amber-700" />
+                  <span>Atelier Artisans Crafting & Hallmarking</span>
+                </>
+              ) : isAccepted ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-purple-700" />
+                  <span>Commission Accepted by Master Goldsmith</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-4 h-4 text-amber-700" />
+                  <span>Order Placed & Awaiting Master Jeweler Review</span>
+                </>
+              )}
+            </div>
+            <p className="text-[11px] opacity-90">
+              {isOutForDelivery
+                ? 'Your courier van has departed the local distribution hub. Signature is required upon delivery.'
+                : isDelivered
+                ? 'Package has been delivered to your destination address. Certificate of authenticity enclosed.'
+                : isDispatched
+                ? 'Your order has cleared the atelier vault and is in transit via insured priority courier.'
+                : isCrafting
+                ? 'Our master jewelers are currently setting, polishing, and stamping your solid gold pieces.'
+                : isAccepted
+                ? 'Your commission was reviewed and accepted by the atelier. Materials have been allocated.'
+                : 'Your order was successfully recorded. The atelier will accept and begin crafting shortly.'}
+            </p>
+          </div>
+
+          {order.estimatedDelivery && (
+            <div className="shrink-0 text-left sm:text-right bg-white/70 px-3 py-1.5 rounded-lg border border-black/5">
+              <span className="text-[10px] text-[#86868b] block uppercase font-bold">Estimated Handover</span>
+              <span className="font-bold text-[#1d1d1f]">{order.estimatedDelivery}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Courier Airway Bill & Destination Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-3.5 bg-[#fbfbfd] rounded-xl border border-[#e5e5ea] space-y-1">
+            <span className="font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5 text-[#86868b]" />
+              Consignment Tracking & Courier
+            </span>
+            {order.trackingNumber ? (
+              <div className="flex items-center justify-between pt-1">
+                <span className="font-mono text-xs font-bold text-[#1d1d1f] bg-white px-2 py-0.5 rounded border border-[#dadce0]">
+                  {order.trackingNumber}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyTracking(order.trackingNumber || '', `track-${order.id}`)}
+                  className="px-2 py-1 bg-white hover:bg-gray-100 text-[#1d1d1f] rounded border border-[#dadce0] text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  {copiedTrackingId === `track-${order.id}` ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy AWB</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <p className="text-[#86868b] text-[11px] pt-1">
+                Airway bill generated upon courier pickup.
+              </p>
+            )}
+          </div>
+
+          <div className="p-3.5 bg-[#fbfbfd] rounded-xl border border-[#e5e5ea] space-y-1">
+            <span className="font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[#86868b]" />
+              Delivery Destination
+            </span>
+            <p className="text-[#555] text-[11px] truncate">
+              {order.shippingAddress.fullName} • {order.shippingAddress.addressLine1}, {order.shippingAddress.city} {order.shippingAddress.postalCode}
+            </p>
+          </div>
+        </div>
+
+        {/* Chronological Status History Log (Collapsible) */}
+        {order.statusUpdates && order.statusUpdates.length > 0 && (
+          <div className="border border-[#e5e5ea] rounded-xl overflow-hidden text-xs">
+            <button
+              type="button"
+              onClick={() => setExpandedTimelineOrderId(
+                expandedTimelineOrderId === order.id ? null : order.id
+              )}
+              className="w-full p-3 bg-[#fbfbfd] hover:bg-[#f5f5f7] flex items-center justify-between font-semibold text-[#1d1d1f] transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-[#86868b]" />
+                Dispatch Timeline & Activity Logs ({order.statusUpdates.length})
+              </span>
+              <ChevronDown className={`w-4 h-4 text-[#86868b] transition-transform ${
+                expandedTimelineOrderId === order.id ? 'rotate-180' : ''
+              }`} />
+            </button>
+            
+            {expandedTimelineOrderId === order.id && (
+              <div className="p-3.5 space-y-3 bg-white divide-y divide-[#f5f5f7]">
+                {order.statusUpdates.map((update, idx) => (
+                  <div key={idx} className="pt-2.5 first:pt-0 flex items-start gap-3 text-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#1d1d1f] mt-1.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-[#1d1d1f]">{update.status}</span>
+                        <span className="text-[10px] text-[#86868b]">
+                          {new Date(update.timestamp).toLocaleString(undefined, { 
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#6e6e73] mt-0.5">{update.note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Order Items List */}
+        <div className="space-y-3">
+          <span className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider block">
+            Creations ({order.items.length})
+          </span>
+          <div className="divide-y divide-[#e5e5ea] border border-[#e5e5ea] rounded-xl overflow-hidden">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="p-3.5 flex items-center justify-between gap-4 bg-white">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.product.images[0] || ''}
+                    alt={item.product.name}
+                    className="w-14 h-14 rounded-lg object-cover bg-[#f5f5f7] border border-[#e5e5ea] shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-[#1d1d1f] truncate">
+                      {item.product.name}
+                    </h4>
+                    <p className="text-[11px] text-[#6e6e73]">
+                      Size: {item.selectedSize || 'Standard'} • {item.selectedFinish?.replace(/-/g, ' ') || 'Solid 18k Gold'} • Qty: {item.quantity}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-xs font-bold text-[#1d1d1f] shrink-0">
+                  {currencySymbol}{item.product.price * item.quantity}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Financial Settlement & Actions */}
+        <div className="pt-3 border-t border-[#e5e5ea] flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Invoice</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-[#6e6e73]">Total Settled:</span>
+            <span className="text-base font-bold text-[#1d1d1f]">
+              {currencySymbol}{order.total}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // IF LOGGED IN -> RENDER COMPLETE ACCOUNT DASHBOARD
   return (
     <div id="account-page" className="w-full bg-white text-[#1d1d1f] min-h-screen font-sans">
@@ -1235,104 +1641,100 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {/* TAB 2: Order History */}
             {activeTab === 'orders' && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e5e5ea]">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f]">
-                      Order History
+                      Order History & Consignment Tracker
                     </h1>
                     <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">
-                      Review previous purchases, track shipments, and access invoices
+                      Real-time artisan progress, courier dispatch tracking, and certificates
                     </p>
+                  </div>
+
+                  <div className="text-xs text-[#86868b] flex items-center gap-1.5 bg-[#f5f5f7] px-3 py-1.5 rounded-full border border-[#e5e5ea]">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Live Atelier & Courier Sync</span>
                   </div>
                 </div>
 
-                {user.orderHistory && user.orderHistory.length > 0 ? (
-                  <div className="space-y-5">
-                    {user.orderHistory.map((order) => (
-                      <div 
-                        key={order.id}
-                        className="p-6 rounded-2xl border border-[#e5e5ea] bg-white space-y-4 shadow-2xs hover:shadow-sm transition-all"
+                {/* Quick Search & Track Any Consignment Bar */}
+                <div className="p-4 bg-[#fbfbfd] rounded-2xl border border-[#e5e5ea] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+                      <Search className="w-3.5 h-3.5 text-[#86868b]" />
+                      Track Consignment by ID or Airway Bill
+                    </span>
+                    {trackedOrder && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTrackedOrder(null);
+                          setOrderSearchQuery('');
+                          setSearchError(null);
+                        }}
+                        className="text-[11px] text-[#0071e3] hover:underline cursor-pointer"
                       >
-                        {/* Order Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#e5e5ea] text-xs">
-                          <div>
-                            <span className="text-[#86868b]">Order Number: </span>
-                            <span className="font-semibold text-[#1d1d1f]">{order.orderNumber}</span>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className="text-[#86868b]">Placed: {order.date}</span>
-                            <span className={`px-2.5 py-0.5 rounded-full font-medium text-[11px] ${
-                              order.status === 'Delivered' 
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                : order.status === 'Dispatched'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Order Items */}
-                        <div className="space-y-3">
-                          {order.items.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-4">
-                              <img
-                                src={item.product.images[0]}
-                                alt={item.product.name}
-                                className="w-16 h-16 rounded-xl object-cover bg-[#f5f5f7] border border-[#e5e5ea] shrink-0"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-semibold text-[#1d1d1f] truncate">
-                                  {item.product.name}
-                                </h4>
-                                <p className="text-xs text-[#6e6e73]">
-                                  Size: {item.selectedSize || 'Standard'} • {item.selectedFinish?.replace(/-/g, ' ') || 'Solid Gold'} • Qty: {item.quantity}
-                                </p>
-                              </div>
-                              <div className="text-sm font-semibold text-[#1d1d1f] text-right shrink-0">
-                                {currencySymbol}{item.product.price * item.quantity}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Order Footer & Tracking */}
-                        <div className="pt-4 border-t border-[#e5e5ea] flex flex-wrap items-center justify-between gap-3 text-xs">
-                          <div>
-                            {order.trackingNumber && (
-                              <span className="text-[#6e6e73]">
-                                Tracking: <strong className="text-[#1d1d1f] font-mono">{order.trackingNumber}</strong>
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-4">
-                            <span className="text-xs text-[#6e6e73]">Total:</span>
-                            <span className="text-base font-semibold text-[#1d1d1f]">
-                              {currencySymbol}{order.total}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        Reset Search
+                      </button>
+                    )}
                   </div>
-                ) : (
+                  <form onSubmit={handleTrackOrderSearch} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. NXT-2026-..., ord-..., or TRACK-NXT-..."
+                      value={orderSearchQuery}
+                      onChange={(e) => setOrderSearchQuery(e.target.value)}
+                      className="flex-1 bg-white border border-[#dadce0] rounded-xl px-3 py-2 text-xs text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Track</span>
+                    </button>
+                  </form>
+                  {searchError && (
+                    <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+                      {searchError}
+                    </p>
+                  )}
+                </div>
+
+                {/* If user looked up a specific order via the search bar */}
+                {trackedOrder && (
+                  <div className="p-5 rounded-2xl border-2 border-[#0071e3]/30 bg-[#f8faff] space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between text-xs border-b border-[#0071e3]/20 pb-3">
+                      <span className="font-bold text-[#0071e3] flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4" /> Tracked Result: {trackedOrder.orderNumber}
+                      </span>
+                      <span className="text-[#86868b]">Placed: {trackedOrder.date}</span>
+                    </div>
+                    {/* Render the detailed order card for the searched order */}
+                    {renderOrderCard(trackedOrder, true)}
+                  </div>
+                )}
+
+                {/* Primary User Order History List */}
+                {user.orderHistory && user.orderHistory.length > 0 ? (
+                  <div className="space-y-6">
+                    {user.orderHistory.map((order) => renderOrderCard(order))}
+                  </div>
+                ) : !trackedOrder ? (
                   <div className="text-center py-16 bg-transparent rounded-2xl border border-[#e5e5ea] space-y-3">
                     <ShoppingBag className="w-8 h-8 text-[#86868b] mx-auto" />
-                    <h3 className="text-base font-semibold text-[#1d1d1f]">No Orders Yet</h3>
+                    <h3 className="text-base font-semibold text-[#1d1d1f]">No Orders Recorded Yet</h3>
                     <p className="text-xs text-[#6e6e73] max-w-sm mx-auto">
-                      Explore our handcrafted creations in solid 18k gold to begin your collection.
+                      Explore our handcrafted creations in solid 18k gold to place your first bespoke commission.
                     </p>
                     <button
                       onClick={onBackToShop}
-                      className="mt-2 px-5 py-2.5 bg-[#1d1d1f] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all"
+                      className="mt-2 px-5 py-2.5 bg-[#1d1d1f] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all cursor-pointer"
                     >
                       Explore Creations
                     </button>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 

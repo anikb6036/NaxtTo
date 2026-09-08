@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Patron user profile, cart, wishlist, and preferences",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "cartItems": { "type": "array" },
+        "wishlistItems": { "type": "array" },
+        "savedAddresses": { "type": "array" },
+        "lastActiveAt": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "High jewelry patron orders and tracking lifecycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { 
+          "type": "string",
+          "enum": ["Confirmed", "Accepted", "Crafting", "Dispatched", "Out for Delivery", "Delivered", "Cancelled"]
+        },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shippingFee": { "type": "number" },
+        "discount": { "type": "number" },
+        "tax": { "type": "number" },
+        "total": { "type": "number" },
+        "shippingAddress": { "type": "object" },
+        "paymentMethod": { "type": "string" },
+        "trackingNumber": { "type": "string" },
+        "estimatedDelivery": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "orderNumber", "total", "status"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Atelier newsletter subscriber",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "subscribedAt": { "type": "string" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores patron account data, carts, wishlists, and addresses"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Stores confirmed atelier jewellery orders"
+    },
+    "/newsletterSubscribers/{subId}": {
+      "schema": "NewsletterSubscriber",
+      "description": "Stores newsletter subscription emails"
+    }
+  }
+}
