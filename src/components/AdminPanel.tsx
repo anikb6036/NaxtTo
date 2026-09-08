@@ -40,6 +40,7 @@ interface AdminPanelProps {
   onSignOut: () => void;
   currencySymbol: string;
   staffInfo?: { email: string; role: string; name: string } | null;
+  onRefreshOrders?: () => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -52,7 +53,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onBackToShop,
   onSignOut,
   currencySymbol,
-  staffInfo
+  staffInfo,
+  onRefreshOrders
 }) => {
   // Navigation active tab in Seller Hub
   const [activeNavTab, setActiveNavTab] = useState<SellerNavTab>('listings');
@@ -219,6 +221,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   showToast(`Order status updated to "${status}"`);
                 }}
                 currencySymbol={currencySymbol}
+                onRefreshOrders={onRefreshOrders}
               />
             ) : activeNavTab === 'inventory' ? (
               /* View D: Inventory Management */

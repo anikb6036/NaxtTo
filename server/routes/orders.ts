@@ -21,16 +21,33 @@ ordersRouter.get('/', async (req: Request, res: Response) => {
 // POST /api/orders - create new order
 ordersRouter.post('/', async (req: Request, res: Response) => {
   try {
-    const { items, total, totalAmount, subtotal, shippingFee, tax, discount, shippingAddress, paymentMethod } = req.body;
+    const { 
+      id,
+      orderNumber,
+      date,
+      status,
+      items, 
+      total, 
+      totalAmount, 
+      subtotal, 
+      shippingFee, 
+      tax, 
+      discount, 
+      shippingAddress, 
+      trackingNumber,
+      paymentMethod,
+      estimatedDelivery
+    } = req.body;
+
     const orderItems = items || [];
     const finalTotal = total ?? totalAmount ?? 0;
+    const orderId = id || `NXT-${Date.now().toString().slice(-6)}`;
 
-    const orderId = `NXT-${Date.now().toString().slice(-6)}`;
     const newOrder: Order = {
       id: orderId,
-      orderNumber: `NXT-${Date.now().toString().slice(-6)}`,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Confirmed',
+      orderNumber: orderNumber || orderId,
+      date: date || new Date().toISOString().split('T')[0],
+      status: status || 'Confirmed',
       items: orderItems,
       subtotal: subtotal ?? finalTotal,
       shippingFee: shippingFee ?? 0,
@@ -46,9 +63,9 @@ ordersRouter.post('/', async (req: Request, res: Response) => {
         country: 'Italy',
         phone: '+39 02 8765 4321'
       },
-      trackingNumber: `TRACK-NXT-${Math.floor(100000 + Math.random() * 900000)}`,
-      paymentMethod: paymentMethod || 'Visa ending in 4242',
-      estimatedDelivery: '3-5 Business Days'
+      trackingNumber: trackingNumber || `TRACK-NXT-${Math.floor(100000 + Math.random() * 900000)}`,
+      paymentMethod: paymentMethod || 'Razorpay Online',
+      estimatedDelivery: estimatedDelivery || '3-5 Business Days'
     };
 
     const saved = await createOrderInDb(newOrder);

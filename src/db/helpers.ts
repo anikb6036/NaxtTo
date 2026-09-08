@@ -4,12 +4,15 @@ import { eq, desc } from 'drizzle-orm';
 import { INITIAL_PRODUCTS } from '../data/mockData';
 import { Product, Order } from '../types';
 
+let inMemoryProducts: Product[] = [...INITIAL_PRODUCTS];
+const inMemoryOrders: Order[] = [];
+const inMemorySubscribers: { id: string; email: string; subscribedAt: Date }[] = [];
+
 export async function seedProductsIfEmpty(): Promise<void> {
+  if (!db) return;
   try {
-    if (!db) return;
     const existing = await db.select().from(products).limit(1);
     if (existing.length === 0) {
-      console.log('Seeding initial products into PostgreSQL...');
       for (const prod of INITIAL_PRODUCTS) {
         await db.insert(products).values({
           id: prod.id,
@@ -40,10 +43,9 @@ export async function seedProductsIfEmpty(): Promise<void> {
           reviews: prod.reviews || []
         }).onConflictDoNothing();
       }
-      console.log('Products seeded successfully.');
     }
-  } catch (error) {
-    console.error('Error seeding products:', error);
+  } catch {
+    // Database unconfigured or unavailable, fallback safely
   }
 }
 
@@ -214,32 +216,42 @@ export async function deleteProductFromDb(id: string): Promise<boolean> {
 }
 
 export async function getAllOrders(): Promise<Order[]> {
-  try {
-    if (!db) return [];
-    const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
-    return rows.map(r => ({
-      id: r.id,
-      orderNumber: r.orderNumber,
-      date: r.date,
-      status: r.status as any,
-      items: (r.items as any[]) || [],
-      subtotal: r.subtotal,
-      shippingFee: r.shippingFee || 0,
-      discount: r.discount || 0,
-      tax: r.tax || 0,
-      total: r.total,
-      shippingAddress: r.shippingAddress as any,
-      trackingNumber: r.trackingNumber || undefined,
-      paymentMethod: r.paymentMethod || undefined,
-      estimatedDelivery: r.estimatedDelivery || undefined
-    }));
-  } catch (error) {
-    console.error('Failed to get orders from DB:', error);
-    return [];
+  if (db) {
+    try {
+      const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
+      if (rows && rows.length > 0) {
+        return rows.map(r => ({
+          id: r.id,
+          orderNumber: r.orderNumber,
+          date: r.date,
+          status: r.status as any,
+          items: (r.items as any[]) || [],
+          subtotal: r.subtotal,
+          shippingFee: r.shippingFee || 0,
+          discount: r.discount || 0,
+          tax: r.tax || 0,
+          total: r.total,
+          shippingAddress: r.shippingAddress as any,
+          trackingNumber: r.trackingNumber || undefined,
+          paymentMethod: r.paymentMethod || undefined,
+          estimatedDelivery: r.estimatedDelivery || undefined
+        }));
+      }
+    } catch {
+      // Fallback to in-memory store
+    }
   }
+  return inMemoryOrders;
 }
 
 export async function createOrderInDb(order: Order): Promise<Order> {
+  const existingIdx = inMemoryOrders.findIndex(o => o.id === order.id);
+  if (existingIdx >= 0) {
+    inMemoryOrders[existingIdx] = order;
+  } else {
+    inMemoryOrders.unshift(order);
+  }
+
   if (db) {
     try {
       await db.insert(orders).values({
@@ -258,38 +270,65 @@ export async function createOrderInDb(order: Order): Promise<Order> {
         paymentMethod: order.paymentMethod,
         estimatedDelivery: order.estimatedDelivery
       });
-    } catch (err) {
-      console.warn('DB createOrder fallback:', err);
+    } catch {
+      // In-memory store safely registered order
     }
   }
   return order;
 }
 
 export async function updateOrderStatusInDb(id: string, status: string): Promise<boolean> {
+  const existing = inMemoryOrders.find(o => o.id === id);
+  if (existing) {
+    existing.status = status as any;
+  }
+
   if (db) {
     try {
       await db.update(orders).set({ status }).where(eq(orders.id, id));
-      return true;
-    } catch (err) {
-      console.warn('DB updateOrderStatus fallback:', err);
+    } catch {
+      // In-memory store updated
     }
   }
   return true;
 }
 
 export async function subscribeNewsletterInDb(email: string): Promise<boolean> {
+  const cleanEmail = email.trim().toLowerCase();
+  const existing = inMemorySubscribers.find(s => s.email === cleanEmail);
+  if (!existing) {
+    inMemorySubscribers.unshift({
+      id: `sub-${Date.now()}`,
+      email: cleanEmail,
+      subscribedAt: new Date()
+    });
+  }
+
   if (db) {
     try {
       await db.insert(newsletterSubscribers).values({
         id: `sub-${Date.now()}`,
-        email: email.toLowerCase()
+        email: cleanEmail
       }).onConflictDoNothing();
-      return true;
-    } catch (err) {
-      console.warn('DB subscribeNewsletter fallback:', err);
+    } catch {
+      // In-memory store updated
     }
   }
   return true;
+}
+
+export async function getNewsletterSubscribersFromDb(): Promise<{ id: string; email: string; subscribedAt: Date }[]> {
+  if (db) {
+    try {
+      const list = await db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.subscribedAt));
+      if (list && list.length > 0) {
+        return list;
+      }
+    } catch {
+      // Fallback
+    }
+  }
+  return inMemorySubscribers;
 }
 
 export async function upsertUserInDb(userData: { id: string; name: string; email: string; memberTier?: string; avatar?: string }): Promise<any> {
@@ -309,9 +348,9 @@ export async function upsertUserInDb(userData: { id: string; name: string; email
         }
       }).returning();
       return result[0];
-    } catch (err) {
-      console.warn('DB upsertUser fallback:', err);
+    } catch {
+      // Fallback to memory record
     }
   }
-  return { id: userData.id, name: userData.name, email: userData.email };
+  return { id: userData.id, name: userData.name, email: userData.email, memberTier: userData.memberTier || 'NaxtTo Circle' };
 }

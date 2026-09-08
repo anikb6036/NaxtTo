@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   Product, 
   CartItem, 
@@ -137,6 +137,75 @@ export default function App() {
     }
     return [];
   });
+
+  // Fetch orders from backend API and sync with local state & storage
+  const refreshOrders = useCallback(async () => {
+    try {
+      const serverOrders = await apiClient.getOrders();
+      if (Array.isArray(serverOrders) && serverOrders.length > 0) {
+        setOrders(prev => {
+          const map = new Map<string, Order>();
+          // Combine existing with server orders
+          (Array.isArray(prev) ? prev : []).forEach(o => {
+            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
+          });
+          serverOrders.forEach(o => {
+            if (o && (o.id || o.orderNumber)) {
+              map.set(o.id || o.orderNumber, o);
+            }
+          });
+          const combined = Array.from(map.values()).sort((a, b) => {
+            const timeA = new Date(a.date || (a as any).createdAt || 0).getTime();
+            const timeB = new Date(b.date || (b as any).createdAt || 0).getTime();
+            return timeB - timeA;
+          });
+          safeSetItem('naxtto_all_orders', JSON.stringify(combined.slice(0, 50).map(sanitizeOrderForStorage)));
+          return combined;
+        });
+      }
+    } catch (err) {
+      console.warn('Orders sync notice:', err);
+    }
+  }, []);
+
+  // Fetch initial orders on app load
+  useEffect(() => {
+    refreshOrders();
+  }, [refreshOrders]);
+
+  // Listen to cross-window storage updates and local dispatch events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'naxtto_all_orders' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setOrders(parsed);
+          }
+        } catch {}
+      }
+    };
+    const handleCustomOrder = (e: Event) => {
+      const customEvent = e as CustomEvent<Order>;
+      if (customEvent.detail) {
+        setOrders(prev => {
+          const exists = (prev || []).some(o => o.id === customEvent.detail.id);
+          if (!exists) {
+            return [customEvent.detail, ...(prev || [])];
+          }
+          return prev;
+        });
+      }
+      refreshOrders();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('naxtto:order_placed', handleCustomOrder);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('naxtto:order_placed', handleCustomOrder);
+    };
+  }, [refreshOrders]);
 
   // Synchronize cart and wishlist whenever user login state changes
   useEffect(() => {
@@ -304,8 +373,10 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    const compactOrders = (Array.isArray(orders) ? orders.slice(0, 15) : []).map(sanitizeOrderForStorage);
-    safeSetItem('naxtto_all_orders', JSON.stringify(compactOrders));
+    if (Array.isArray(orders) && orders.length > 0) {
+      const compactOrders = orders.slice(0, 50).map(sanitizeOrderForStorage);
+      safeSetItem('naxtto_all_orders', JSON.stringify(compactOrders));
+    }
   }, [orders]);
 
   // 2. Currency State (Default: INR)
@@ -323,6 +394,15 @@ export default function App() {
   // 3. Navigation View State: 'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'
   const [currentView, setCurrentView] = useState<'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'>('shop');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Sync orders periodically when viewing the Admin Panel so live orders reflect immediately
+  useEffect(() => {
+    if (currentView === 'admin') {
+      refreshOrders();
+      const timer = setInterval(refreshOrders, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [currentView, refreshOrders]);
 
   // Staff / Admin Authentication State (Credential Verification Required)
   const [isStaffAuthenticated, setIsStaffAuthenticated] = useState<boolean>(() => {
@@ -732,7 +812,12 @@ export default function App() {
         };
       });
 
-      setOrders(prev => [newOrder, ...(Array.isArray(prev) ? prev : [])]);
+      setOrders(prev => {
+        const filtered = (Array.isArray(prev) ? prev : []).filter(o => o.id !== newOrder.id && o.orderNumber !== newOrder.orderNumber);
+        const updated = [newOrder, ...filtered];
+        safeSetItem('naxtto_all_orders', JSON.stringify(updated.slice(0, 50).map(sanitizeOrderForStorage)));
+        return updated;
+      });
       setCartItems([]);
       
       try {
@@ -741,11 +826,14 @@ export default function App() {
         }
         sessionStorage.setItem('naxtto_completed_order', JSON.stringify(newOrder));
         safeSetItem('naxtto_last_order', JSON.stringify(sanitizeOrderForStorage(newOrder)));
+        window.dispatchEvent(new CustomEvent('naxtto:order_placed', { detail: newOrder }));
       } catch {
         // ignore
       }
 
-      apiClient.createOrder(newOrder).catch(err => {
+      apiClient.createOrder(newOrder).then(() => {
+        refreshOrders();
+      }).catch(err => {
         console.warn('Backend order recording notice:', err);
       });
     } catch (err) {
@@ -942,6 +1030,7 @@ export default function App() {
           onSignOut={handleAdminSignOut}
           currencySymbol={currencySymbol}
           staffInfo={staffUser}
+          onRefreshOrders={refreshOrders}
         />
       ) : currentView === 'account' ? (
         <AccountPage

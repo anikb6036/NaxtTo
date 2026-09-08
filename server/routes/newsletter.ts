@@ -1,8 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { subscribeNewsletterInDb } from '../../src/db/helpers';
-import { db } from '../../src/db';
-import { newsletterSubscribers } from '../../src/db/schema';
-import { desc } from 'drizzle-orm';
+import { subscribeNewsletterInDb, getNewsletterSubscribersFromDb } from '../../src/db/helpers';
 
 export const newsletterRouter = Router();
 
@@ -29,7 +26,7 @@ newsletterRouter.post('/subscribe', async (req: Request, res: Response) => {
 // GET /api/newsletter/subscribers - for admin
 newsletterRouter.get('/subscribers', async (req: Request, res: Response) => {
   try {
-    const list = await db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.subscribedAt));
+    const list = await getNewsletterSubscribersFromDb();
     res.json({
       success: true,
       count: list.length,
@@ -39,3 +36,4 @@ newsletterRouter.get('/subscribers', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch subscribers' });
   }
 });
+

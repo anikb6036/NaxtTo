@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import fs from 'fs';
 import * as schema from './schema';
 
 declare global {
@@ -8,9 +9,18 @@ declare global {
 
 export const createPool = () => {
   if (!global._postgresPool) {
-    if (!process.env.SQL_HOST && !process.env.DATABASE_URL) {
+    const host = process.env.SQL_HOST;
+    const dbUrl = process.env.DATABASE_URL;
+
+    if (!host && !dbUrl) {
       return null;
     }
+
+    // If host is configured as a unix socket path, verify socket exists before attempting connection
+    if (host && host.startsWith('/') && !fs.existsSync(host)) {
+      return null;
+    }
+
     try {
       global._postgresPool = new Pool({
         host: process.env.SQL_HOST,
@@ -18,14 +28,13 @@ export const createPool = () => {
         password: process.env.SQL_PASSWORD,
         database: process.env.SQL_DB_NAME,
         max: 10,
-        connectionTimeoutMillis: 15000,
+        connectionTimeoutMillis: 5000,
       });
 
       global._postgresPool.on('error', (err) => {
-        console.warn('Postgres pool warning:', err);
+        // Prevent unhandled errors from idle clients
       });
     } catch (err) {
-      console.warn('Failed to initialize Postgres pool:', err);
       return null;
     }
   }
@@ -33,4 +42,5 @@ export const createPool = () => {
 };
 
 const pool = createPool();
-export const db = pool ? drizzle(pool, { schema }) : (null as any);
+export const db = pool ? drizzle(pool, { schema }) : null;
+

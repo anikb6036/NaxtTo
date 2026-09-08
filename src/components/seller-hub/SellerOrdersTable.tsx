@@ -10,7 +10,8 @@ import {
   ArrowUpDown,
   ShoppingBag,
   Filter,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { Order } from '../../types';
 
@@ -19,23 +20,34 @@ interface SellerOrdersTableProps {
   onSelectOrder: (order: Order) => void;
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   currencySymbol: string;
+  onRefreshOrders?: () => void;
 }
 
 export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
   orders,
   onSelectOrder,
   onUpdateOrderStatus,
-  currencySymbol
+  currencySymbol,
+  onRefreshOrders
 }) => {
   const [orderStatusTab, setOrderStatusTab] = useState<'all' | 'pending' | 'ready_to_dispatch' | 'shipped' | 'delivered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshClick = () => {
+    if (onRefreshOrders) {
+      setIsRefreshing(true);
+      onRefreshOrders();
+      setTimeout(() => setIsRefreshing(false), 800);
+    }
+  };
 
   const filteredOrders = orders.filter(o => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const match = o.orderNumber.toLowerCase().includes(q) ||
-                    o.shippingAddress.fullName.toLowerCase().includes(q) ||
-                    o.trackingNumber.toLowerCase().includes(q);
+      const match = (o.orderNumber || '').toLowerCase().includes(q) ||
+                    (o.shippingAddress?.fullName || '').toLowerCase().includes(q) ||
+                    (o.trackingNumber || '').toLowerCase().includes(q);
       if (!match) return false;
     }
     if (orderStatusTab === 'pending' && o.status !== 'Confirmed') return false;
@@ -68,6 +80,17 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
               className="w-48 sm:w-64 bg-[#f5f5f7] border border-transparent focus:border-[#2874f0] focus:bg-white text-xs rounded-lg pl-9 pr-3 py-2 outline-none"
             />
           </div>
+          {onRefreshOrders && (
+            <button
+              type="button"
+              onClick={handleRefreshClick}
+              title="Refresh orders from ledger"
+              className="border border-[#dadce0] rounded-lg px-3 py-2 text-xs font-medium text-[#212121] hover:bg-[#f5f5f7] flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#717478] ${isRefreshing ? 'animate-spin text-[#2874f0]' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          )}
           <button
             type="button"
             className="border border-[#dadce0] rounded-lg px-3 py-2 text-xs font-medium text-[#212121] hover:bg-[#f5f5f7] flex items-center gap-1"
@@ -174,24 +197,24 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                     </td>
 
                     <td className="py-3 px-4">
-                      <p className="font-semibold text-xs text-[#212121]">{ord.shippingAddress.fullName}</p>
+                      <p className="font-semibold text-xs text-[#212121]">{ord.shippingAddress?.fullName || 'Patron of Atelier'}</p>
                       <p className="text-[11px] text-[#717478] truncate max-w-[160px]">
-                        {ord.shippingAddress.city}, {ord.shippingAddress.country}
+                        {ord.shippingAddress?.city || 'Bespoke'}, {ord.shippingAddress?.country || 'India'}
                       </p>
                     </td>
 
                     <td className="py-3 px-4">
                       <p className="font-medium text-xs text-[#212121]">
-                        {ord.items.reduce((sum, item) => sum + item.quantity, 0)} item(s)
+                        {(ord.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} item(s)
                       </p>
                       <p className="text-[11px] text-[#717478] truncate max-w-[180px]">
-                        {ord.items[0]?.product.name}
+                        {ord.items?.[0]?.product?.name || (ord.items?.[0] as any)?.name || 'Atelier Fine Jewellery'}
                       </p>
                     </td>
 
                     <td className="py-3 px-4">
-                      <p className="font-bold text-xs text-[#212121]">{currencySymbol}{ord.total.toFixed(2)}</p>
-                      <p className="text-[10px] text-[#717478] capitalize">{ord.paymentMethod.replace('-', ' ')}</p>
+                      <p className="font-bold text-xs text-[#212121]">{currencySymbol}{(Number(ord.total) || 0).toFixed(2)}</p>
+                      <p className="text-[10px] text-[#717478] capitalize">{(ord.paymentMethod || 'Razorpay').replace('-', ' ')}</p>
                     </td>
 
                     <td className="py-3 px-4">
@@ -202,13 +225,13 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                           ? 'bg-[#e8f0fe] text-[#1a73e8] border-[#d2e3fc]'
                           : 'bg-[#fef7e0] text-[#b06000] border-[#feefc3]'
                       }`}>
-                        {ord.status}
+                        {ord.status || 'Confirmed'}
                       </span>
                     </td>
 
                     <td className="py-3 px-4">
                       <span className="font-mono text-[11px] text-[#717478]">
-                        {ord.trackingNumber}
+                        {ord.trackingNumber || 'N/A'}
                       </span>
                     </td>
 
