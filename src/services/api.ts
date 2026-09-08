@@ -176,10 +176,14 @@ export const apiClient = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, currency, receipt, notes })
       });
-      return await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+      return { success: false, keyId: 'rzp_test_TZC5OuxpUn3JdQ', message: 'Direct payment gateway' };
     } catch (err) {
-      console.error('Failed to create Razorpay order:', err);
-      return { success: false, message: 'Could not connect to payment gateway' };
+      console.warn('Failed to create Razorpay order on server, using standard browser gateway:', err);
+      return { success: false, keyId: 'rzp_test_TZC5OuxpUn3JdQ', message: 'Direct payment gateway' };
     }
   },
 

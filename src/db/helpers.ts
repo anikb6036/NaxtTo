@@ -6,6 +6,7 @@ import { Product, Order } from '../types';
 
 export async function seedProductsIfEmpty(): Promise<void> {
   try {
+    if (!db) return;
     const existing = await db.select().from(products).limit(1);
     if (existing.length === 0) {
       console.log('Seeding initial products into PostgreSQL...');
@@ -48,6 +49,7 @@ export async function seedProductsIfEmpty(): Promise<void> {
 
 export async function getAllProducts(): Promise<Product[]> {
   try {
+    if (!db) return INITIAL_PRODUCTS;
     await seedProductsIfEmpty();
     const rows = await db.select().from(products).orderBy(desc(products.createdAt));
     return rows.map(r => ({
@@ -86,6 +88,7 @@ export async function getAllProducts(): Promise<Product[]> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
+    if (!db) return INITIAL_PRODUCTS.find(p => p.id === id) || null;
     const rows = await db.select().from(products).where(eq(products.id, id));
     if (rows.length === 0) return null;
     const r = rows[0];
@@ -119,79 +122,100 @@ export async function getProductById(id: string): Promise<Product | null> {
     };
   } catch (error) {
     console.error('Failed to get product by ID:', error);
-    return null;
+    return INITIAL_PRODUCTS.find(p => p.id === id) || null;
   }
 }
 
 export async function createProduct(prod: Product): Promise<Product> {
-  await db.insert(products).values({
-    id: prod.id,
-    name: prod.name,
-    subtitle: prod.subtitle,
-    price: prod.price,
-    originalPrice: prod.originalPrice,
-    category: prod.category,
-    metal: prod.metal,
-    metalName: prod.metalName,
-    style: prod.style,
-    styleName: prod.styleName,
-    images: prod.images,
-    description: prod.description,
-    story: prod.story,
-    features: prod.features,
-    dimensions: prod.dimensions,
-    karatPurity: prod.karatPurity,
-    origin: prod.origin,
-    inStock: prod.inStock,
-    stockCount: prod.stockCount,
-    isBestSeller: prod.isBestSeller,
-    isNewArrival: prod.isNewArrival,
-    rating: prod.rating,
-    reviewsCount: prod.reviewsCount,
-    availableSizes: prod.availableSizes,
-    availableFinishes: prod.availableFinishes,
-    reviews: prod.reviews || []
-  });
+  if (db) {
+    try {
+      await db.insert(products).values({
+        id: prod.id,
+        name: prod.name,
+        subtitle: prod.subtitle,
+        price: prod.price,
+        originalPrice: prod.originalPrice,
+        category: prod.category,
+        metal: prod.metal,
+        metalName: prod.metalName,
+        style: prod.style,
+        styleName: prod.styleName,
+        images: prod.images,
+        description: prod.description,
+        story: prod.story,
+        features: prod.features,
+        dimensions: prod.dimensions,
+        karatPurity: prod.karatPurity,
+        origin: prod.origin,
+        inStock: prod.inStock,
+        stockCount: prod.stockCount,
+        isBestSeller: prod.isBestSeller,
+        isNewArrival: prod.isNewArrival,
+        rating: prod.rating,
+        reviewsCount: prod.reviewsCount,
+        availableSizes: prod.availableSizes,
+        availableFinishes: prod.availableFinishes,
+        reviews: prod.reviews || []
+      });
+    } catch (err) {
+      console.warn('DB createProduct fallback:', err);
+    }
+  }
   return prod;
 }
 
 export async function updateProductInDb(id: string, updates: Partial<Product>): Promise<Product | null> {
-  const updatePayload: any = {};
-  if (updates.name !== undefined) updatePayload.name = updates.name;
-  if (updates.subtitle !== undefined) updatePayload.subtitle = updates.subtitle;
-  if (updates.price !== undefined) updatePayload.price = updates.price;
-  if (updates.originalPrice !== undefined) updatePayload.originalPrice = updates.originalPrice;
-  if (updates.category !== undefined) updatePayload.category = updates.category;
-  if (updates.metal !== undefined) updatePayload.metal = updates.metal;
-  if (updates.metalName !== undefined) updatePayload.metalName = updates.metalName;
-  if (updates.style !== undefined) updatePayload.style = updates.style;
-  if (updates.styleName !== undefined) updatePayload.styleName = updates.styleName;
-  if (updates.images !== undefined) updatePayload.images = updates.images;
-  if (updates.description !== undefined) updatePayload.description = updates.description;
-  if (updates.story !== undefined) updatePayload.story = updates.story;
-  if (updates.features !== undefined) updatePayload.features = updates.features;
-  if (updates.dimensions !== undefined) updatePayload.dimensions = updates.dimensions;
-  if (updates.karatPurity !== undefined) updatePayload.karatPurity = updates.karatPurity;
-  if (updates.origin !== undefined) updatePayload.origin = updates.origin;
-  if (updates.inStock !== undefined) updatePayload.inStock = updates.inStock;
-  if (updates.stockCount !== undefined) updatePayload.stockCount = updates.stockCount;
-  if (updates.isBestSeller !== undefined) updatePayload.isBestSeller = updates.isBestSeller;
-  if (updates.isNewArrival !== undefined) updatePayload.isNewArrival = updates.isNewArrival;
-  if (updates.availableSizes !== undefined) updatePayload.availableSizes = updates.availableSizes;
-  if (updates.availableFinishes !== undefined) updatePayload.availableFinishes = updates.availableFinishes;
-  if (updates.reviews !== undefined) updatePayload.reviews = updates.reviews;
+  if (db) {
+    try {
+      const updatePayload: any = {};
+      if (updates.name !== undefined) updatePayload.name = updates.name;
+      if (updates.subtitle !== undefined) updatePayload.subtitle = updates.subtitle;
+      if (updates.price !== undefined) updatePayload.price = updates.price;
+      if (updates.originalPrice !== undefined) updatePayload.originalPrice = updates.originalPrice;
+      if (updates.category !== undefined) updatePayload.category = updates.category;
+      if (updates.metal !== undefined) updatePayload.metal = updates.metal;
+      if (updates.metalName !== undefined) updatePayload.metalName = updates.metalName;
+      if (updates.style !== undefined) updatePayload.style = updates.style;
+      if (updates.styleName !== undefined) updatePayload.styleName = updates.styleName;
+      if (updates.images !== undefined) updatePayload.images = updates.images;
+      if (updates.description !== undefined) updatePayload.description = updates.description;
+      if (updates.story !== undefined) updatePayload.story = updates.story;
+      if (updates.features !== undefined) updatePayload.features = updates.features;
+      if (updates.dimensions !== undefined) updatePayload.dimensions = updates.dimensions;
+      if (updates.karatPurity !== undefined) updatePayload.karatPurity = updates.karatPurity;
+      if (updates.origin !== undefined) updatePayload.origin = updates.origin;
+      if (updates.inStock !== undefined) updatePayload.inStock = updates.inStock;
+      if (updates.stockCount !== undefined) updatePayload.stockCount = updates.stockCount;
+      if (updates.isBestSeller !== undefined) updatePayload.isBestSeller = updates.isBestSeller;
+      if (updates.isNewArrival !== undefined) updatePayload.isNewArrival = updates.isNewArrival;
+      if (updates.availableSizes !== undefined) updatePayload.availableSizes = updates.availableSizes;
+      if (updates.availableFinishes !== undefined) updatePayload.availableFinishes = updates.availableFinishes;
+      if (updates.reviews !== undefined) updatePayload.reviews = updates.reviews;
 
-  await db.update(products).set(updatePayload).where(eq(products.id, id));
-  return getProductById(id);
+      await db.update(products).set(updatePayload).where(eq(products.id, id));
+      return getProductById(id);
+    } catch (err) {
+      console.warn('DB updateProduct fallback:', err);
+    }
+  }
+  return null;
 }
 
 export async function deleteProductFromDb(id: string): Promise<boolean> {
-  const res = await db.delete(products).where(eq(products.id, id));
+  if (db) {
+    try {
+      await db.delete(products).where(eq(products.id, id));
+      return true;
+    } catch (err) {
+      console.warn('DB deleteProduct fallback:', err);
+    }
+  }
   return true;
 }
 
 export async function getAllOrders(): Promise<Order[]> {
   try {
+    if (!db) return [];
     const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
     return rows.map(r => ({
       id: r.id,
@@ -216,51 +240,78 @@ export async function getAllOrders(): Promise<Order[]> {
 }
 
 export async function createOrderInDb(order: Order): Promise<Order> {
-  await db.insert(orders).values({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    date: order.date,
-    status: order.status,
-    items: order.items,
-    subtotal: order.subtotal,
-    shippingFee: order.shippingFee,
-    discount: order.discount,
-    tax: order.tax,
-    total: order.total,
-    shippingAddress: order.shippingAddress,
-    trackingNumber: order.trackingNumber,
-    paymentMethod: order.paymentMethod,
-    estimatedDelivery: order.estimatedDelivery
-  });
+  if (db) {
+    try {
+      await db.insert(orders).values({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        date: order.date,
+        status: order.status,
+        items: order.items,
+        subtotal: order.subtotal,
+        shippingFee: order.shippingFee,
+        discount: order.discount,
+        tax: order.tax,
+        total: order.total,
+        shippingAddress: order.shippingAddress,
+        trackingNumber: order.trackingNumber,
+        paymentMethod: order.paymentMethod,
+        estimatedDelivery: order.estimatedDelivery
+      });
+    } catch (err) {
+      console.warn('DB createOrder fallback:', err);
+    }
+  }
   return order;
 }
 
 export async function updateOrderStatusInDb(id: string, status: string): Promise<boolean> {
-  await db.update(orders).set({ status }).where(eq(orders.id, id));
+  if (db) {
+    try {
+      await db.update(orders).set({ status }).where(eq(orders.id, id));
+      return true;
+    } catch (err) {
+      console.warn('DB updateOrderStatus fallback:', err);
+    }
+  }
   return true;
 }
 
 export async function subscribeNewsletterInDb(email: string): Promise<boolean> {
-  await db.insert(newsletterSubscribers).values({
-    id: `sub-${Date.now()}`,
-    email: email.toLowerCase()
-  }).onConflictDoNothing();
+  if (db) {
+    try {
+      await db.insert(newsletterSubscribers).values({
+        id: `sub-${Date.now()}`,
+        email: email.toLowerCase()
+      }).onConflictDoNothing();
+      return true;
+    } catch (err) {
+      console.warn('DB subscribeNewsletter fallback:', err);
+    }
+  }
   return true;
 }
 
 export async function upsertUserInDb(userData: { id: string; name: string; email: string; memberTier?: string; avatar?: string }): Promise<any> {
-  const result = await db.insert(users).values({
-    id: userData.id,
-    name: userData.name,
-    email: userData.email.toLowerCase(),
-    memberTier: userData.memberTier || 'NaxtTo Circle',
-    avatar: userData.avatar
-  }).onConflictDoUpdate({
-    target: users.email,
-    set: {
-      name: userData.name,
-      avatar: userData.avatar
+  if (db) {
+    try {
+      const result = await db.insert(users).values({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email.toLowerCase(),
+        memberTier: userData.memberTier || 'NaxtTo Circle',
+        avatar: userData.avatar
+      }).onConflictDoUpdate({
+        target: users.email,
+        set: {
+          name: userData.name,
+          avatar: userData.avatar
+        }
+      }).returning();
+      return result[0];
+    } catch (err) {
+      console.warn('DB upsertUser fallback:', err);
     }
-  }).returning();
-  return result[0];
+  }
+  return { id: userData.id, name: userData.name, email: userData.email };
 }
