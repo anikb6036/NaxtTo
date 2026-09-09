@@ -102,6 +102,12 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
                   alt={post.caption}
                   className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-108"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85') {
+                      target.src = 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85';
+                    }
+                  }}
                 />
 
                 {/* Hover Overlay */}
@@ -188,6 +194,12 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
                 src={selectedPost.image}
                 alt={selectedPost.caption}
                 className="w-full h-full max-h-[480px] object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85') {
+                    target.src = 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85';
+                  }
+                }}
               />
             </div>
 

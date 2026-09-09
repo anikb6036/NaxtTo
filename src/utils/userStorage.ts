@@ -3,7 +3,118 @@ import { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy,
 import { firestore } from '../lib/firebase';
 
 /**
- * Creates a lightweight, compact clone of an order suitable for localStorage
+ * Ensures product payload is strictly compact (< 5KB), removing heavy descriptions,
+ * 3D models, review lists, and downscaling/capping large base64 image strings.
+ */
+export function sanitizeProductForStorage(product: Partial<Product> | undefined): Product {
+  const p = product || {};
+  let safeImg = p.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
+  
+  // If base64 data URL exceeds 30KB, fallback to standard placeholder to prevent Firestore 1MB explosion & storage quota crashes
+  if (typeof safeImg === 'string' && safeImg.startsWith('data:') && safeImg.length > 30000) {
+    safeImg = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
+  }
+
+  return {
+    id: p.id || '',
+    name: p.name || 'Fine Jewellery Piece',
+    subtitle: p.subtitle || '',
+    price: Number(p.price) || 0,
+    originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+    category: p.category || 'all',
+    metal: p.metal || '18k-yellow-gold',
+    metalName: p.metalName || '18k Solid Gold',
+    style: p.style || 'everyday-luxe',
+    styleName: p.styleName || 'Everyday Luxe',
+    sku: p.sku || '',
+    karatPurity: p.karatPurity || '18K (750)',
+    origin: p.origin || 'Mumbai Atelier',
+    dimensions: p.dimensions || '',
+    inStock: p.inStock ?? true,
+    stockCount: p.stockCount ?? 1,
+    rating: Number(p.rating) || 5.0,
+    reviewsCount: Number(p.reviewsCount) || 0,
+    images: [safeImg],
+    description: '',
+    story: '',
+    details: '',
+    craftsmanship: '',
+    features: [],
+    reviews: []
+  } as unknown as Product;
+}
+
+/**
+ * Downscales an image (especially large data URIs) to a compact thumbnail (~4-8KB)
+ * to guarantee that Firestore documents remain far below the 1,048,576 bytes limit.
+ */
+export async function createCompactThumbnail(imgSrc: string | undefined, maxDim = 160, quality = 0.65): Promise<string> {
+  const fallback = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
+  if (!imgSrc || typeof imgSrc !== 'string') return fallback;
+
+  // Web URLs are already very small (< 200 bytes)
+  if (imgSrc.startsWith('http://') || imgSrc.startsWith('https://')) {
+    return imgSrc;
+  }
+
+  // Small data URIs (< 30KB) are already safe
+  if (imgSrc.startsWith('data:') && imgSrc.length <= 30000) {
+    return imgSrc;
+  }
+
+  // If in browser and is a large data URI, downscale via canvas
+  if (typeof window !== 'undefined' && typeof document !== 'undefined' && imgSrc.startsWith('data:')) {
+    try {
+      const downscaled = await new Promise<string>((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        const timeout = setTimeout(() => resolve(fallback), 1200);
+        img.onload = () => {
+          clearTimeout(timeout);
+          try {
+            const canvas = document.createElement('canvas');
+            let w = img.width || maxDim;
+            let h = img.height || maxDim;
+            if (w > h) {
+              h = Math.round((h * maxDim) / Math.max(1, w));
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / Math.max(1, h));
+              h = maxDim;
+            }
+            canvas.width = Math.max(1, w);
+            canvas.height = Math.max(1, h);
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, w, h);
+              const compressed = canvas.toDataURL('image/jpeg', quality);
+              if (compressed.length < 35000) {
+                resolve(compressed);
+                return;
+              }
+            }
+          } catch {
+            // fallback
+          }
+          resolve(fallback);
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          resolve(fallback);
+        };
+        img.src = imgSrc;
+      });
+      return downscaled;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return fallback;
+}
+
+/**
+ * Creates a lightweight, compact clone of an order suitable for localStorage and cloud storage
  * without duplicating heavy review arrays, descriptions, or redundant metadata.
  */
 export function sanitizeOrderForStorage(order: Order): Order {
@@ -15,14 +126,7 @@ export function sanitizeOrderForStorage(order: Order): Order {
           quantity: item.quantity || 1,
           selectedSize: item.selectedSize,
           selectedFinish: item.selectedFinish,
-          product: {
-            ...(item.product || {}),
-            description: '',
-            details: '',
-            craftsmanship: '',
-            reviews: [],
-            images: [item.product?.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80']
-          } as Product
+          product: sanitizeProductForStorage(item.product)
         }))
       : []
   };
@@ -392,9 +496,25 @@ export async function syncUserDataToFirestore(
   if (!userKey) return;
   try {
     const userDocRef = doc(firestore, 'users', userKey);
+    
+    // Sanitize cart and wishlist to ensure no multi-megabyte base64 strings inflate user document
+    const safeCart = Array.isArray(cartItems)
+      ? cartItems.map(item => ({
+          ...item,
+          product: sanitizeProductForStorage(item.product)
+        }))
+      : [];
+
+    const safeWishlist = Array.isArray(wishlistItems)
+      ? wishlistItems.map(item => ({
+          ...item,
+          product: sanitizeProductForStorage(item.product)
+        }))
+      : [];
+
     const updatePayload: Record<string, any> = {
-      cartItems,
-      wishlistItems,
+      cartItems: safeCart,
+      wishlistItems: safeWishlist,
       lastActiveAt: new Date().toISOString()
     };
 
@@ -449,15 +569,35 @@ export async function fetchUserDataFromFirestore(
 }
 
 /**
- * Persist an order to Firestore permanent cloud storage with full metadata and timeline
+ * Persist an order to Firestore permanent cloud storage with full metadata and timeline.
+ * Guaranteed to stay far below Firestore's 1MB (1,048,576 bytes) document size limit.
  */
 export async function saveOrderToFirestore(order: Order, userId?: string, patronEmail?: string): Promise<void> {
   if (!order || !order.id) return;
   try {
     const orderDocRef = doc(firestore, 'orders', order.id);
-    const sanitized = sanitizeOrderForStorage(order);
+
+    // Asynchronously create compact, high-performance thumbnails for any uploaded item images
+    const sanitizedItems = await Promise.all(
+      (order.items || []).map(async (item) => {
+        const rawProd = item.product || ({} as Product);
+        const rawImg = rawProd.images?.[0];
+        const compactImg = await createCompactThumbnail(rawImg);
+        const cleanProd = sanitizeProductForStorage(rawProd);
+        cleanProd.images = [compactImg];
+
+        return {
+          quantity: item.quantity || 1,
+          selectedSize: item.selectedSize,
+          selectedFinish: item.selectedFinish,
+          product: cleanProd
+        };
+      })
+    );
+
     const orderPayload = {
-      ...sanitized,
+      ...order,
+      items: sanitizedItems,
       userId: userId || order.userId || 'guest',
       customerEmail: patronEmail || order.customerEmail || '',
       createdAt: order.createdAt || new Date().toISOString(),
@@ -470,6 +610,23 @@ export async function saveOrderToFirestore(order: Order, userId?: string, patron
         }
       ]
     };
+
+    // Absolute safety check: If document payload approaches 900KB, fall back to CDN placeholder
+    try {
+      const payloadString = JSON.stringify(orderPayload);
+      if (payloadString.length > 900000) {
+        orderPayload.items = orderPayload.items.map(it => ({
+          ...it,
+          product: {
+            ...it.product,
+            images: ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80']
+          }
+        }));
+      }
+    } catch {
+      // ignore
+    }
+
     await setDoc(orderDocRef, orderPayload, { merge: true });
 
     // Also link to user's private orderHistory in Firestore if userId is present

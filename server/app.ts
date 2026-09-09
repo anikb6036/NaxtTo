@@ -30,6 +30,67 @@ export function createExpressApp(): Express {
     });
   });
 
+  // SEO & Crawler Directives
+  app.get('/robots.txt', (req: Request, res: Response) => {
+    res.type('text/plain');
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nHost: https://naxtto.shop\nSitemap: https://naxtto.shop/sitemap.xml\n`);
+  });
+
+  app.get('/sitemap.xml', (req: Request, res: Response) => {
+    res.type('application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://naxtto.shop/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?category=rings</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?category=necklaces</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?category=earrings</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?category=bracelets</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?view=story</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?view=materials</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://naxtto.shop/?view=journal</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`);
+  });
+
   // Mount API routers
   app.use('/api/products', productsRouter);
   app.use('/api/orders', ordersRouter);

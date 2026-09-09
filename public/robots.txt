@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Host and Sitemap
+Host: https://naxtto.shop
+Sitemap: https://naxtto.shop/sitemap.xml

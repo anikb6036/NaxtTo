@@ -134,7 +134,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=1000&q=85'
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'An organic freshwater baroque pearl with soft champagne iridescence, suspended from a fluid 18k gold snake link chain.',
     story: 'No two organic pearls are identical. Each piece is hand-selected in the South Seas for singular luster, naturally contoured form, and creamy undertones.',
@@ -185,7 +185,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=1000&q=85'
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'Precision interlocking gold chevron links that drape over the collarbone with liquid fluidity. Highly reflective satin-polish mirror surface.',
     story: 'Woven using classical Vicenza goldsmith techniques, this collar glides seamlessly against the skin like golden fabric.',
@@ -337,7 +337,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'minimalist',
     styleName: 'Minimalist Architecture',
     images: [
-      'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
     ],
@@ -390,7 +390,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     styleName: 'Everyday Luxe',
     images: [
       'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'A contemporary reimagining of the classic tennis bracelet featuring bezel-framed diamonds that will never catch on knitwear or lace.',
@@ -573,7 +573,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     styleName: 'Sculptural Art',
     images: [
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'A dynamic undulating wrist band mimicking natural tidal currents. Forged from high-grade recycled 925 sterling silver with a protective rhodium mirror coating.',
@@ -644,7 +644,7 @@ export const INSTAGRAM_FEED: InstagramPost[] = [
     username: 'elena_arch',
     handle: '@elena_arch',
     avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1611591475102-468ae701548e?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85',
     caption: 'My everyday armor: Kallisto hinged cuff + Nyx tennis bracelet in recycled 18k gold. Understated, architectural, eternal. @naxtto.jewels #FineJewellery',
     likes: 1620,
     commentsCount: 35,

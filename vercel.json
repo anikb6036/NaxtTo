@@ -4,15 +4,37 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api"
     },
     {
-      "source": "/((?!api/.*).*)",
+      "source": "/((?!api/.*|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=UTF-8" },
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=3600" }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=UTF-8" },
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=3600" }
+      ]
+    },
     {
       "source": "/api/(.*)",
       "headers": [

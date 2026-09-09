@@ -39,8 +39,9 @@ export const Footer: React.FC<FooterProps> = ({
             </p>
 
             <div className="pt-2 text-[10px] text-[#a39d96] space-y-1 font-sans uppercase tracking-wider">
+              <p>Official Boutique: <a href="https://naxtto.shop" className="text-[#d4af37] hover:underline">naxtto.shop</a></p>
               <p>Atelier Privé: Via Montenapoleone 8, Milano</p>
-              <p>Client Concierge: atelier@naxtto.com</p>
+              <p>Client Concierge: concierge@naxtto.shop</p>
             </div>
           </div>
 
@@ -134,7 +135,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Copyright & Security Badges */}
         <div className="pt-8 border-t border-[#3d3934] flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] uppercase tracking-widest text-[#a39d96] font-sans">
-          <p>© 2026 NaxtTo Fine Jewellery. All rights reserved.</p>
+          <p>© 2026 NaxtTo Fine Jewellery • Official Store: naxtto.shop. All rights reserved.</p>
 
           <div className="flex items-center gap-6">
             <span className="hover:text-white cursor-pointer transition-colors">Privacy Policy</span>

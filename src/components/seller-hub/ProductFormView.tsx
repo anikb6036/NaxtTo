@@ -1144,31 +1144,31 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 1200;
+          const maxDim = 800;
           let { width, height } = img;
           if (width > maxDim || height > maxDim) {
             if (width > height) {
-              height = Math.round((height * maxDim) / width);
+              height = Math.round((height * maxDim) / Math.max(1, width));
               width = maxDim;
             } else {
-              width = Math.round((width * maxDim) / height);
+              width = Math.round((width * maxDim) / Math.max(1, height));
               height = maxDim;
             }
           }
           const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
+          canvas.width = Math.max(1, width);
+          canvas.height = Math.max(1, height);
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.85);
+            const compressed = canvas.toDataURL('image/jpeg', 0.72);
             resolve(compressed);
           } else {
-            resolve(e.target?.result as string);
+            resolve('');
           }
         };
         img.onerror = () => {
-          resolve(e.target?.result as string);
+          resolve('');
         };
         img.src = e.target?.result as string;
       };
