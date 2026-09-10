@@ -31,6 +31,7 @@ import { ListingsTable } from './seller-hub/ListingsTable';
 import { SellerOrdersTable } from './seller-hub/SellerOrdersTable';
 import { ProductFormView } from './seller-hub/ProductFormView';
 import { ShippingLabelModal } from './seller-hub/ShippingLabelModal';
+import { CloudStorageManager } from './seller-hub/CloudStorageManager';
 
 interface AdminPanelProps {
   products: Product[];
@@ -170,6 +171,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         onSignOut={onSignOut}
         sellerName={staffInfo?.name || 'NaxtTo'}
         activeOrdersCount={activeOrdersCount}
+        onOpenStorageTab={() => setActiveNavTab('storage')}
       />
 
       {/* Main Workspace Layout (Sidebar + Content) */}
@@ -288,8 +290,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 </div>
               </div>
+            ) : activeNavTab === 'storage' ? (
+              /* View F: Cloud Database & Persistent Storage (Supabase & Firestore) */
+              <CloudStorageManager
+                products={products}
+                orders={orders}
+                onShowToast={showToast}
+              />
             ) : (
-              /* View F: Generic Growth / Ads / Reports Placeholder */
+              /* View G: Generic Growth / Ads / Reports Placeholder */
               <div className="bg-white rounded-xl border border-[#e5e5ea] p-12 text-center shadow-xs space-y-3">
                 <div className="w-12 h-12 rounded-full bg-[#f0f5ff] text-[#2874f0] mx-auto flex items-center justify-center">
                   <TrendingUp className="w-6 h-6" />

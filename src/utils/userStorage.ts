@@ -837,4 +837,89 @@ export async function fetchAllOrdersFromFirestore(): Promise<Order[]> {
   }
 }
 
+/**
+ * Persist a product piece to Firestore permanent cloud storage.
+ */
+export async function saveProductToFirestore(product: Product): Promise<void> {
+  if (!product || !product.id) return;
+  try {
+    const prodDocRef = doc(firestore, 'products', product.id);
+    const clean = sanitizeProductForStorage(product);
+    await setDoc(prodDocRef, {
+      ...clean,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err) {
+    console.warn('Failed to save product to Firestore:', err);
+  }
+}
+
+/**
+ * Remove a product piece from Firestore permanent cloud storage.
+ */
+export async function deleteProductFromFirestore(productId: string): Promise<void> {
+  if (!productId) return;
+  try {
+    const prodDocRef = doc(firestore, 'products', productId);
+    await deleteDoc(prodDocRef);
+  } catch (err) {
+    console.warn('Failed to delete product from Firestore:', err);
+  }
+}
+
+/**
+ * Real-time subscription to custom catalog products in Firestore.
+ */
+export function subscribeToAllProducts(callback: (products: Product[]) => void): () => void {
+  try {
+    const prodsCol = collection(firestore, 'products');
+    return onSnapshot(prodsCol, (snapshot) => {
+      const prodsList: Product[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d && d.name && d.price) {
+          prodsList.push({
+            id: d.id || docSnap.id,
+            name: d.name,
+            subtitle: d.subtitle || undefined,
+            price: Number(d.price) || 0,
+            originalPrice: d.originalPrice ? Number(d.originalPrice) : undefined,
+            category: d.category,
+            metal: d.metal,
+            metalName: d.metalName || undefined,
+            style: d.style,
+            styleName: d.styleName || undefined,
+            images: Array.isArray(d.images) ? d.images : [],
+            description: d.description || '',
+            story: d.story || undefined,
+            features: Array.isArray(d.features) ? d.features : [],
+            dimensions: d.dimensions || undefined,
+            karatPurity: d.karatPurity || undefined,
+            origin: d.origin || undefined,
+            inStock: d.inStock ?? true,
+            stockCount: Number(d.stockCount) ?? 1,
+            isBestSeller: d.isBestSeller ?? false,
+            isNewArrival: d.isNewArrival ?? false,
+            rating: Number(d.rating) || 5,
+            reviewsCount: Number(d.reviewsCount) || 0,
+            availableSizes: Array.isArray(d.availableSizes) ? d.availableSizes : [],
+            availableFinishes: Array.isArray(d.availableFinishes) ? d.availableFinishes : [],
+            reviews: Array.isArray(d.reviews) ? d.reviews : []
+          });
+        }
+      });
+
+      if (prodsList.length > 0) {
+        callback(prodsList);
+      }
+    }, (error) => {
+      console.warn('Firestore products onSnapshot notice:', error);
+    });
+  } catch (err) {
+    console.warn('Firestore products subscription init failed:', err);
+    return () => {};
+  }
+}
+
+
 

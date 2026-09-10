@@ -203,5 +203,34 @@ export const apiClient = {
       console.error('Failed to verify Razorpay payment:', err);
       return { success: false, message: 'Could not verify payment signature' };
     }
+  },
+
+  // Supabase & Cloud Storage Management
+  async getSupabaseStatus() {
+    try {
+      const res = await fetch('/api/supabase/status');
+      if (!res.ok) throw new Error('Status failed');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getSupabaseStatus fallback:', err);
+      return {
+        success: false,
+        data: { configured: false, connected: false }
+      };
+    }
+  },
+
+  async syncSupabase() {
+    try {
+      const res = await fetch('/api/supabase/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('API syncSupabase fallback:', err);
+      return { success: false, message: 'Could not trigger Supabase sync' };
+    }
   }
 };
+

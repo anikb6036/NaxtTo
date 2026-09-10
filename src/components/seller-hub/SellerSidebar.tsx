@@ -9,7 +9,8 @@ import {
   Megaphone, 
   FileText, 
   Users,
-  HelpCircle
+  HelpCircle,
+  Database
 } from 'lucide-react';
 
 export type SellerNavTab = 
@@ -21,7 +22,8 @@ export type SellerNavTab =
   | 'growth' 
   | 'ads' 
   | 'reports' 
-  | 'partner-services';
+  | 'partner-services'
+  | 'storage';
 
 interface SellerSidebarProps {
   activeTab: SellerNavTab;
@@ -45,6 +47,7 @@ export const SellerSidebar: React.FC<SellerSidebarProps> = ({
     { id: 'growth', label: 'Growth', icon: TrendingUp },
     { id: 'ads', label: 'Ads', icon: Megaphone },
     { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'storage', label: 'Cloud DB', icon: Database },
     { id: 'partner-services', label: 'Partner Services', icon: Users }
   ];
 

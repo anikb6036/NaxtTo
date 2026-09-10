@@ -22,14 +22,23 @@ export const createPool = () => {
     }
 
     try {
-      global._postgresPool = new Pool({
-        host: process.env.SQL_HOST,
-        user: process.env.SQL_USER,
-        password: process.env.SQL_PASSWORD,
-        database: process.env.SQL_DB_NAME,
-        max: 10,
-        connectionTimeoutMillis: 5000,
-      });
+      if (dbUrl) {
+        global._postgresPool = new Pool({
+          connectionString: dbUrl,
+          ssl: { rejectUnauthorized: false },
+          max: 10,
+          connectionTimeoutMillis: 5000,
+        });
+      } else {
+        global._postgresPool = new Pool({
+          host: process.env.SQL_HOST,
+          user: process.env.SQL_USER,
+          password: process.env.SQL_PASSWORD,
+          database: process.env.SQL_DB_NAME,
+          max: 10,
+          connectionTimeoutMillis: 5000,
+        });
+      }
 
       global._postgresPool.on('error', (err) => {
         // Prevent unhandled errors from idle clients

@@ -6,6 +6,7 @@ import { authRouter } from './routes/auth';
 import { newsletterRouter } from './routes/newsletter';
 import { aiRouter } from './routes/ai';
 import { paymentRouter } from './routes/payment';
+import { supabaseRouter } from './routes/supabase';
 
 export function createExpressApp(): Express {
   const app = express();
@@ -98,6 +99,7 @@ export function createExpressApp(): Express {
   app.use('/api/newsletter', newsletterRouter);
   app.use('/api/ai', aiRouter);
   app.use('/api/payment', paymentRouter);
+  app.use('/api/supabase', supabaseRouter);
 
   // Global API 404 handler
   app.all('/api/*', (req: Request, res: Response) => {

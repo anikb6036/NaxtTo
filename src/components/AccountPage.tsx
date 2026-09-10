@@ -1641,7 +1641,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {/* TAB 2: Order History */}
             {activeTab === 'orders' && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e5e5ea]">
+                <div className="pb-4 border-b border-[#e5e5ea]">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f]">
                       Order History & Consignment Tracker
@@ -1649,11 +1649,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">
                       Real-time artisan progress, courier dispatch tracking, and certificates
                     </p>
-                  </div>
-
-                  <div className="text-xs text-[#86868b] flex items-center gap-1.5 bg-[#f5f5f7] px-3 py-1.5 rounded-full border border-[#e5e5ea]">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Live Atelier & Courier Sync</span>
                   </div>
                 </div>
 

@@ -6,7 +6,8 @@ import {
   ChevronDown, 
   ArrowLeft, 
   LogOut,
-  Sparkles
+  Sparkles,
+  Database
 } from 'lucide-react';
 import { BrandLogo } from '../BrandLogo';
 
@@ -17,6 +18,7 @@ interface SellerHeaderProps {
   onSignOut: () => void;
   sellerName?: string;
   activeOrdersCount: number;
+  onOpenStorageTab?: () => void;
 }
 
 export const SellerHeader: React.FC<SellerHeaderProps> = ({
@@ -25,7 +27,8 @@ export const SellerHeader: React.FC<SellerHeaderProps> = ({
   onExitToStorefront,
   onSignOut,
   sellerName = 'NaxtTo',
-  activeOrdersCount
+  activeOrdersCount,
+  onOpenStorageTab
 }) => {
   const [showProfileMenu, setShowProfileMenu] = React.useState(false);
 
@@ -59,7 +62,20 @@ export const SellerHeader: React.FC<SellerHeaderProps> = ({
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Storage Quick Switch */}
+        {onOpenStorageTab && (
+          <button
+            type="button"
+            onClick={onOpenStorageTab}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-full text-[11px] font-semibold transition-colors border border-emerald-200"
+            title="Cloud Database & Supabase Storage Status"
+          >
+            <Database className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden md:inline">Cloud DB</span>
+          </button>
+        )}
+
         {/* Notification Bell */}
         <button 
           type="button"

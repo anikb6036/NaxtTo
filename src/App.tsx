@@ -53,7 +53,10 @@ import {
   sanitizeOrderForStorage,
   saveOrderToFirestore,
   updateOrderStatusInFirestore,
-  subscribeToAllOrders
+  subscribeToAllOrders,
+  saveProductToFirestore,
+  deleteProductFromFirestore,
+  subscribeToAllProducts
 } from './utils/userStorage';
 
 export default function App() {
@@ -224,6 +227,45 @@ export default function App() {
 
     return () => {
       unsubscribe();
+    };
+  }, []);
+
+  // Synchronize catalog products with Supabase / Postgres and Firestore
+  useEffect(() => {
+    // 1. Fetch initial products from backend (Supabase / Postgres)
+    apiClient.getProducts().then((serverProds) => {
+      if (Array.isArray(serverProds) && serverProds.length > 0) {
+        setProducts(prev => {
+          const map = new Map<string, Product>();
+          prev.forEach(p => map.set(p.id, p));
+          serverProds.forEach(p => map.set(p.id, p));
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem('naxtto_products', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    }).catch(err => console.warn('Backend products initial sync notice:', err));
+
+    // 2. Real-time Firestore cloud products listener
+    const unsubProds = subscribeToAllProducts((remoteProds) => {
+      if (remoteProds && remoteProds.length > 0) {
+        setProducts(prev => {
+          const map = new Map<string, Product>();
+          prev.forEach(p => map.set(p.id, p));
+          remoteProds.forEach(p => map.set(p.id, p));
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem('naxtto_products', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    });
+
+    return () => {
+      unsubProds();
     };
   }, []);
 
@@ -945,28 +987,46 @@ export default function App() {
     showToast('Delivery address saved to your account.');
   };
 
-  // 12. Admin CRUD Handlers
+  // 12. Admin CRUD Handlers (Multi-Layer Cloud & Local Persistence)
   const handleAddProduct = (newProd: Product) => {
-    setProducts(prev => [newProd, ...prev]);
+    setProducts(prev => {
+      const updated = [newProd, ...prev];
+      try { localStorage.setItem('naxtto_products', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    // Multi-tier persistence: Firestore + Supabase + Postgres
+    saveProductToFirestore(newProd);
     apiClient.createProduct(newProd);
     showToast(`Piece "${newProd.name}" successfully catalogued.`);
   };
 
   const handleUpdateProduct = (updatedProd: Product) => {
-    setProducts(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p));
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === updatedProd.id ? updatedProd : p);
+      try { localStorage.setItem('naxtto_products', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (selectedProduct && selectedProduct.id === updatedProd.id) {
       setSelectedProduct(updatedProd);
     }
+    // Multi-tier persistence: Firestore + Supabase + Postgres
+    saveProductToFirestore(updatedProd);
     apiClient.updateProduct(updatedProd.id, updatedProd);
     showToast(`Piece "${updatedProd.name}" updated successfully.`);
   };
 
   const handleDeleteProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.id !== productId);
+      try { localStorage.setItem('naxtto_products', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (selectedProduct && selectedProduct.id === productId) {
       setSelectedProduct(null);
       setCurrentView('shop');
     }
+    // Multi-tier persistence: Firestore + Supabase + Postgres
+    deleteProductFromFirestore(productId);
     apiClient.deleteProduct(productId);
     showToast('Piece removed from Atelier collection.');
   };
