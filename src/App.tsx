@@ -18,6 +18,17 @@ import {
   DEMO_USER 
 } from './data/mockData';
 import { Navbar } from './components/Navbar';
+import { MyntraCouponStrip } from './components/MyntraCouponStrip';
+import { MyntraHeroBanner } from './components/MyntraHeroBanner';
+import { MyntraWowDeals } from './components/MyntraWowDeals';
+import { MyntraSideRibbon } from './components/MyntraSideRibbon';
+import { MyntraNotificationFab } from './components/MyntraNotificationFab';
+import { CategoryNavStrip } from './components/CategoryNavStrip';
+import { DealsCarousel } from './components/DealsCarousel';
+import { TopRatedSection } from './components/TopRatedSection';
+import { FlashSaleBanner } from './components/FlashSaleBanner';
+import { QuickServicesStrip } from './components/QuickServicesStrip';
+import { FloatingSellerBadge } from './components/FloatingSellerBadge';
 import { HeroSection } from './components/HeroSection';
 import { ProductFilter } from './components/ProductFilter';
 import { ProductCard } from './components/ProductCard';
@@ -1130,6 +1141,22 @@ export default function App() {
         onSearchChange={(query) => {
           setFilterOptions(prev => ({ ...prev, searchQuery: query }));
         }}
+        cartTotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
+        onSelectGender={(gender) => {
+          setSelectedProduct(null);
+          setCurrentView('shop');
+          if (gender === 'men') {
+            setFilterOptions(prev => ({ ...prev, searchQuery: 'men' }));
+          } else {
+            setFilterOptions(prev => ({ ...prev, searchQuery: '' }));
+          }
+          scrollToCatalog();
+        }}
+      />
+
+      {/* Myntra Orange Coupon Voucher Strip (FLAT ₹300 OFF on 1st purchase) */}
+      <MyntraCouponStrip 
+        onApplyCoupon={(code) => showToast(`Voucher code "${code}" claimed! Extra ₹300 discount active.`)} 
       />
 
       {/* Dynamic Page Views: Dedicated Account Page, Admin Panel, Dedicated Checkout Page, Product Detail Page, or Home Catalog */}
@@ -1267,19 +1294,50 @@ export default function App() {
         />
       ) : (
         <>
-          {/* Hero Banner Section */}
+          {/* Hero Banner: FLAT 20% OFF PAY DAY SALE (Exact Screenshot Match) */}
           <HeroSection
             onExploreCatalog={scrollToCatalog}
+            onSelectCategory={(cat) => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              setFilterOptions(prev => ({ ...prev, category: cat }));
+              scrollToCatalog();
+            }}
+          />
+
+          {/* Myntra WOW DEALS (Matches Screenshot: Big Brands, Even Bigger Savings) */}
+          <MyntraWowDeals
+            onSelectCategory={(cat) => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              setFilterOptions(prev => ({ ...prev, category: cat }));
+              scrollToCatalog();
+            }}
+            onExploreCatalog={scrollToCatalog}
+          />
+
+          {/* Curated Top Rated Section */}
+          <TopRatedSection
+            products={products}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setCurrentView('product-detail');
+              window.scrollTo(0, 0);
+            }}
             onSelectCategory={(cat) => {
               setFilterOptions({ ...filterOptions, category: cat });
               scrollToCatalog();
             }}
-            onExploreJournal={scrollToJournal}
-            onOpenPdfCatalogue={() => setIsPdfCatalogueOpen(true)}
+            onExploreCatalog={scrollToCatalog}
+            currencySymbol={currencySymbol}
           />
 
+          {/* Flash Sale Banner Strip with Live Countdown */}
+          <FlashSaleBanner onShopNow={scrollToCatalog} />
+
           {/* Main Catalog & Filter Section */}
-          <main ref={catalogRef} id="product-catalog-section" className="flex-1 scroll-mt-20 bg-white">
+          <main ref={catalogRef} id="product-catalog-section" className="flex-1 scroll-mt-20 bg-[#f5f5f6] pb-12">
+            {/* Filter & Sort Bar */}
             <ProductFilter
               filterOptions={filterOptions}
               onChangeFilter={setFilterOptions}
@@ -1287,51 +1345,67 @@ export default function App() {
               currencySymbol={currencySymbol}
             />
 
-            {/* Product Catalog Grid */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 bg-white">
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-20 bg-[#f5f5f7] rounded-lg border border-[#e5e5ea] space-y-4 max-w-lg mx-auto shadow-xs">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto text-[#6e6e73]">
-                    <ShoppingBag className="w-5 h-5" />
+            {/* Suggested / All Creations Header & Product Catalog Grid */}
+            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-4">
+              <div className="bg-white rounded-md border border-[#eaeaec] p-4 sm:p-6 shadow-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-[#f5f5f6] mb-4">
+                  <div>
+                    <h3 className="text-base sm:text-xl font-extrabold text-[#282c3f]">
+                      Curated Fine Jewellery
+                    </h3>
+                    <p className="text-xs text-[#696e79]">
+                      18K solid gold, certified diamonds, and verified customer ratings
+                    </p>
                   </div>
-                  <h3 className="text-xl font-semibold text-[#1d1d1f]">No creations match your current criteria</h3>
-                  <p className="text-xs text-[#6e6e73]">
-                    Try adjusting your precious metal, style archetype, or price filter to view available pieces.
-                  </p>
-                  <button
-                    onClick={() => setFilterOptions({
-                      category: 'all',
-                      metals: [],
-                      styles: [],
-                      priceRange: [0, 3000],
-                      inStockOnly: false,
-                      sortBy: 'featured',
-                      searchQuery: ''
-                    })}
-                    className="px-5 py-2.5 bg-[#1d1d1f] text-white text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-black transition-colors"
-                  >
-                    Reset All Filters
-                  </button>
+                  <span className="text-xs font-bold text-[#ff3e6c] bg-[#ff3e6c]/10 px-2.5 py-1 rounded-full">
+                    {filteredProducts.length} Verified Pieces
+                  </span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
-                  {filteredProducts.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onQuickView={(p) => {
-                        setSelectedProduct(p);
-                        setCurrentView('product-detail');
-                        window.scrollTo(0, 0);
-                      }}
-                      onAddToCart={handleAddToCart}
-                      isWishlisted={isWishlisted(product.id)}
-                      onToggleWishlist={handleToggleWishlist}
-                      currencySymbol={currencySymbol}
-                    />
-                  ))}
-                </div>
-              )}
+
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-20 bg-[#f5f5f7] rounded-lg border border-[#e5e5ea] space-y-4 max-w-lg mx-auto shadow-xs">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto text-[#6e6e73]">
+                      <ShoppingBag className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-[#1d1d1f]">No creations match your current criteria</h3>
+                    <p className="text-xs text-[#6e6e73]">
+                      Try adjusting your precious metal, style archetype, or price filter to view available pieces.
+                    </p>
+                    <button
+                      onClick={() => setFilterOptions({
+                        category: 'all',
+                        metals: [],
+                        styles: [],
+                        priceRange: [0, 3000],
+                        inStockOnly: false,
+                        sortBy: 'featured',
+                        searchQuery: ''
+                      })}
+                      className="px-5 py-2.5 bg-[#2874f0] text-white text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-[#1259c7] transition-colors"
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+                    {filteredProducts.map(product => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onQuickView={(p) => {
+                          setSelectedProduct(p);
+                          setCurrentView('product-detail');
+                          window.scrollTo(0, 0);
+                        }}
+                        onAddToCart={handleAddToCart}
+                        isWishlisted={isWishlisted(product.id)}
+                        onToggleWishlist={handleToggleWishlist}
+                        currencySymbol={currencySymbol}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </main>
 
@@ -1466,6 +1540,15 @@ export default function App() {
         productName={loginPromptProductName}
         actionType={loginPromptActionType}
       />
+
+      {/* 6. Floating Seller Hub Badge */}
+      <FloatingSellerBadge onOpenSellerHub={() => setIsStaffAuthModalOpen(true)} />
+
+      {/* 7. Myntra Vertical Side Ribbon Tab (▲ UPTO ₹300 OFF on right edge) */}
+      <MyntraSideRibbon onApplyCoupon={(code) => showToast(`Coupon "${code}" applied to checkout!`)} />
+
+      {/* 8. Myntra Circular Blue Notification Bell FAB (Bottom-Right) */}
+      <MyntraNotificationFab onOpenOffers={scrollToCatalog} />
     </div>
   );
 }

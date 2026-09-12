@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 import { ProductCategory } from '../types';
 
 import bannerPaydayModel from '../assets/images/payday_hero_model_1788375869668.jpg';
@@ -362,6 +362,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
+        {/* Floating Side Action Buttons Matching Reference Image */}
+        <div className="absolute right-3 sm:right-5 bottom-8 sm:bottom-10 z-40 flex flex-col gap-2 items-center">
+          {/* Quick Category Grid Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExploreCatalog();
+            }}
+            aria-label="Browse All Collections"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-[#282c3f] flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer border border-gray-100"
+            title="Browse All Collections"
+          >
+            <LayoutGrid className="w-4 h-4 text-[#282c3f]" />
+          </button>
+
+          {/* Quick Assist Pill Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            aria-label="Audio Assist"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border-2 border-[#1a73e8] text-[#1a73e8] flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            title="Accessibility / Audio Support"
+          >
+            <span className="w-3.5 h-3.5 rounded-full border border-[#1a73e8] flex items-center justify-center">
+              <span className="w-1.5 h-1.5 bg-[#1a73e8] rounded-full" />
+            </span>
+          </button>
+        </div>
+
         {/* Bottom Pagination Dots Matching Exact Design in Reference Image */}
         <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-2">
           {SLIDES.map((slide, idx) => (
@@ -373,12 +403,44 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               }}
               className={`transition-all duration-300 cursor-pointer ${
                 idx === currentSlide
-                  ? 'w-7 sm:w-8 h-2 sm:h-2.5 rounded-full bg-white shadow-xs'
+                  ? 'w-9 sm:w-11 h-2.5 sm:h-3 rounded-full bg-white/20 border-2 border-white shadow-xs'
                   : 'w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white/50 hover:bg-white/80'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Bank & Instant Discount Promo Strip */}
+      <div className="bg-white border-t border-[#eaeaec] py-2.5 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+            {/* Bank Logos */}
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 font-bold text-[#db0011] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                <span className="w-3 h-3 bg-[#db0011] rounded-xs inline-block" />
+                HSBC
+              </span>
+              <span className="flex items-center gap-1 font-bold text-[#0c2340] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                <span className="text-[#008080] font-black">RBL</span>BANK
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-1 font-bold text-[#004c8f] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
+                HDFC BANK
+              </span>
+            </div>
+
+            <div className="h-4 w-px bg-gray-300 hidden sm:block" />
+
+            <div className="font-bold text-[#282c3f] text-xs sm:text-sm flex items-center gap-1.5">
+              <span>Get 10% Instant Discount*</span>
+              <span className="text-[11px] font-normal text-[#535766]">on credit/debit cards &amp; No-Cost EMI</span>
+            </div>
+          </div>
+
+          <div className="text-[11px] text-[#7e818c] font-medium ml-auto">
+            T&amp;C Apply*
+          </div>
         </div>
       </div>
     </section>

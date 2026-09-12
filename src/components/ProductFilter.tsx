@@ -94,6 +94,42 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
   return (
     <div id="product-filter-bar" className="w-full bg-white border-b border-[#e5e5ea] pt-6 sm:pt-8 pb-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Myntra-Style Sort By Tab Strip */}
+        <div className="flex items-center justify-between border-b border-[#eaeaec] pb-2 mb-3 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-4 sm:gap-6 text-xs font-sans shrink-0">
+            <span className="font-bold text-[#282c3f] uppercase text-[11px] tracking-wider">Sort By:</span>
+            {[
+              { id: 'featured', label: 'Recommended' },
+              { id: 'rating', label: 'Customer Rating' },
+              { id: 'price-low', label: 'Price: Low to High' },
+              { id: 'price-high', label: 'Price: High to Low' },
+              { id: 'newest', label: 'What\'s New' }
+            ].map(s => {
+              const active = filterOptions.sortBy === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onChangeFilter({ ...filterOptions, sortBy: s.id as any })}
+                  className={`relative py-1 font-semibold transition-colors whitespace-nowrap ${
+                    active ? 'text-[#F50087] font-bold' : 'text-[#696e79] hover:text-[#282c3f]'
+                  }`}
+                >
+                  <span>{s.label}</span>
+                  {active && (
+                    <span className="absolute -bottom-2.5 left-0 right-0 h-[2.5px] bg-gradient-to-r from-[#F50087] to-[#F0501A] rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            <span className="text-xs text-[#7e818c]">
+              Showing <strong className="text-[#282c3f]">{totalResults}</strong> creations
+            </span>
+          </div>
+        </div>
+
         {/* Category Pills Header & Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pb-3">
           {/* Scrollable Category Chips */}
@@ -103,10 +139,10 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                 key={cat.id}
                 id={`filter-cat-${cat.id}`}
                 onClick={() => onChangeFilter({ ...filterOptions, category: cat.id })}
-                className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-sans font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition-all duration-200 border shrink-0 ${
+                className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-sans font-bold uppercase whitespace-nowrap transition-all duration-200 border shrink-0 ${
                   filterOptions.category === cat.id
-                    ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] shadow-xs'
-                    : 'bg-[#f5f5f7] text-[#6e6e73] border-transparent hover:bg-[#e8e8ed] hover:text-[#1d1d1f]'
+                    ? 'bg-[#282c3f] text-white border-[#282c3f] shadow-xs'
+                    : 'bg-[#f5f5f6] text-[#535766] border-transparent hover:bg-[#eaeaec] hover:text-[#282c3f]'
                 }`}
               >
                 {cat.label}
@@ -119,16 +155,16 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
             <button
               id="open-filter-drawer-btn"
               onClick={() => setDrawerOpen(true)}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-sans font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase border transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-sans font-bold uppercase border transition-all ${
                 activeFilterCount > 0
-                  ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] font-bold'
-                  : 'bg-[#f5f5f7] text-[#1d1d1f] border-[#e5e5ea] hover:bg-[#e8e8ed]'
+                  ? 'bg-gradient-to-r from-[#F50087] to-[#F0501A] text-white border-transparent'
+                  : 'bg-white text-[#282c3f] border-[#d4d5d9] hover:border-[#282c3f]'
               }`}
             >
               <SlidersHorizontal className="w-3 h-3" />
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="w-3.5 h-3.5 rounded-full bg-white text-[#1d1d1f] text-[8px] font-bold flex items-center justify-center">
+                <span className="w-3.5 h-3.5 rounded-full bg-white text-[#F50087] text-[8px] font-bold flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}

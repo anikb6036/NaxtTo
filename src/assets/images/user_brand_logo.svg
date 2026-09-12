@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Sticker Drop Shadow -->
+    <filter id="nStickerShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.14" />
+    </filter>
+
+    <!-- Golden Orange to Warm Tangerine Gradient -->
+    <linearGradient id="nFoldGoldOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FFA439" />
+      <stop offset="60%" stopColor="#FF8526" />
+      <stop offset="100%" stopColor="#FF6B1A" />
+    </linearGradient>
+
+    <!-- Fiery Deep Red-Orange Gradient -->
+    <linearGradient id="nFoldFieryOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FF5C16" />
+      <stop offset="70%" stopColor="#EB3D09" />
+      <stop offset="100%" stopColor="#CC2E04" />
+    </linearGradient>
+
+    <!-- Vibrant Electric Magenta Gradient -->
+    <linearGradient id="nPetalMagenta" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FF148F" />
+      <stop offset="60%" stopColor="#F50087" />
+      <stop offset="100%" stopColor="#D9006E" />
+    </linearGradient>
+  </defs>
+
+  <!-- Group with sticker drop shadow -->
+  <g filter="url(#nStickerShadow)">
+    <!-- 0. Smooth White Die-Cut Sticker Outline Contour for 'N' -->
+    <path
+      d="M 23 75 
+         C 17 64, 30 26, 44 22 
+         C 50 20, 56 26, 61 38 
+         L 72 62 
+         C 75 52, 79 36, 82 24 
+         C 86 21, 93 23, 94 30 
+         C 95 44, 88 74, 80 78 
+         C 72 82, 65 74, 62 66 
+         L 51 44 
+         C 47 48, 43 62, 38 74 
+         C 34 82, 26 82, 23 75 Z"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-width="7.5"
+      stroke-linejoin="round"
+      stroke-linecap="round"
+    />
+
+    <!-- Main 'N' Logo Geometry -->
+    <g id="nLogoBody">
+      <!-- 1. Left Magenta Stem (Angled Rounded Pill) -->
+      <path
+        d="M 24 74 
+           C 19 64, 31 28, 43 23.5 
+           C 49 21.5, 51 28, 47 39 
+           L 38 67 
+           C 34.5 77, 26.5 79, 24 74 Z"
+        fill="url(#nPetalMagenta)"
+      />
+
+      <!-- 2. Upper/Inner Diagonal Fold (Golden Tangerine Ribbon) -->
+      <path
+        d="M 43 23.5 
+           C 48 21.5, 54 28, 58 40 
+           C 62 52, 65 65, 61 72 
+           C 57 76, 52 73, 49 63 
+           L 44 46 
+           C 43.5 35, 43 26, 43 23.5 Z"
+        fill="url(#nFoldGoldOrange)"
+      />
+
+      <!-- 3. Lower/Outer Diagonal Fold (Fiery Red-Orange Ribbon) -->
+      <path
+        d="M 58 40 
+           C 62 28, 70 23, 76 24 
+           C 80 25, 80 34, 77 45 
+           L 70 65 
+           C 67 74, 59 75, 57 69 
+           C 55 63, 56 50, 58 40 Z"
+        fill="url(#nFoldFieryOrange)"
+      />
+
+      <!-- 4. Right Magenta Stem / Leg completing the 'N' -->
+      <path
+        d="M 76 24 
+           C 83 23.5, 93 42, 91 66 
+           C 89.5 76, 81 78, 78 68 
+           L 72 46 
+           C 69.5 34, 70.5 24.5, 76 24 Z"
+        fill="url(#nPetalMagenta)"
+      />
+
+      <!-- 5. Top Burgundy / Maroon Outline Crest Accent (exact detail from image) -->
+      <path
+        d="M 25 68 
+           C 27 46, 35 24, 43.5 23.5 
+           C 51 23, 58 35, 64 48 
+           C 70 35, 78 24, 84 24.5 
+           C 90 25, 93 45, 91 65"
+        fill="none"
+        stroke="#67001C"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+  </g>
+</svg>
