@@ -95,11 +95,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header id="myntra-main-header" className="sticky top-0 z-40 w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-b border-[#f5f5f6] font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-2 sm:gap-6 h-18 sm:h-20">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-6 h-14 sm:h-20">
           
           {/* LEFT: MYNTRA-STYLE FASHION LOGO & MAIN NAVIGATION */}
-          <div className="flex items-center gap-6 lg:gap-10 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-6 lg:gap-10 shrink-0">
             
             {/* Mobile Hamburger Menu */}
             <button
@@ -107,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-1.5 -ml-1 text-[#282c3f] hover:bg-gray-100 rounded-md lg:hidden"
               aria-label="Toggle navigation"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
             {/* Brand Logo Mark */}
@@ -116,10 +116,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onSelectCategory('all');
                 onNavigateToShop();
               }}
-              className="cursor-pointer flex items-center gap-2 group select-none"
+              className="cursor-pointer flex items-center gap-1.5 sm:gap-2 group select-none"
             >
               {/* Vibrant Brand Logo Provided by User */}
-              <div className="relative w-9 h-7 sm:w-11 sm:h-8 flex items-center justify-center">
+              <div className="relative w-8 h-6 sm:w-11 sm:h-8 flex items-center justify-center shrink-0">
                 <img
                   src={userBrandLogo}
                   alt="NaxtTo Brand Logo"
@@ -130,10 +130,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* Brand Typography */}
               <div className="flex flex-col leading-none">
-                <span className="font-extrabold text-xl sm:text-2xl tracking-tighter text-[#282c3f]">
+                <span className="font-extrabold text-lg sm:text-2xl tracking-tighter text-[#282c3f]">
                   Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-[#696e79] font-bold">
+                <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#696e79] font-bold hidden xs:block">
                   LUXE JEWELLERY
                 </span>
               </div>
@@ -161,9 +161,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           </div>
 
-          {/* CENTER/RIGHT: MYNTRA ROUNDED SEARCH BAR */}
-          <div className="flex-1 max-w-xs sm:max-w-md xl:max-w-xl mx-2 sm:mx-4">
-            <div className="relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-4 py-2 sm:py-2.5">
+          {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Hidden on mobile to preserve action buttons) */}
+          <div className="hidden sm:flex flex-1 max-w-xs sm:max-w-md xl:max-w-xl mx-2 sm:mx-4">
+            <div className="w-full relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-4 py-2 sm:py-2.5">
               <Search className="w-4 h-4 text-[#696e79] shrink-0 mr-2.5" />
               <input
                 ref={searchInputRef}
@@ -188,8 +188,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* RIGHT: ICON + TEXT BUTTONS (Profile, Wishlist, Bag) */}
-          <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+          {/* RIGHT: ICON + TEXT BUTTONS (Profile, Wishlist, Bag - Protected on mobile) */}
+          <div className="flex items-center gap-1 xs:gap-2 sm:gap-6 shrink-0">
             
             {/* PROFILE (Stacked Icon + Text with Flyout) */}
             <div 
@@ -200,13 +200,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <button
                 onClick={() => {
-                  setProfileDropdownOpen(!profileDropdownOpen);
+                  setProfileDropdownOpen(false);
                   onOpenAccount();
                 }}
-                className="flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 transition-colors"
+                className="flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
+                aria-label="Profile"
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#282c3f] group-hover:text-[#ff3e6c] stroke-[1.8]" />
-                <span className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#282c3f] group-hover:text-[#ff3e6c]">
+                <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                   Profile
                 </span>
               </button>
@@ -272,17 +273,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button
                         onClick={() => {
                           setProfileDropdownOpen(false);
-                          if (onOpenPdfCatalogue) onOpenPdfCatalogue();
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs font-semibold hover:bg-[#f5f5f6] flex items-center gap-2"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-[#696e79]" />
-                        <span>Download 2026 Lookbook PDF</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setProfileDropdownOpen(false);
                           onNavigateToAtelier();
                         }}
                         className="w-full px-4 py-2 text-left text-xs font-semibold hover:bg-[#f5f5f6] flex items-center gap-2"
@@ -313,18 +303,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* WISHLIST (Stacked Icon + Text with Count Badge) */}
             <button
               onClick={onOpenWishlist}
-              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 transition-colors"
+              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
               aria-label="Wishlist"
             >
               <div className="relative">
                 <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-[#282c3f] group-hover:text-[#ff3e6c] stroke-[1.8]" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-[#ff3e6c] text-white text-[10px] font-black rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center ring-2 ring-white">
+                  <span className="absolute -top-1.5 -right-2 bg-[#ff3e6c] text-white text-[9px] sm:text-[10px] font-black rounded-full h-3.5 min-w-[14px] sm:h-4 sm:min-w-[16px] px-1 flex items-center justify-center ring-1 sm:ring-2 ring-white">
                     {wishlistCount}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#282c3f] group-hover:text-[#ff3e6c]">
+              <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                 Wishlist
               </span>
             </button>
@@ -332,24 +322,50 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* BAG / CART (Stacked Icon + Text with Count Badge) */}
             <button
               onClick={onOpenCart}
-              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 transition-colors"
+              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
               aria-label="Shopping Bag"
             >
               <div className="relative">
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-[#282c3f] group-hover:text-[#ff3e6c] stroke-[1.8]" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-[#ff3e6c] text-white text-[10px] font-black rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center ring-2 ring-white animate-pulse">
+                  <span className="absolute -top-1.5 -right-2 bg-[#ff3e6c] text-white text-[9px] sm:text-[10px] font-black rounded-full h-3.5 min-w-[14px] sm:h-4 sm:min-w-[16px] px-1 flex items-center justify-center ring-1 sm:ring-2 ring-white animate-pulse">
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] sm:text-[11px] font-bold mt-1 text-[#282c3f] group-hover:text-[#ff3e6c]">
+              <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                 Bag
               </span>
             </button>
 
           </div>
 
+        </div>
+      </div>
+
+      {/* MOBILE FULL-WIDTH SEARCH BAR (Cleanly placed below top bar so icons never overflow) */}
+      <div className="sm:hidden px-3 pb-2 pt-0.5 border-t border-gray-100">
+        <div className="relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#ff3e6c] rounded-md transition-all px-3 py-1.5">
+          <Search className="w-3.5 h-3.5 text-[#696e79] shrink-0 mr-2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onNavigateToShop();
+            }}
+            placeholder="Search for jewellery, rings, gold..."
+            className="w-full text-xs text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange('')}
+              className="text-[#696e79] hover:text-[#282c3f] p-0.5"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
