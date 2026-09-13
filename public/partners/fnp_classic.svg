@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 70" width="240" height="70">
+  <!-- Stylized floral icon -->
+  <g transform="translate(18, 30)">
+    <path d="M 0 -18 C 10 -22 18 -10 12 0 C 18 10 10 22 0 18 C -10 22 -18 10 -12 0 C -18 -10 -10 -22 0 -18 Z" fill="#4B6F28" />
+    <circle cx="0" cy="0" r="5" fill="#E6AE15" />
+    <path d="M 0 16 Q -5 26 -12 28" stroke="#3D5A1E" stroke-width="2.5" fill="none" stroke-linecap="round" />
+  </g>
+  <!-- Text -->
+  <g transform="translate(48, 36)">
+    <text font-family="'Georgia', serif" font-size="22" font-weight="700">
+      <tspan fill="#244B22">ferns</tspan>
+      <tspan fill="#648E2E"> n </tspan>
+      <tspan fill="#244B22">petals</tspan>
+    </text>
+    <text x="2" y="16" font-family="'Georgia', serif" font-style="italic" font-size="10.5" fill="#6B7280">flowers, anywhere anytime...</text>
+  </g>
+</svg>

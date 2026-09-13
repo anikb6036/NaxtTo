@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <rect width="160" height="160" rx="28" fill="#1D4ED8" />
+  <!-- Folded Ribbon K -->
+  <g transform="translate(42, 34)">
+    <rect x="0" y="0" width="16" height="92" rx="4" fill="#ffffff" />
+    <path d="M 64 0 L 18 46 L 36 60 L 76 18 Z" fill="#ffffff" />
+    <path d="M 24 38 L 74 92 L 56 92 L 14 50 Z" fill="#E2E8F0" opacity="0.9" />
+  </g>
+</svg>

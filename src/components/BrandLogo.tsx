@@ -44,45 +44,13 @@ export const MyntraEmblem = UserBrandLogoEmblem;
 export const LotusEmblem = UserBrandLogoEmblem;
 
 /**
- * Geometric Diamond Accent Rule Bar matching the original NaxtTo signature divider
+ * Geometric Diamond Accent Rule Bar (removed per user request)
  */
 export const NaxtToDivider: React.FC<{
   color?: string;
   className?: string;
   width?: string;
-}> = ({
-  color = "#3E271D",
-  className = "my-1.5",
-  width = "w-full max-w-[140px]"
-}) => {
-  return (
-    <div className={`flex items-center justify-center gap-1.5 ${width} ${className} opacity-85 select-none`}>
-      {/* Left Hairline Rule */}
-      <div className="h-[0.75px] flex-1" style={{ backgroundColor: color }} />
-      
-      {/* Left Small Dot/Diamond */}
-      <div 
-        className="w-1 h-1 rotate-45 shrink-0" 
-        style={{ backgroundColor: color }} 
-      />
-      
-      {/* Central Statement Diamond */}
-      <div 
-        className="w-1.5 h-1.5 rotate-45 shrink-0 scale-110" 
-        style={{ backgroundColor: color }} 
-      />
-      
-      {/* Right Small Dot/Diamond */}
-      <div 
-        className="w-1 h-1 rotate-45 shrink-0" 
-        style={{ backgroundColor: color }} 
-      />
-      
-      {/* Right Hairline Rule */}
-      <div className="h-[0.75px] flex-1" style={{ backgroundColor: color }} />
-    </div>
-  );
-};
+}> = () => null;
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   layout = 'horizontal',
@@ -235,13 +203,6 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         />
       )}
 
-      {/* Decorative Accent Rule for vertical layout */}
-      {layout === 'vertical' && (
-        <NaxtToDivider 
-          color={currentColors.divider} 
-          width={currentSize.dividerWidth}
-        />
-      )}
 
       {/* Typography Brand Mark (NaxtTo with vibrant Myntra accent) */}
       {layout !== 'icon-only' && (

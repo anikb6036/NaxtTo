@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 import { ProductCategory } from '../types';
+import { BankOfferLogos } from './BankOfferLogos';
 
 import bannerPaydayModel from '../assets/images/payday_hero_model_1788375869668.jpg';
 import bannerLoveSilver from '../assets/images/banner_love_silver_1788375478655.jpg';
@@ -416,19 +417,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="bg-white border-t border-[#eaeaec] py-2.5 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-            {/* Bank Logos */}
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 font-bold text-[#db0011] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                <span className="w-3 h-3 bg-[#db0011] rounded-xs inline-block" />
-                HSBC
-              </span>
-              <span className="flex items-center gap-1 font-bold text-[#0c2340] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                <span className="text-[#008080] font-black">RBL</span>BANK
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 font-bold text-[#004c8f] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                HDFC BANK
-              </span>
-            </div>
+            {/* Real Bank Logos */}
+            <BankOfferLogos />
 
             <div className="h-4 w-px bg-gray-300 hidden sm:block" />
 

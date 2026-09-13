@@ -11,8 +11,6 @@ import {
   Sparkles,
   Package,
   Store,
-  ShieldCheck,
-  FileText,
   LogOut,
   Gift,
   PhoneCall,
@@ -107,17 +105,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header id="myntra-main-header" className={`sticky top-0 ${mobileMenuOpen ? 'z-[100]' : 'z-40'} w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-b border-[#f5f5f6] font-sans`}>
+    <header id="myntra-main-header" className={`sticky top-0 ${mobileMenuOpen ? 'z-[100]' : 'z-50'} w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-b border-[#f5f5f6] font-sans`}>
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-1.5 sm:gap-6 h-14 sm:h-20">
           
           {/* LEFT: MYNTRA-STYLE FASHION LOGO & MAIN NAVIGATION */}
-          <div className="flex items-center gap-1.5 sm:gap-6 lg:gap-10 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 xl:gap-8 shrink-0">
             
-            {/* Mobile Hamburger Menu */}
+            {/* Mobile / Tablet Hamburger Menu (Visible up to xl: 1280px) */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 -ml-1 text-[#282c3f] hover:bg-gray-100 rounded-md lg:hidden"
+              className="p-1.5 -ml-1 text-[#282c3f] hover:bg-gray-100 rounded-md xl:hidden"
               aria-label="Toggle navigation"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -129,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onSelectCategory('all');
                 onNavigateToShop();
               }}
-              className="cursor-pointer flex items-center gap-1.5 sm:gap-2 group select-none"
+              className="cursor-pointer flex items-center gap-1.5 sm:gap-2 group select-none shrink-0"
             >
               {/* Vibrant Brand Logo Provided by User */}
               <div className="relative w-8 h-6 sm:w-11 sm:h-8 flex items-center justify-center shrink-0">
@@ -152,13 +150,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Desktop Navigation Links (Directly matching MEN, WOMEN, KIDS, HOME, BEAUTY, GENZ, STUDIO NEW) */}
-            <nav className="hidden lg:flex items-center gap-5 xl:gap-7 h-full">
+            {/* Desktop Navigation Links (Visible on xl: screens where there is ample room) */}
+            <nav className="hidden xl:flex items-center gap-3.5 2xl:gap-6 h-full shrink-0">
               {navLinks.map((link) => (
                 <button
                   key={link.label}
                   onClick={link.action}
-                  className="relative text-xs sm:text-[13px] font-extrabold tracking-wider text-[#282c3f] hover:text-[#ff3e6c] transition-colors py-6 select-none flex items-center gap-1 group"
+                  className="relative text-xs 2xl:text-[13px] font-extrabold tracking-wider text-[#282c3f] hover:text-[#ff3e6c] transition-colors py-6 select-none flex items-center gap-1 group whitespace-nowrap"
                 >
                   <span>{link.label}</span>
                   {link.isNew && (
@@ -174,8 +172,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           </div>
 
-          {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Hidden on mobile to preserve action buttons) */}
-          <div className="hidden sm:flex flex-1 max-w-xs sm:max-w-md xl:max-w-xl mx-2 sm:mx-4">
+          {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Flexible width, never overlapping) */}
+          <div className="hidden sm:flex flex-1 min-w-[160px] max-w-sm xl:max-w-md 2xl:max-w-xl mx-2 sm:mx-4">
             <div className="w-full relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-4 py-2 sm:py-2.5">
               <Search className="w-4 h-4 text-[#696e79] shrink-0 mr-2.5" />
               <input
@@ -233,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* Welcome Box */}
                     <div className="px-4 pb-3 border-b border-[#f5f5f6]">
                       <p className="text-xs font-bold text-[#282c3f]">
-                        Welcome, {user.name ? user.name.split(' ')[0] : 'Fine Jewellery Patron'}
+                        Welcome, {user.name ? user.name.split(' ')[0] : 'NaxtTo'}
                       </p>
                       <p className="text-[11px] text-[#696e79] mt-0.5">
                         {user.email || 'anik@naxtto.shop'}
@@ -281,17 +279,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                             {wishlistCount}
                           </span>
                         )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setProfileDropdownOpen(false);
-                          onNavigateToAtelier();
-                        }}
-                        className="w-full px-4 py-2 text-left text-xs font-semibold hover:bg-[#f5f5f6] flex items-center gap-2"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#696e79]" />
-                        <span>Certificate Verification (IGI/GIA)</span>
                       </button>
                     </div>
 
@@ -385,7 +372,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* LEFT-SIDE SLIDING NAVIGATION DRAWER */}
       {/* Semi-transparent Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[100] transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[100] transition-opacity duration-300 xl:hidden ${
           mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileMenuOpen(false)}
@@ -394,7 +381,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Drawer Panel (Slides in from the Left Side) */}
       <aside
-        className={`fixed inset-y-0 left-0 w-[82vw] max-w-[320px] bg-white z-[101] shadow-2xl flex flex-col transition-transform duration-300 ease-out transform lg:hidden ${
+        className={`fixed inset-y-0 left-0 w-[82vw] max-w-[320px] bg-white z-[101] shadow-2xl flex flex-col transition-transform duration-300 ease-out transform xl:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-label="Mobile Navigation"
@@ -524,17 +511,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {cartCount}
                 </span>
               )}
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigateToAtelier();
-              }}
-              className="w-full text-left text-xs font-semibold text-[#282c3f] py-2 px-3 hover:bg-[#f5f5f6] rounded-md flex items-center gap-2"
-            >
-              <ShieldCheck className="w-4 h-4 text-[#696e79]" />
-              <span>Certificate Verification (IGI/GIA)</span>
             </button>
 
             <button

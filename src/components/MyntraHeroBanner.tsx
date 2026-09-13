@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sparkles, ChevronRight, ChevronLeft, ArrowRight, Copy, Check } from 'lucide-react';
 import happyJewelleryHero from '../assets/images/happy_jewellery_hero_1789043188213.jpg';
+import { BankOfferLogos } from './BankOfferLogos';
 
 interface MyntraHeroBannerProps {
   onSelectGender: (gender: 'men' | 'women') => void;
@@ -291,19 +292,8 @@ export const MyntraHeroBanner: React.FC<MyntraHeroBannerProps> = ({
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-            {/* Bank Logos */}
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 font-bold text-[#db0011] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                <span className="w-3 h-3 bg-[#db0011] rounded-xs inline-block" />
-                HSBC
-              </span>
-              <span className="flex items-center gap-1 font-bold text-[#0c2340] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                <span className="text-[#008080] font-black">RBL</span>BANK
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 font-bold text-[#004c8f] tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
-                HDFC BANK
-              </span>
-            </div>
+            {/* Real Bank Logos */}
+            <BankOfferLogos />
 
             <div className="h-4 w-px bg-gray-300 hidden sm:block" />
 

@@ -28,7 +28,6 @@ import { DealsCarousel } from './components/DealsCarousel';
 import { TopRatedSection } from './components/TopRatedSection';
 import { FlashSaleBanner } from './components/FlashSaleBanner';
 import { QuickServicesStrip } from './components/QuickServicesStrip';
-import { FloatingSellerBadge } from './components/FloatingSellerBadge';
 import { HeroSection } from './components/HeroSection';
 import { ProductFilter } from './components/ProductFilter';
 import { ProductCard } from './components/ProductCard';
@@ -41,6 +40,7 @@ import { NewsletterSignup } from './components/NewsletterSignup';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { BlogSection } from './components/BlogSection';
 import { AtelierEthos } from './components/AtelierEthos';
+import { ChannelPartners } from './components/ChannelPartners';
 import { Footer } from './components/Footer';
 import { PdfCatalogueViewer } from './components/PdfCatalogueViewer';
 import { AdminPanel } from './components/AdminPanel';
@@ -1091,7 +1091,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-white text-[#1d1d1f]">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip flex flex-col bg-white text-[#1d1d1f]">
       {/* Toast Notification */}
       {toastMessage && (
         <div 
@@ -1456,6 +1456,9 @@ export default function App() {
         </>
       )}
 
+      {/* Official Channel Partners Strip (All 21 Marketplaces & Quick-Commerce Partners) */}
+      <ChannelPartners />
+
       {/* Comprehensive Luxury Footer */}
       <Footer
         onSelectCategory={(cat) => {
@@ -1541,10 +1544,7 @@ export default function App() {
         actionType={loginPromptActionType}
       />
 
-      {/* 6. Floating Seller Hub Badge */}
-      <FloatingSellerBadge onOpenSellerHub={() => setIsStaffAuthModalOpen(true)} />
-
-      {/* 7. Myntra Vertical Side Ribbon Tab (▲ UPTO ₹300 OFF on right edge) */}
+      {/* 6. Myntra Vertical Side Ribbon Tab (▲ UPTO ₹300 OFF on right edge) */}
       <MyntraSideRibbon onApplyCoupon={(code) => showToast(`Coupon "${code}" applied to checkout!`)} />
 
       {/* 8. Myntra Circular Blue Notification Bell FAB (Bottom-Right) */}
