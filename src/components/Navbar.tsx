@@ -17,7 +17,8 @@ import {
   Gift,
   PhoneCall,
   SlidersHorizontal,
-  ArrowRight
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import { ProductCategory, UserProfile } from '../types';
 
@@ -77,6 +78,18 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Lock body scroll when mobile left drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { label: 'MEN', action: () => { if (onSelectGender) onSelectGender('men'); onSelectCategory('all'); onNavigateToShop(); } },
     { label: 'WOMEN', action: () => { if (onSelectGender) onSelectGender('women'); onSelectCategory('all'); onNavigateToShop(); } },
@@ -94,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header id="myntra-main-header" className="sticky top-0 z-40 w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-b border-[#f5f5f6] font-sans">
+    <header id="myntra-main-header" className={`sticky top-0 ${mobileMenuOpen ? 'z-[100]' : 'z-40'} w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-b border-[#f5f5f6] font-sans`}>
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-1.5 sm:gap-6 h-14 sm:h-20">
           
@@ -369,54 +382,185 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* MOBILE COLLAPSIBLE DRAWER */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#eaeaec] bg-white px-4 py-3 space-y-2 animate-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-2 gap-2 pb-3 border-b border-gray-100">
-            {navLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => {
-                  link.action();
-                  setMobileMenuOpen(false);
-                }}
-                className="text-left text-xs font-bold text-[#282c3f] py-2 px-3 hover:bg-[#f5f5f6] rounded flex items-center justify-between"
-              >
-                <span>{link.label}</span>
+      {/* LEFT-SIDE SLIDING NAVIGATION DRAWER */}
+      {/* Semi-transparent Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[100] transition-opacity duration-300 lg:hidden ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Drawer Panel (Slides in from the Left Side) */}
+      <aside
+        className={`fixed inset-y-0 left-0 w-[82vw] max-w-[320px] bg-white z-[101] shadow-2xl flex flex-col transition-transform duration-300 ease-out transform lg:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-label="Mobile Navigation"
+      >
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 bg-[#fafafa]">
+          <div 
+            onClick={() => {
+              onSelectCategory('all');
+              onNavigateToShop();
+              setMobileMenuOpen(false);
+            }}
+            className="cursor-pointer flex items-center gap-2 select-none"
+          >
+            <img
+              src={userBrandLogo}
+              alt="NaxtTo Brand Logo"
+              className="w-7 h-5 object-contain"
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-extrabold text-lg tracking-tighter text-[#282c3f]">
+                Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
+              </span>
+              <span className="text-[8px] uppercase tracking-[0.2em] text-[#696e79] font-bold">
+                LUXE JEWELLERY
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 -mr-1 text-[#282c3f] hover:bg-gray-200/80 rounded-full transition-colors active:scale-95"
+            aria-label="Close navigation menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Profile Card / Sign In Shortcut */}
+        <div 
+          onClick={() => {
+            setMobileMenuOpen(false);
+            onOpenAccount();
+          }}
+          className="mx-3 mt-3 p-3 bg-gradient-to-r from-[#fdf7f4] to-[#fef2f6] border border-[#fce4ec] rounded-lg cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-[#ff3e6c]/10 flex items-center justify-center shrink-0 text-[#ff3e6c]">
+              <User className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-[#282c3f] truncate">
+                {user?.name ? user.name : 'Welcome to NaxtTo'}
+              </p>
+              <p className="text-[10px] text-[#ff3e6c] font-semibold flex items-center gap-0.5">
+                <span>{user?.name ? 'Manage Profile & Orders' : 'Sign In / Register'}</span>
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#ff3e6c] shrink-0 group-hover:translate-x-0.5 transition-transform" />
+        </div>
+
+        {/* Categories List (Scrollable) */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+          <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#696e79]">
+            Shop By Category
+          </div>
+
+          {navLinks.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => {
+                link.action();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left text-xs font-bold text-[#282c3f] py-2.5 px-3 hover:bg-[#f5f5f6] active:bg-[#eee] rounded-md flex items-center justify-between transition-colors"
+            >
+              <span className="tracking-wide">{link.label}</span>
+              <div className="flex items-center gap-1.5">
                 {link.isNew && (
                   <span className="text-[9px] bg-[#ff3e6c] text-white font-extrabold px-1.5 py-0.5 rounded">
                     NEW
                   </span>
                 )}
-              </button>
-            ))}
-          </div>
+                <ChevronRight className="w-3.5 h-3.5 text-[#94969f]" />
+              </div>
+            </button>
+          ))}
 
-          <div className="pt-2 flex items-center justify-between text-xs">
+          {/* Quick Services Section */}
+          <div className="pt-3 mt-2 border-t border-gray-100">
+            <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[#696e79]">
+              Atelier Services
+            </div>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenWishlist();
+              }}
+              className="w-full text-left text-xs font-semibold text-[#282c3f] py-2 px-3 hover:bg-[#f5f5f6] rounded-md flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-[#ff3e6c]" />
+                <span>My Wishlist</span>
+              </div>
+              {wishlistCount > 0 && (
+                <span className="text-[10px] bg-[#ff3e6c] text-white px-2 py-0.5 rounded-full font-bold">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenCart();
+              }}
+              className="w-full text-left text-xs font-semibold text-[#282c3f] py-2 px-3 hover:bg-[#f5f5f6] rounded-md flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-[#282c3f]" />
+                <span>Shopping Bag</span>
+              </div>
+              {cartCount > 0 && (
+                <span className="text-[10px] bg-[#ff3e6c] text-white px-2 py-0.5 rounded-full font-bold">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigateToAtelier();
+              }}
+              className="w-full text-left text-xs font-semibold text-[#282c3f] py-2 px-3 hover:bg-[#f5f5f6] rounded-md flex items-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4 text-[#696e79]" />
+              <span>Certificate Verification (IGI/GIA)</span>
+            </button>
+
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 if (onNavigateToAdmin) onNavigateToAdmin();
               }}
-              className="text-[#ff5722] font-bold flex items-center gap-1.5"
+              className="w-full text-left text-xs font-bold text-[#ff5722] py-2 px-3 hover:bg-[#fff2ed] rounded-md flex items-center gap-2"
             >
-              <Store className="w-3.5 h-3.5" />
-              <span>Seller Hub</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenPdfCatalogue) onOpenPdfCatalogue();
-              }}
-              className="text-[#282c3f] font-semibold flex items-center gap-1"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Lookbook PDF</span>
+              <Store className="w-4 h-4 text-[#ff5722]" />
+              <span>Seller Hub / Atelier Admin</span>
             </button>
           </div>
         </div>
-      )}
+
+        {/* Drawer Footer (Trust Badges) */}
+        <div className="p-3 border-t border-gray-100 bg-[#fafafa] text-[10px] text-[#696e79] space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-[#282c3f]">
+            <Sparkles className="w-3 h-3 text-[#ff3e6c]" />
+            <span>100% Certified 18K Solid Gold & Diamonds</span>
+          </div>
+          <p className="text-[9px] text-[#696e79]">
+            Complimentary Insured Pan-India & Global Express Delivery
+          </p>
+        </div>
+      </aside>
     </header>
   );
 };

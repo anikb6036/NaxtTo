@@ -345,7 +345,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             e.stopPropagation();
             prevSlide();
           }}
-          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#8f0d3a]/85 hover:bg-[#a61145] text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#8f0d3a]/85 hover:bg-[#a61145] text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
           aria-label="Previous Slide"
         >
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -356,14 +356,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             e.stopPropagation();
             nextSlide();
           }}
-          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#8f0d3a]/85 hover:bg-[#a61145] text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#8f0d3a]/85 hover:bg-[#a61145] text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
           aria-label="Next Slide"
         >
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         {/* Floating Side Action Buttons Matching Reference Image */}
-        <div className="absolute right-3 sm:right-5 bottom-8 sm:bottom-10 z-40 flex flex-col gap-2 items-center">
+        <div className="absolute right-3 sm:right-5 bottom-8 sm:bottom-10 z-20 flex flex-col gap-2 items-center">
           {/* Quick Category Grid Button */}
           <button
             onClick={(e) => {
@@ -393,7 +393,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Bottom Pagination Dots Matching Exact Design in Reference Image */}
-        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-2">
+        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 sm:gap-2">
           {SLIDES.map((slide, idx) => (
             <button
               key={slide.id}
