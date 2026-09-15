@@ -23,9 +23,9 @@ export const MyntraCouponStrip: React.FC<MyntraCouponStripProps> = ({ onApplyCou
   return (
     <div 
       id="myntra-coupon-strip"
-      className="w-full bg-[#f26a36] text-white select-none relative transition-all duration-300"
+      className="w-full bg-[#f26a36] text-white select-none relative transition-all duration-300 overflow-x-clip"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-2.5">
+      <div className="w-full max-w-[1600px] mx-auto px-2.5 sm:px-4 lg:px-6 xl:px-8 py-2 sm:py-2.5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-4">
           
           {/* Main Voucher Layout */}

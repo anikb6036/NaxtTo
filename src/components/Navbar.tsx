@@ -87,33 +87,56 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { label: 'ALL SAKHA POLA', action: () => { onSelectCategory('all'); onNavigateToShop(); } },
-    { label: 'SHANKHA', action: () => { onSelectCategory('shakha'); onNavigateToShop(); } },
-    { label: 'POLA', action: () => { onSelectCategory('pola'); onNavigateToShop(); } },
+    { 
+      label: 'ALL SAKHA POLA', 
+      shortLabel: 'ALL',
+      action: () => { onSelectCategory('all'); onNavigateToShop(); } 
+    },
+    { 
+      label: 'SHANKHA', 
+      shortLabel: 'SHANKHA',
+      action: () => { onSelectCategory('shakha'); onNavigateToShop(); } 
+    },
+    { 
+      label: 'POLA', 
+      shortLabel: 'POLA',
+      action: () => { onSelectCategory('pola'); onNavigateToShop(); } 
+    },
     { 
       label: '22K GOLD BADHANO', 
+      shortLabel: 'GOLD BADHANO',
       isNew: true, 
       action: () => { onSelectCategory('gold-badhano'); onNavigateToShop(); } 
     },
-    { label: 'LOHA BADHANO', action: () => { onSelectCategory('loha-badhano'); onNavigateToShop(); } },
-    { label: 'BRIDAL COMBOS', action: () => { onSelectCategory('bridal-combos'); onNavigateToShop(); } },
+    { 
+      label: 'LOHA BADHANO', 
+      shortLabel: 'LOHA',
+      action: () => { onSelectCategory('loha-badhano'); onNavigateToShop(); } 
+    },
+    { 
+      label: 'BRIDAL COMBOS', 
+      shortLabel: 'BRIDAL',
+      action: () => { onSelectCategory('bridal-combos'); onNavigateToShop(); } 
+    },
     { 
       label: 'ATELIER', 
+      shortLabel: 'ATELIER',
       action: () => { onNavigateToAtelier(); } 
     },
     { 
       label: 'JOURNAL', 
+      shortLabel: 'JOURNAL',
       action: () => { onNavigateToJournal(); } 
     },
   ];
 
   return (
-    <header id="myntra-main-header" className={`sticky top-0 ${mobileMenuOpen ? 'z-[100]' : 'z-50'} w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-b border-[#f5f5f6] font-sans`}>
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-1.5 sm:gap-6 h-14 sm:h-20">
+    <header id="myntra-main-header" className={`sticky top-0 ${mobileMenuOpen ? 'z-[100]' : 'z-50'} w-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-b border-[#f5f5f6] font-sans overflow-x-clip`}>
+      <div className="w-full max-w-[1600px] mx-auto px-2.5 sm:px-4 lg:px-6 xl:px-8">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3 xl:gap-4 2xl:gap-6 h-14 sm:h-18 2xl:h-20">
           
           {/* LEFT: MYNTRA-STYLE FASHION LOGO & MAIN NAVIGATION */}
-          <div className="flex items-center gap-2 sm:gap-4 xl:gap-8 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 xl:gap-4 2xl:gap-8 shrink-0">
             
             {/* Mobile / Tablet Hamburger Menu (Visible up to xl: 1280px) */}
             <button
@@ -143,17 +166,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Desktop Navigation Links (Visible on xl: screens where there is ample room) */}
-            <nav className="hidden xl:flex items-center gap-3.5 2xl:gap-6 h-full shrink-0">
+            {/* Desktop Navigation Links (Adaptive labels and spacing for seamless fit across 1280px to 4K) */}
+            <nav className="hidden xl:flex items-center gap-2 xl:gap-2.5 2xl:gap-5 h-full shrink-0">
               {navLinks.map((link) => (
                 <button
                   key={link.label}
                   onClick={link.action}
-                  className="relative text-xs 2xl:text-[13px] font-extrabold tracking-wider text-[#282c3f] hover:text-[#ff3e6c] transition-colors py-6 select-none flex items-center gap-1 group whitespace-nowrap"
+                  className="relative text-[11px] xl:text-[11.5px] 2xl:text-[13px] font-extrabold tracking-tight 2xl:tracking-wider text-[#282c3f] hover:text-[#ff3e6c] transition-colors py-5 2xl:py-6 select-none flex items-center gap-1 group whitespace-nowrap"
                 >
-                  <span>{link.label}</span>
+                  <span className="hidden 2xl:inline">{link.label}</span>
+                  <span className="2xl:hidden">{link.shortLabel}</span>
                   {link.isNew && (
-                    <span className="text-[9px] font-black uppercase text-[#ff3e6c] -top-1 relative animate-pulse tracking-normal">
+                    <span className="text-[8.5px] 2xl:text-[9px] font-black uppercase text-[#ff3e6c] -top-1 relative animate-pulse tracking-normal">
                       NEW
                     </span>
                   )}
@@ -165,10 +189,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           </div>
 
-          {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Flexible width, never overlapping) */}
-          <div className="hidden sm:flex flex-1 min-w-[160px] max-w-sm xl:max-w-md 2xl:max-w-xl mx-2 sm:mx-4">
-            <div className="w-full relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-4 py-2 sm:py-2.5">
-              <Search className="w-4 h-4 text-[#696e79] shrink-0 mr-2.5" />
+          {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Flexible width, perfectly responsive without squeezing buttons) */}
+          <div className="hidden sm:flex flex-1 min-w-[140px] xl:min-w-[180px] max-w-sm xl:max-w-md 2xl:max-w-xl mx-2 xl:mx-4">
+            <div className="w-full relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-3.5 2xl:px-4 py-2 sm:py-2.5">
+              <Search className="w-4 h-4 text-[#696e79] shrink-0 mr-2 xl:mr-2.5" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -177,7 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') onNavigateToShop();
                 }}
-                placeholder="Search Shankha, Pola, 22K Gold Badhano, Loha..."
+                placeholder="Search Shankha, Pola, Gold Badhano, Loha..."
                 className="w-full text-xs sm:text-[13px] text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
               />
               {searchQuery && (
@@ -192,8 +216,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* RIGHT: ICON + TEXT BUTTONS (Profile, Wishlist, Bag - Protected on mobile) */}
-          <div className="flex items-center gap-1 xs:gap-2 sm:gap-6 shrink-0">
+          {/* RIGHT: ICON + TEXT BUTTONS (Profile, Wishlist, Bag - Fully protected from clipping) */}
+          <div className="flex items-center gap-1.5 sm:gap-3 xl:gap-4 2xl:gap-6 shrink-0">
             
             {/* PROFILE (Stacked Icon + Text with Flyout) */}
             <div 
@@ -207,11 +231,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setProfileDropdownOpen(false);
                   onOpenAccount();
                 }}
-                className="flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
+                className="flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[36px] sm:min-w-[42px] 2xl:min-w-[48px] shrink-0"
                 aria-label="Profile"
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#282c3f] group-hover:text-[#ff3e6c] stroke-[1.8]" />
-                <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
+                <span className="text-[10px] 2xl:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                   Profile
                 </span>
               </button>
@@ -296,7 +320,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* WISHLIST (Stacked Icon + Text with Count Badge) */}
             <button
               onClick={onOpenWishlist}
-              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
+              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[36px] sm:min-w-[42px] 2xl:min-w-[48px] shrink-0"
               aria-label="Wishlist"
             >
               <div className="relative">
@@ -307,7 +331,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 )}
               </div>
-              <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
+              <span className="text-[10px] 2xl:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                 Wishlist
               </span>
             </button>
@@ -315,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* BAG / CART (Stacked Icon + Text with Count Badge) */}
             <button
               onClick={onOpenCart}
-              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[38px] sm:min-w-[48px]"
+              className="relative flex flex-col items-center justify-center text-[#282c3f] hover:text-[#ff3e6c] group p-1 sm:p-1.5 transition-colors min-w-[36px] sm:min-w-[42px] 2xl:min-w-[48px] shrink-0"
               aria-label="Shopping Bag"
             >
               <div className="relative">
@@ -326,7 +350,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 )}
               </div>
-              <span className="text-[10px] sm:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
+              <span className="text-[10px] 2xl:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
                 Bag
               </span>
             </button>
