@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  ShieldCheck, 
   Lock, 
-  Key, 
-  UserCheck, 
   X, 
-  ArrowRight, 
   AlertCircle, 
   CheckCircle2, 
   Eye, 
-  EyeOff, 
-  Fingerprint
+  EyeOff
 } from 'lucide-react';
-import { BrandLogo } from './BrandLogo';
 
 interface StaffAuthModalProps {
   isOpen: boolean;
@@ -112,152 +106,162 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
   return (
     <div 
       id="staff-auth-modal-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div 
         id="staff-auth-modal-container"
-        className="relative w-full max-w-md bg-white border border-[#2d2a26]/10 rounded-2xl shadow-2xl overflow-hidden animate-scaleUp"
+        className="relative w-full max-w-[400px] bg-white shadow-2xl border border-[#ebdce1] overflow-hidden animate-scaleUp"
       >
-        {/* Top Header with Dark Gold Accent */}
-        <div className="bg-[#1d1d1f] text-white px-6 py-6 border-b border-[#2d2a26]/20 relative">
-          <button
-            id="close-staff-auth-modal-btn"
-            onClick={onClose}
-            className="absolute top-5 right-5 text-white/60 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* Close button */}
+        <button
+          id="close-staff-auth-modal-btn"
+          onClick={onClose}
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#f5f5f6] hover:bg-[#ebebee] text-[#535766] hover:text-[#282c3f] flex items-center justify-center cursor-pointer transition-colors z-10"
+          aria-label="Close modal"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-          <div className="flex items-center justify-between mb-3">
-            <BrandLogo layout="horizontal" size="xs" variant="gold" showSubtitle subtitleText="STAFF ATELIER" showIcon={false} />
-            <span className="text-[9px] uppercase tracking-[0.25em] text-[#d4af37] font-semibold bg-white/5 px-2 py-0.5 rounded border border-white/10">
-              Security Gate
-            </span>
+        {/* Card Body */}
+        <div className="p-7 sm:p-8">
+          {/* Header Title */}
+          <div className="mb-5">
+            <h1 className="text-[20px] sm:text-[22px] font-bold text-[#282c3f] mb-1 flex items-baseline gap-1.5">
+              <span>Staff Login</span>
+              <span className="font-normal text-[#535766] text-base">or</span>
+              <span>Portal</span>
+            </h1>
+            <p className="text-xs text-[#535766]">
+              Access to inventory management, catalogue editing & admin ledger
+            </p>
           </div>
 
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[#d4af37] border border-white/10 shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif text-lg text-white font-medium">
-                Staff Authentication
-              </h3>
-            </div>
-          </div>
-          <p className="text-xs text-white/70 font-sans mt-1">
-            Access to inventory management, catalogue editing, and client ledger is restricted to authorized personnel.
-          </p>
-        </div>
-
-        {/* Modal Body */}
-        <div className="p-6 space-y-5">
           {errorMsg && (
             <div 
               id="staff-auth-error-banner"
-              className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-start gap-2.5 animate-fadeIn"
+              className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xs flex items-start gap-2 animate-fadeIn"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+              <div className="flex-1">
+                <p className="leading-snug text-[12px]">{errorMsg}</p>
+                <button
+                  type="button"
+                  onClick={() => setErrorMsg(null)}
+                  className="mt-1 text-rose-500 hover:text-rose-700 underline text-[11px] cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 
           {verifiedSuccess ? (
             <div className="py-8 text-center space-y-3 animate-fadeIn">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto animate-bounce">
-                <CheckCircle2 className="w-8 h-8" />
+              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto animate-bounce">
+                <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h4 className="font-serif text-lg text-[#1d1d1f] font-medium">
+              <h4 className="text-[18px] font-bold text-[#282c3f]">
                 Credentials Verified
               </h4>
-              <p className="text-xs text-[#6e6e73]">
-                Decryption complete. Initializing Atelier Admin Suite...
+              <p className="text-xs text-[#535766]">
+                Security clearance approved. Launching Admin Suite...
               </p>
             </div>
           ) : (
-            <form onSubmit={handleVerify} className="space-y-4 font-sans">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#2d2a26] mb-1.5">
-                  Staff ID / Username / Email
-                </label>
-                <div className="relative">
-                  <input
-                    id="staff-auth-email-input"
-                    type="text"
-                    value={emailOrId}
-                    onChange={(e) => {
-                      setEmailOrId(e.target.value);
-                      if (errorMsg) setErrorMsg(null);
-                    }}
-                    placeholder="e.g. anik or admin@naxtto.com"
-                    className="w-full px-3.5 py-2.5 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#1d1d1f] focus:bg-white transition-all pl-9"
-                    autoFocus
-                  />
-                  <UserCheck className="w-4 h-4 text-[#86868b] absolute left-3 top-3" />
-                </div>
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div className="border border-[#d4d5d9] focus-within:border-[#282c3f] h-11 px-3.5 flex items-center transition-colors">
+                <input
+                  id="staff-auth-email-input"
+                  type="text"
+                  required
+                  value={emailOrId}
+                  onChange={(e) => {
+                    setEmailOrId(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
+                  placeholder="Staff ID, username or work email*"
+                  className="w-full h-full text-sm text-[#282c3f] placeholder:text-[#94969f] focus:outline-none bg-transparent"
+                  autoFocus
+                />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#2d2a26] mb-1.5">
-                  Security Passkey / Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="staff-auth-passcode-input"
-                    type={showPasscode ? 'text' : 'password'}
-                    value={passcode}
-                    onChange={(e) => {
-                      setPasscode(e.target.value);
-                      if (errorMsg) setErrorMsg(null);
-                    }}
-                    placeholder="Enter confidential passkey..."
-                    className="w-full px-3.5 py-2.5 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#1d1d1f] focus:bg-white transition-all pl-9 pr-10"
-                  />
-                  <Key className="w-4 h-4 text-[#86868b] absolute left-3 top-3" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasscode(!showPasscode)}
-                    className="absolute right-3 top-3 text-[#86868b] hover:text-[#1d1d1f] transition-colors"
-                  >
-                    {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 space-y-2.5">
+              <div className="relative border border-[#d4d5d9] focus-within:border-[#282c3f] h-11 pl-3.5 pr-10 flex items-center transition-colors">
+                <input
+                  id="staff-auth-passcode-input"
+                  type={showPasscode ? 'text' : 'password'}
+                  required
+                  value={passcode}
+                  onChange={(e) => {
+                    setPasscode(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
+                  placeholder="Security passkey or password*"
+                  className="w-full h-full text-sm text-[#282c3f] placeholder:text-[#94969f] focus:outline-none bg-transparent"
+                />
                 <button
-                  id="staff-auth-submit-btn"
-                  type="submit"
-                  disabled={isVerifying}
-                  className="w-full py-3 bg-[#1d1d1f] hover:bg-black text-white text-xs uppercase tracking-widest font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  type="button"
+                  onClick={() => setShowPasscode(!showPasscode)}
+                  className="absolute right-3 text-[#94969f] hover:text-[#282c3f] transition-colors cursor-pointer"
+                  aria-label={showPasscode ? 'Hide password' : 'Show password'}
                 >
-                  {isVerifying ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>Verifying Credentials...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Fingerprint className="w-4 h-4 text-[#d4af37]" />
-                      <span>Verify & Enter Admin Suite</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
+                  {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-
               </div>
+
+              {/* Terms / Policy text matching login page */}
+              <div className="text-center text-xs text-[#535766] leading-relaxed select-none pt-1">
+                By continuing, you verify compliance with{' '}
+                <span className="text-[#ff3f6c] font-bold">
+                  Atelier Security Protocols
+                </span>{' '}
+                &{' '}
+                <span className="text-[#ff3f6c] font-bold">
+                  Confidentiality NDA
+                </span>
+              </div>
+
+              {/* Primary Action Button matching login page */}
+              <button
+                id="staff-auth-submit-btn"
+                type="submit"
+                disabled={isVerifying}
+                className="w-full h-11 mt-2 bg-[#ff3f6c] hover:bg-[#e6355f] text-white text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+              >
+                {isVerifying ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>VERIFYING CREDENTIALS...</span>
+                  </div>
+                ) : (
+                  <span>VERIFY & ENTER ADMIN SUITE</span>
+                )}
+              </button>
             </form>
           )}
 
-          {/* Footer note */}
-          <div className="pt-3 border-t border-[#e5e5ea] flex items-center justify-between text-[10px] text-[#86868b]">
+          {/* Quick Demo Credentials */}
+          <div className="mt-5 text-center text-xs text-[#282c3f]">
+            <span className="text-[#535766]">Need staff access? </span>
+            <button
+              type="button"
+              onClick={() => {
+                setEmailOrId('anik@naxtto.com');
+                setPasscode('naxtto2026');
+                setErrorMsg(null);
+              }}
+              className="text-[#ff3f6c] font-bold hover:underline cursor-pointer"
+            >
+              Fill Staff Passkey
+            </button>
+          </div>
+
+          {/* Bottom Security Information */}
+          <div className="mt-5 pt-4 border-t border-[#eaeaec] flex items-center justify-between text-[11px] text-[#94969f]">
             <span className="flex items-center gap-1">
-              <Lock className="w-3 h-3 text-emerald-600" />
+              <Lock className="w-3.5 h-3.5 text-[#ff3f6c]" />
               256-Bit TLS Authenticated
             </span>
             <span>Cloud SQL & PostgreSQL Secured</span>

@@ -624,25 +624,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
 
               <p className="text-xs text-[#5A524A] leading-relaxed">
-                Our rings and bracelets are engineered with comfort-fit geometry. To find your exact measurement, wrap a strip of paper around your knuckle, mark the overlap, and measure against a millimeter ruler.
+                Traditional Sakha and Pola bangles are sized according to standard Indian bangle dimensions. To find your size, measure the inner diameter across a well-fitting bangle or measure around your hand across the knuckles.
               </p>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border border-[#E8DFD1]">
                   <thead className="bg-[#EFE9DF] text-[#1A1816] uppercase tracking-wider font-semibold">
                     <tr>
-                      <th className="p-2 border-b border-[#E8DFD1]">US Size</th>
-                      <th className="p-2 border-b border-[#E8DFD1]">Inside Diameter</th>
-                      <th className="p-2 border-b border-[#E8DFD1]">Circumference</th>
-                      <th className="p-2 border-b border-[#E8DFD1]">UK / EU</th>
+                      <th className="p-2 border-b border-[#E8DFD1]">Bangle Size</th>
+                      <th className="p-2 border-b border-[#E8DFD1]">Inside Diameter (Inches)</th>
+                      <th className="p-2 border-b border-[#E8DFD1]">Inside Diameter (mm)</th>
+                      <th className="p-2 border-b border-[#E8DFD1]">Fit Recommendation</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E8DFD1] text-[#4A443D]">
-                    <tr><td className="p-2 font-semibold">US 5</td><td className="p-2">15.7 mm</td><td className="p-2">49.3 mm</td><td className="p-2">J 1/2 (49)</td></tr>
-                    <tr><td className="p-2 font-semibold">US 6</td><td className="p-2">16.5 mm</td><td className="p-2">51.9 mm</td><td className="p-2">L 1/2 (52)</td></tr>
-                    <tr><td className="p-2 font-semibold">US 7</td><td className="p-2">17.3 mm</td><td className="p-2">54.4 mm</td><td className="p-2">N 1/2 (54)</td></tr>
-                    <tr><td className="p-2 font-semibold">US 8</td><td className="p-2">18.1 mm</td><td className="p-2">57.0 mm</td><td className="p-2">P 1/2 (57)</td></tr>
-                    <tr><td className="p-2 font-semibold">US 9</td><td className="p-2">18.9 mm</td><td className="p-2">59.5 mm</td><td className="p-2">R 1/2 (60)</td></tr>
+                    <tr><td className="p-2 font-semibold">2.2</td><td className="p-2">2.12 in</td><td className="p-2">54.0 mm</td><td className="p-2">Petite wrist / Extra Small</td></tr>
+                    <tr><td className="p-2 font-semibold">2.4</td><td className="p-2">2.25 in</td><td className="p-2">57.2 mm</td><td className="p-2">Small to Medium</td></tr>
+                    <tr><td className="p-2 font-semibold">2.6</td><td className="p-2">2.37 in</td><td className="p-2">60.3 mm</td><td className="p-2">Standard / Most Common</td></tr>
+                    <tr><td className="p-2 font-semibold">2.8</td><td className="p-2">2.50 in</td><td className="p-2">63.5 mm</td><td className="p-2">Large wrist</td></tr>
+                    <tr><td className="p-2 font-semibold">2.10</td><td className="p-2">2.62 in</td><td className="p-2">66.7 mm</td><td className="p-2">Extra Large</td></tr>
                   </tbody>
                 </table>
               </div>

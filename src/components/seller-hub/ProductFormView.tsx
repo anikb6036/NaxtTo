@@ -1906,6 +1906,10 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                       onChange={e => {
                         const m = e.target.value as MetalType;
                         const nameMap: Record<MetalType, string> = {
+                          'pure-conch-shell': '100% Pure Conch Shell (Natural Shankha)',
+                          'crimson-coral-acrylic': 'Auspicious Coral Red Pola',
+                          '22k-yellow-gold': '22K Solid Gold (BIS 916 Hallmarked)',
+                          'iron-gold': 'Pure Iron & 22K Solid Gold (Loha Badhano)',
                           '18k-yellow-gold': '18K Recycled Yellow Gold',
                           '18k-white-gold': '18K Recycled White Gold',
                           '18k-rose-gold': '18K Recycled Rose Gold',
@@ -1917,6 +1921,10 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                       }}
                       className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none font-medium"
                     >
+                      <option value="pure-conch-shell">100% Pure Conch Shell (Natural Shankha)</option>
+                      <option value="crimson-coral-acrylic">Auspicious Coral Red Pola</option>
+                      <option value="22k-yellow-gold">22K Solid Gold (BIS 916 Hallmarked)</option>
+                      <option value="iron-gold">Pure Iron & 22K Solid Gold (Loha Badhano)</option>
                       <option value="18k-yellow-gold">18K Recycled Yellow Gold</option>
                       <option value="18k-white-gold">18K Recycled White Gold</option>
                       <option value="18k-rose-gold">18K Recycled Rose Gold</option>

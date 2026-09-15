@@ -1,5 +1,10 @@
 export type ProductCategory = 
   | 'all' 
+  | 'shakha'
+  | 'pola'
+  | 'gold-badhano'
+  | 'loha-badhano'
+  | 'bridal-combos'
   | 'rings' 
   | 'necklaces' 
   | 'earrings' 
@@ -8,7 +13,11 @@ export type ProductCategory =
   | 'bespoke';
 
 export type MetalType = 
+  | 'pure-conch-shell'
+  | 'crimson-coral-acrylic'
+  | '22k-yellow-gold'
   | '18k-yellow-gold'
+  | 'iron-gold'
   | '18k-white-gold'
   | '18k-rose-gold'
   | '925-sterling-silver'
@@ -16,6 +25,12 @@ export type MetalType =
   | 'gold-vermeil';
 
 export type JewelleryStyle = 
+  | 'traditional-bengali'
+  | 'bridal-heritage'
+  | 'hand-carved'
+  | 'mukhi-design'
+  | 'filigree-badhano'
+  | 'daily-wear'
   | 'minimalist' 
   | 'statement' 
   | 'sculptural' 
@@ -105,7 +120,7 @@ export interface BlogPost {
   title: string;
   subtitle: string;
   excerpt: string;
-  category: 'Craft & Atelier' | 'Care Guides' | 'Style & Stacking' | 'Gemology' | 'Sustainability';
+  category: 'Craft & Atelier' | 'Care Guides' | 'Style & Stacking' | 'Gemology' | 'Sustainability' | 'Heritage & Rituals' | 'Sizing & Fit' | 'Care & Maintenance';
   readTime: string;
   publishedAt: string;
   coverImage: string;

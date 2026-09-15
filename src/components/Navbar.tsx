@@ -7,7 +7,6 @@ import {
   Menu, 
   X, 
   ChevronDown,
-  Sparkles,
   Package,
   Store,
   LogOut,
@@ -88,18 +87,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [mobileMenuOpen]);
 
   const navLinks = [
-    { label: 'MEN', action: () => { if (onSelectGender) onSelectGender('men'); onSelectCategory('all'); onNavigateToShop(); } },
-    { label: 'WOMEN', action: () => { if (onSelectGender) onSelectGender('women'); onSelectCategory('all'); onNavigateToShop(); } },
-    { label: 'RINGS', action: () => { onSelectCategory('rings'); onNavigateToShop(); } },
-    { label: 'NECKLACES', action: () => { onSelectCategory('necklaces'); onNavigateToShop(); } },
-    { label: 'EARRINGS', action: () => { onSelectCategory('earrings'); onNavigateToShop(); } },
-    { label: 'BRACELETS', action: () => { onSelectCategory('bracelets'); onNavigateToShop(); } },
-    { label: 'COLLECTIONS', action: () => { onSelectCategory('fine-collections'); onNavigateToShop(); } },
-    { label: 'BESPOKE', action: () => { onSelectCategory('bespoke'); onNavigateToShop(); } },
+    { label: 'ALL SAKHA POLA', action: () => { onSelectCategory('all'); onNavigateToShop(); } },
+    { label: 'SHANKHA', action: () => { onSelectCategory('shakha'); onNavigateToShop(); } },
+    { label: 'POLA', action: () => { onSelectCategory('pola'); onNavigateToShop(); } },
     { 
-      label: 'STUDIO', 
+      label: '22K GOLD BADHANO', 
       isNew: true, 
+      action: () => { onSelectCategory('gold-badhano'); onNavigateToShop(); } 
+    },
+    { label: 'LOHA BADHANO', action: () => { onSelectCategory('loha-badhano'); onNavigateToShop(); } },
+    { label: 'BRIDAL COMBOS', action: () => { onSelectCategory('bridal-combos'); onNavigateToShop(); } },
+    { 
+      label: 'ATELIER', 
       action: () => { onNavigateToAtelier(); } 
+    },
+    { 
+      label: 'JOURNAL', 
+      action: () => { onNavigateToJournal(); } 
     },
   ];
 
@@ -134,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
                 </span>
                 <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#696e79] font-bold hidden xs:block">
-                  LUXE JEWELLERY
+                  SAKHA POLA ATELIER
                 </span>
               </div>
             </div>
@@ -173,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') onNavigateToShop();
                 }}
-                placeholder="Search for products, brands and more"
+                placeholder="Search Shankha, Pola, 22K Gold Badhano, Loha..."
                 className="w-full text-xs sm:text-[13px] text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
               />
               {searchQuery && (
@@ -390,7 +394,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
               </span>
               <span className="text-[8px] uppercase tracking-[0.2em] text-[#696e79] font-bold">
-                LUXE JEWELLERY
+                SAKHA POLA ATELIER
               </span>
             </div>
           </div>
@@ -512,8 +516,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Drawer Footer (Trust Badges) */}
         <div className="p-3 border-t border-gray-100 bg-[#fafafa] text-[10px] text-[#696e79] space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-[#282c3f]">
-            <Sparkles className="w-3 h-3 text-[#ff3e6c]" />
+          <div className="font-bold text-[#282c3f]">
             <span>100% Certified 18K Solid Gold & Diamonds</span>
           </div>
           <p className="text-[9px] text-[#696e79]">

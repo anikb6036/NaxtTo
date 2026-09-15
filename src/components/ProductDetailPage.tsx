@@ -586,17 +586,18 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 {showSizeGuide && (
                   <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] text-xs space-y-2.5 animate-fadeIn">
                     <div className="flex justify-between items-center font-semibold text-[#1d1d1f]">
-                      <span>International Sizing Matrix</span>
-                      <span className="text-[#86868b] font-normal text-xs">Diameter (mm)</span>
+                      <span>Indian Bangle Sizing Matrix</span>
+                      <span className="text-[#86868b] font-normal text-xs">Inner Diameter</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs text-[#6e6e73]">
-                      <div className="p-2 bg-white rounded border border-[#e5e5ea]"><strong>US 5</strong> (15.7mm)</div>
-                      <div className="p-2 bg-white rounded border border-[#e5e5ea]"><strong>US 6</strong> (16.5mm)</div>
-                      <div className="p-2 bg-white rounded border border-[#e5e5ea]"><strong>US 7</strong> (17.3mm)</div>
-                      <div className="p-2 bg-white rounded border border-[#e5e5ea]"><strong>US 8</strong> (18.1mm)</div>
+                    <div className="grid grid-cols-5 gap-1.5 text-center text-xs text-[#6e6e73]">
+                      <div className="p-1.5 bg-white rounded border border-[#e5e5ea]"><strong>2.2</strong><br/><span className="text-[10px]">54mm</span></div>
+                      <div className="p-1.5 bg-white rounded border border-[#e5e5ea]"><strong>2.4</strong><br/><span className="text-[10px]">57mm</span></div>
+                      <div className="p-1.5 bg-white rounded border border-[#e5e5ea]"><strong>2.6</strong><br/><span className="text-[10px]">60mm</span></div>
+                      <div className="p-1.5 bg-white rounded border border-[#e5e5ea]"><strong>2.8</strong><br/><span className="text-[10px]">63mm</span></div>
+                      <div className="p-1.5 bg-white rounded border border-[#e5e5ea]"><strong>2.10</strong><br/><span className="text-[10px]">66mm</span></div>
                     </div>
                     <p className="text-xs text-[#86868b]">
-                      Complimentary bespoke resizing provided within 60 days of purchase.
+                      Free size exchange within 15 days if the bangles don't fit smoothly over your knuckles.
                     </p>
                   </div>
                 )}

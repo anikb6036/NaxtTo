@@ -82,6 +82,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Handle Save Product (from ProductFormView)
   const handleSaveProduct = (formData: any) => {
     const metalNameMap: Record<MetalType, string> = {
+      'pure-conch-shell': '100% Pure Conch Shell (Natural Shankha)',
+      'crimson-coral-acrylic': 'Auspicious Coral Red Pola',
+      '22k-yellow-gold': '22K Solid Gold (BIS 916 Hallmarked)',
+      'iron-gold': 'Pure Iron & 22K Solid Gold (Loha Badhano)',
       '18k-yellow-gold': '18K Recycled Yellow Gold',
       '18k-white-gold': '18K Recycled White Gold',
       '18k-rose-gold': '18K Recycled Rose Gold',
@@ -91,6 +95,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     };
 
     const styleNameMap: Record<JewelleryStyle, string> = {
+      'traditional-bengali': 'Traditional Bengali Craft',
+      'bridal-heritage': 'Bridal Heritage Ceremony',
+      'hand-carved': 'Master Artisan Hand-Carved',
+      'mukhi-design': 'Mukhi Carved Animal/Floral Motif',
+      'filigree-badhano': 'Fine Gold Filigree Wirework (Jal Badhano)',
+      'daily-wear': 'Comfortable Daily Auspicious Wear',
       'minimalist': 'Minimalist Architecture',
       'statement': 'Statement Sculpture',
       'sculptural': 'Sculptural Fluidity',

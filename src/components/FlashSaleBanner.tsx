@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, ArrowRight, ShieldAlert, Sparkles } from 'lucide-react';
+import { Clock, ArrowRight } from 'lucide-react';
 
 interface FlashSaleBannerProps {
   onShopNow: () => void;
@@ -40,12 +40,6 @@ export const FlashSaleBanner: React.FC<FlashSaleBannerProps> = ({ onShopNow }) =
         >
           {/* Left Flash Sale Badge & Text (Matches Video 0:07) */}
           <div className="flex items-center gap-3 sm:gap-4 z-10">
-            {/* Flash Icon Box */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-yellow-400 text-[#0d47a1] flex flex-col items-center justify-center font-black shadow-md shrink-0 transform group-hover:scale-105 transition-transform">
-              <Zap className="w-6 h-6 fill-[#0d47a1]" />
-              <span className="text-[9px] uppercase tracking-tighter font-extrabold leading-none">FLASH</span>
-            </div>
-
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-yellow-400 text-[#1a237e] text-[10px] font-black uppercase rounded-xs tracking-wider">
@@ -56,10 +50,10 @@ export const FlashSaleBanner: React.FC<FlashSaleBannerProps> = ({ onShopNow }) =
                 </span>
               </div>
               <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight mt-0.5">
-                Flat 15% Off on All Gold & Diamond Pieces
+                Flat 15% Off on All Shankha, Pola &amp; Gold Badhano
               </h3>
               <p className="text-xs text-blue-100 hidden sm:block">
-                Use Code: <strong className="text-yellow-300 tracking-wider">GOLD15</strong> at checkout. Valid on orders above ₹10,000.
+                Use Code: <strong className="text-yellow-300 tracking-wider">SAKHA15</strong> at checkout. Free Velvet Gift Box Included.
               </p>
             </div>
           </div>

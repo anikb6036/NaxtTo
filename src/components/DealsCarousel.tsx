@@ -17,45 +17,45 @@ export const DealsCarousel: React.FC<DealsCarouselProps> = ({
   const slides = [
     {
       id: 0,
-      badge: '⚡ MINUTES EXPRESS',
-      title: 'Get certified jewellery in MINUTES',
-      subtitle: 'Express 24-Hour Dispatch • 100% BIS Hallmarked 18K & 22K',
-      offer: 'UP TO 50% OFF',
-      offerSub: 'On Solitaire Bands, Chokers & Anklets',
-      cta: 'Shop Express',
-      category: 'rings' as ProductCategory,
+      badge: '⚡ BENGAL EXPRESS',
+      title: 'Authentic Shankha Pola Delivered Pan-India',
+      subtitle: 'Safe Velvet Box Packing • 100% Genuine Conch Shell Guaranteed',
+      offer: 'UP TO 30% OFF',
+      offerSub: 'On Hand-Carved Shankha & Crimson Pola Pairs',
+      cta: 'Shop Shankha',
+      category: 'shakha' as ProductCategory,
       bgGradient: 'from-[#3b1728] via-[#240816] to-[#12020a]',
       accentColor: '#ffaec0',
-      tagline: 'Instant Delivery to Your Doorstep',
-      bannerImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85'
+      tagline: 'Hand-Carved by Bowbazar Artisans',
+      bannerImage: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=800&q=85'
     },
     {
       id: 1,
-      badge: 'FESTIVE GOLD GALA',
-      title: 'Save big on 18K Solid Gold & Solitaires',
-      subtitle: 'Certified IGI & GIA Solitaires • Zero Deduction Gold Exchange',
-      offer: 'FROM ₹2,990',
-      offerSub: 'Hand-Planished by Milan & Antwerp Artisans',
-      cta: 'Explore Gala',
-      category: 'all' as ProductCategory,
+      badge: 'ROYAL BRIDAL GALA',
+      title: '22K Gold Badhano Pola & Shankha Sets',
+      subtitle: 'BIS 916 Hallmarked Gold Wire Work • Karigar Crafted in Bengal',
+      offer: 'FROM ₹19,800',
+      offerSub: 'Custom Sizing 2.2 to 2.10 with Authenticity Certificate',
+      cta: 'Explore Gold Badhano',
+      category: 'gold-badhano' as ProductCategory,
       bgGradient: 'from-[#1c2e4a] via-[#101d32] to-[#080e1a]',
       accentColor: '#ffd700',
-      tagline: 'Lowest Gold Price Guarantee',
-      bannerImage: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=800&q=85'
+      tagline: 'Bowbazar Gold Corridor Craft',
+      bannerImage: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=800&q=85'
     },
     {
       id: 2,
-      badge: 'PAYDAY GOLD RUSH',
-      title: 'Solitaire Studs & Tennis Bracelets',
-      subtitle: 'Instant 10% Bank Discount on HDFC, SBI & ICICI Cards',
-      offer: 'FROM ₹1,499/MO*',
-      offerSub: 'No-Cost EMI Available for up to 12 Months',
-      cta: 'Claim Bank Offer',
-      category: 'bracelets' as ProductCategory,
+      badge: 'SACRED BLESSINGS',
+      title: 'Loha Badhano & Sampurna Bridal Sets',
+      subtitle: 'Auspicious Iron + 22K Gold Bangle Sets for Bengali Brides',
+      offer: 'FROM ₹9,800',
+      offerSub: 'Mukhi Carved (Mayur, Makara, Floral Motifs)',
+      cta: 'Shop Bridal Sets',
+      category: 'bridal-combos' as ProductCategory,
       bgGradient: 'from-[#2e1a47] via-[#1c0f2d] to-[#0f071a]',
       accentColor: '#c5a059',
-      tagline: 'Bank Offer Ends Midnight',
-      bannerImage: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85'
+      tagline: 'Blessed with Eternal Good Fortune',
+      bannerImage: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=800&q=85'
     }
   ];
 

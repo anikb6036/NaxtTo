@@ -28,31 +28,30 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const categories: { id: ProductCategory; label: string }[] = [
-    { id: 'all', label: 'All Pieces' },
-    { id: 'rings', label: 'Rings' },
-    { id: 'necklaces', label: 'Necklaces' },
-    { id: 'earrings', label: 'Earrings' },
-    { id: 'bracelets', label: 'Bracelets' },
-    { id: 'fine-collections', label: 'Fine Collections' },
-    { id: 'bespoke', label: 'Bespoke Atelier' }
+    { id: 'all', label: 'All Sakha Pola' },
+    { id: 'shakha', label: 'Shankha (Pure Conch)' },
+    { id: 'pola', label: 'Pola (Coral Red)' },
+    { id: 'gold-badhano', label: 'Gold Badhano (22K Gold)' },
+    { id: 'loha-badhano', label: 'Loha Badhano (Iron & Gold)' },
+    { id: 'bridal-combos', label: 'Bridal Combos & Sets' }
   ];
 
   const metals: { id: MetalType; label: string; swatch: string }[] = [
-    { id: '18k-yellow-gold', label: '18K Yellow Gold', swatch: '#D4AF37' },
-    { id: '18k-white-gold', label: '18K White Gold', swatch: '#E5E4E2' },
-    { id: '18k-rose-gold', label: '18K Rose Gold', swatch: '#E0A899' },
-    { id: 'platinum', label: 'Platinum 950', swatch: '#CECECE' },
-    { id: '925-sterling-silver', label: '925 Sterling Silver', swatch: '#DCDCDC' },
-    { id: 'gold-vermeil', label: '18K Gold Vermeil', swatch: '#E6C875' }
+    { id: 'pure-conch-shell', label: 'Pure Conch Shell', swatch: '#FDFBF7' },
+    { id: 'crimson-coral-acrylic', label: 'Crimson Coral Red', swatch: '#C01A27' },
+    { id: '22k-yellow-gold', label: '22K Solid Gold', swatch: '#D4AF37' },
+    { id: 'iron-gold', label: 'Sacred Iron & Gold', swatch: '#5A554C' },
+    { id: '18k-yellow-gold', label: '18K Gold Finish', swatch: '#E6C875' },
+    { id: '925-sterling-silver', label: '925 Pure Silver', swatch: '#DCDCDC' }
   ];
 
   const styles: { id: JewelleryStyle; label: string }[] = [
-    { id: 'minimalist', label: 'Minimalist' },
-    { id: 'statement', label: 'Statement' },
-    { id: 'sculptural', label: 'Sculptural' },
-    { id: 'bridal', label: 'Bridal & Ceremonial' },
-    { id: 'everyday-luxe', label: 'Everyday Luxe' },
-    { id: 'vintage-modern', label: 'Vintage Modern' }
+    { id: 'traditional-bengali', label: 'Traditional Bengali Classic' },
+    { id: 'hand-carved', label: 'Hand-Carved Shankha' },
+    { id: 'mukhi-design', label: 'Mukhi (Mayur / Makara)' },
+    { id: 'filigree-badhano', label: '22K Filigree Badhano' },
+    { id: 'bridal-heritage', label: 'Bridal Heritage Sets' },
+    { id: 'daily-wear', label: 'Daily Wear & Lightweight' }
   ];
 
   const toggleMetal = (metal: MetalType) => {

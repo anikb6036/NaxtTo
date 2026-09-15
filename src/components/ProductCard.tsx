@@ -44,11 +44,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const original = product.originalPrice || Math.round(product.price * 1.5);
   const discountPercent = Math.max(10, Math.round(((original - product.price) / original) * 100));
 
-  const brandName = product.metalName.includes('Gold') 
-    ? 'NAXTTO LUXE' 
-    : product.metalName.includes('Diamond') 
-    ? 'NAXTTO SOLITAIRE' 
-    : 'NAXTTO ATELIER';
+  const brandName = (product.metalName && (product.metalName.includes('22K') || product.metalName.includes('Gold')))
+    ? '22K GOLD BADHANO' 
+    : product.category === 'shakha'
+    ? 'PURE CONCH SHANKHA' 
+    : product.category === 'pola'
+    ? 'CRIMSON CORAL POLA'
+    : product.category === 'loha-badhano'
+    ? 'SACRED LOHA BADHANO'
+    : 'BENGAL HERITAGE';
 
   return (
     <div

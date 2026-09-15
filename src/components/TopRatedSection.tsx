@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Star, Sparkles, ShieldCheck } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 
 interface TopRatedSectionProps {
@@ -65,18 +65,13 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
         <div className="bg-white rounded-lg border border-[#e5e5ea] p-4 sm:p-5 shadow-xs">
           {/* Header Row (Flipkart Style: Title + VIEW ALL Button) */}
           <div className="flex items-center justify-between pb-3 border-b border-[#f0f0f0] mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#2874f0]/10 flex items-center justify-center text-[#2874f0]">
-                <Star className="w-4 h-4 fill-[#2874f0]" />
-              </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#212121]">
-                  Top Rated in Fine Jewellery
-                </h3>
-                <p className="text-xs text-[#878787] hidden sm:block">
-                  Certified 18K Hallmarked pieces trusted by 10,000+ patrons
-                </p>
-              </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-[#212121]">
+                Top Rated in Fine Jewellery
+              </h3>
+              <p className="text-xs text-[#878787] hidden sm:block">
+                Certified 18K Hallmarked pieces trusted by 10,000+ patrons
+              </p>
             </div>
 
             <button

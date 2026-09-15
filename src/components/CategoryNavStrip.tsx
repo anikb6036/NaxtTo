@@ -42,79 +42,65 @@ export const CategoryNavStrip: React.FC<CategoryNavStripProps> = ({
   const categories: NavCategoryItem[] = [
     {
       id: 'all',
-      label: 'For You',
-      subLabel: 'Top Deals',
-      badge: 'HOT',
+      label: 'All Sakha Pola',
+      subLabel: 'Top Curations',
+      badge: 'POPULAR',
       icon: <Sparkles className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=160&q=80'
-    },
-    {
-      id: 'rings',
-      label: 'Rings',
-      subLabel: 'Solitaire & Bands',
-      icon: <CircleDot className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=160&q=80'
-    },
-    {
-      id: 'necklaces',
-      label: 'Necklaces',
-      subLabel: 'Chokers & Chains',
-      icon: <Gem className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=160&q=80'
-    },
-    {
-      id: 'earrings',
-      label: 'Earrings',
-      subLabel: 'Studs & Drops',
-      icon: <Sparkles className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=160&q=80'
-    },
-    {
-      id: 'bracelets',
-      label: 'Bangles & Bracelets',
-      subLabel: 'Tennis & Kadas',
-      icon: <Zap className="w-5 h-5 text-[#b07d1e]" />,
       imgUrl: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=160&q=80'
     },
     {
-      id: 'fine-collections',
-      label: 'Bridal Sets',
-      subLabel: 'Heritage 18K',
-      badge: 'WEDDING',
-      icon: <Crown className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=160&q=80'
+      id: 'shakha',
+      label: 'Shankha',
+      subLabel: 'Pure Conch Shell',
+      icon: <CircleDot className="w-5 h-5 text-[#b07d1e]" />,
+      imgUrl: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=160&q=80'
     },
     {
-      id: 'chains',
-      isSpecial: true,
-      label: 'Chains & Mangalsutra',
-      subLabel: 'Daily Wear',
-      icon: <Flame className="w-5 h-5 text-[#b07d1e]" />,
+      id: 'pola',
+      label: 'Pola Bangles',
+      subLabel: 'Crimson Coral Red',
+      icon: <CircleDot className="w-5 h-5 text-[#b07d1e]" />,
       imgUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=160&q=80'
     },
     {
-      id: 'gold-coins',
-      isSpecial: true,
-      label: '24K Gold Coins',
-      subLabel: '999 Pure Bullion',
-      badge: '0% MAKING',
-      icon: <Coins className="w-5 h-5 text-[#b07d1e]" />,
+      id: 'gold-badhano',
+      label: 'Gold Badhano',
+      subLabel: '22K Solid Gold',
+      badge: 'BESTSELLER',
+      icon: <Crown className="w-5 h-5 text-[#b07d1e]" />,
       imgUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=160&q=80'
     },
     {
-      id: 'silver-925',
-      isSpecial: true,
-      label: 'Silver 925 & Anklets',
-      subLabel: 'Oxidized & Pure',
+      id: 'loha-badhano',
+      label: 'Loha Badhano',
+      subLabel: 'Sacred Iron & Gold',
       icon: <ShieldCheck className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=160&q=80'
+      imgUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=160&q=80'
     },
     {
-      id: 'bespoke',
-      label: 'Gifting & Custom',
-      subLabel: 'Under ₹10,000',
+      id: 'bridal-combos',
+      label: 'Bridal Combos',
+      subLabel: 'Shakha + Pola + Loha',
+      badge: 'WEDDING',
       icon: <Gift className="w-5 h-5 text-[#b07d1e]" />,
-      imgUrl: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=160&q=80'
+      imgUrl: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=160&q=80'
+    },
+    {
+      id: 'mukhi-designs',
+      isSpecial: true,
+      label: 'Mukhi Motifs',
+      subLabel: 'Mayur & Makara',
+      icon: <Gem className="w-5 h-5 text-[#b07d1e]" />,
+      imgUrl: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=160&q=80'
+    },
+    {
+      id: 'daily-wear',
+      isSpecial: true,
+      label: 'Daily Wear',
+      subLabel: 'Light & Waterproof',
+      badge: 'COMFORT',
+      icon: <Zap className="w-5 h-5 text-[#b07d1e]" />,
+      imgUrl: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=160&q=80'
     }
   ];
 
@@ -130,11 +116,10 @@ export const CategoryNavStrip: React.FC<CategoryNavStripProps> = ({
       if (onSelectSpecialFilter) {
         onSelectSpecialFilter(item.id);
       }
-      // If chains or silver, set closest base category
-      if (item.id === 'chains') {
-        onSelectCategory('necklaces');
-      } else if (item.id === 'silver-925') {
-        onSelectCategory('bracelets');
+      if (item.id === 'mukhi-designs') {
+        onSelectCategory('shakha');
+      } else if (item.id === 'daily-wear') {
+        onSelectCategory('pola');
       } else {
         onSelectCategory('all');
       }

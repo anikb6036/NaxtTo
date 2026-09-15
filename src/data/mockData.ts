@@ -2,598 +2,636 @@ import { Product, InstagramPost, BlogPost, UserProfile } from '../types';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
-    id: 'naxtto-001',
-    name: 'Aethel Continuous Band',
-    subtitle: '18K Solid Gold Minimalist Sculptural Ring',
-    price: 680,
-    originalPrice: 750,
-    category: 'rings',
-    metal: '18k-yellow-gold',
-    metalName: '18K Recycled Yellow Gold',
-    style: 'minimalist',
-    styleName: 'Minimalist Architecture',
+    id: 'sp-001',
+    name: 'Mayur Mukhi Hand-Carved Shankha (Pair)',
+    subtitle: '100% Pure Natural Conch Shell with Peacock Face Carving',
+    price: 1899,
+    originalPrice: 2499,
+    category: 'shakha',
+    metal: 'pure-conch-shell',
+    metalName: 'Natural Grade-A Conch Shell',
+    style: 'mukhi-design',
+    styleName: 'Mayur Mukhi Traditional',
     images: [
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85'
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85'
     ],
-    description: 'A seamless, hand-forged circular contour sculpted in mirror-polished 18k solid gold. Designed with comfort-fit geometry to be worn daily as an intimate modern totem.',
-    story: 'Conceived at our Milanese partner atelier, the Aethel Band celebrates unbroken continuity. Every curve is hand-planished by third-generation goldsmiths using certified 100% recycled precious bullion.',
+    description: 'Authentic pair of pristine white conch shell bangles meticulously hand-carved by master Bengali shankhari artisans. Features the sacred peacock (Mayur) face motif with feather plumage etchings, signifying grace, marital harmony, and auspicious longevity.',
+    story: 'Sourced from the deep waters of the Bay of Bengal, each conch shell is sliced with diamond-grit saws and carved using age-old ancestral chisels in Nabadwip. Every curve respects the natural growth spiral of the shell.',
     features: [
-      'Cast in 100% Certified Recycled 18K Solid Gold',
-      'Comfort-fit domed interior profile',
-      'Individual hallmarking stamp with serial number',
-      'Hypoallergenic & lifetime tarnish-resistant warranty'
+      '100% Genuine Natural Conch Shell (Turbinella Pyrum)',
+      'Hand-carved Mayur Mukhi (peacock head) terminal design',
+      'Smooth inner comfort-fit bevel to protect delicate wrists',
+      'Lifetime authentic conch sound & natural luminescence guarantee'
     ],
-    dimensions: 'Band width: 3.8mm | Thickness: 1.9mm',
-    karatPurity: '750/1000 (18K Fine Solid Gold)',
-    origin: 'Hand-finished in Milan, Italy',
+    dimensions: 'Band width: 8.5mm | Wall thickness: 3.2mm',
+    karatPurity: '100% Genuine Certified Natural Conch Shell',
+    origin: 'Hand-carved in Nabadwip & Bishnupur, West Bengal',
     inStock: true,
-    stockCount: 14,
+    stockCount: 28,
     isBestSeller: true,
+    isNewArrival: false,
     rating: 4.9,
-    reviewsCount: 38,
-    availableSizes: ['US 5', 'US 6', 'US 7', 'US 8', 'US 9'],
+    reviewsCount: 64,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
     availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' },
-      { name: '18K Rose Gold', type: '18k-rose-gold', colorHex: '#E0A899' }
+      { name: 'Pure White Conch Shell', type: 'pure-conch-shell', colorHex: '#FDFBF7' }
     ],
     reviews: [
       {
-        id: 'rev-1',
-        author: 'Eleanor Vance',
-        location: 'London, UK',
+        id: 'rev-sp-1',
+        author: 'Debolina Banerjee',
+        location: 'Kolkata, West Bengal',
         rating: 5,
-        date: 'August 12, 2026',
-        title: 'Exquisite weight and pure craftsmanship',
-        comment: 'The weight of solid gold feels substantial yet so gentle on the finger. The high-polish finish catches morning sunlight like nothing else I own.',
+        date: 'September 02, 2026',
+        title: 'Breathtaking peacock detailing & perfect fit',
+        comment: 'The Mayur Mukhi carving is sharp, detailed and so elegant. Being genuine conch shell, it has that beautiful cool feel on the wrist and resonates so sweetly.',
         verified: true,
-        itemPurchased: 'Aethel Continuous Band - US 6 / 18K Yellow Gold',
-        helpfulCount: 12
+        itemPurchased: 'Mayur Mukhi Shankha (Pair) - Size 2.4',
+        helpfulCount: 22
       },
       {
-        id: 'rev-2',
-        author: 'Soren Lindqvist',
-        location: 'Stockholm, Sweden',
+        id: 'rev-sp-2',
+        author: 'Poulomi Sen',
+        location: 'Bengaluru, Karnataka',
         rating: 5,
-        date: 'July 28, 2026',
-        title: 'Minimalist perfection for daily wear',
-        comment: 'Never take it off. Works effortlessly when stacked with my heirloom signet or worn solo for clean architectural clarity.',
+        date: 'August 24, 2026',
+        title: 'Authentic Bengali craftsmanship delivered fast',
+        comment: 'Living outside Bengal it is hard to find genuine high-grade shankha. The sizing 2.6 fits like a dream and does not bite the wrist at all.',
         verified: true,
-        itemPurchased: 'Aethel Continuous Band - US 8 / 18K White Gold',
-        helpfulCount: 8
-      }
-    ]
-  },
-  {
-    id: 'naxtto-002',
-    name: 'Luminary Pavé Solitaire Ring',
-    subtitle: 'Brilliant Cut Lab-Grown Diamond in Floating 18K Bezel',
-    price: 1450,
-    category: 'rings',
-    metal: '18k-yellow-gold',
-    metalName: '18K Yellow Gold & VVS+ Diamond',
-    style: 'bridal',
-    styleName: 'Bridal & Ceremonial',
-    images: [
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'An ethereal 0.85ct F/VVS1 brilliant diamond secured within our signature low-profile floating bezel setting, suspended on a micro-pavé whisper band.',
-    story: 'Engineered for modern romance, the Luminary sits flush with companion wedding bands without requiring a notched ring silhouette.',
-    features: [
-      '0.85ct Certified Lab-Grown Diamond (F Color, VVS1 Clarity, Ideal Cut)',
-      '14 micro-pavé round brilliant accent stones (0.16ctw)',
-      'Low-profile protective bezel setting',
-      'Includes IGI Gemological Certificate'
-    ],
-    dimensions: 'Bezel diameter: 6.2mm | Band width: 1.6mm',
-    caratWeight: '1.01 ctw Total Weight',
-    karatPurity: '18K Solid Gold (750 Fine)',
-    origin: 'Antwerp & Milan Atelier',
-    inStock: true,
-    stockCount: 6,
-    isNewArrival: true,
-    rating: 5.0,
-    reviewsCount: 19,
-    availableSizes: ['US 5', 'US 6', 'US 7', 'US 8'],
-    availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: 'Platinum 950', type: 'platinum', colorHex: '#E5E4E2' },
-      { name: '18K Rose Gold', type: '18k-rose-gold', colorHex: '#E0A899' }
-    ],
-    reviews: [
-      {
-        id: 'rev-3',
-        author: 'Camille Dubois',
-        location: 'Paris, France',
-        rating: 5,
-        date: 'August 4, 2026',
-        title: 'Breathtaking light refraction',
-        comment: 'We chose this as an engagement ring. The floating bezel gives it a timeless, modern architectural feel without any snagging on delicate fabrics.',
-        verified: true,
-        itemPurchased: 'Luminary Pavé Solitaire - US 6',
-        helpfulCount: 15
-      }
-    ]
-  },
-  {
-    id: 'naxtto-003',
-    name: 'Soleil Droplet Pendant Necklace',
-    subtitle: 'Hand-Selected Natural Baroque Pearl & Gold Snake Chain',
-    price: 520,
-    originalPrice: 580,
-    category: 'necklaces',
-    metal: '18k-yellow-gold',
-    metalName: '18K Gold Vermeil on Sterling Silver',
-    style: 'everyday-luxe',
-    styleName: 'Everyday Luxe',
-    images: [
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'An organic freshwater baroque pearl with soft champagne iridescence, suspended from a fluid 18k gold snake link chain.',
-    story: 'No two organic pearls are identical. Each piece is hand-selected in the South Seas for singular luster, naturally contoured form, and creamy undertones.',
-    features: [
-      'Natural AAA Grade Organic Freshwater Baroque Pearl (~14-16mm)',
-      '18K Thick Micro-Layered Gold Vermeil (3.0 microns)',
-      'Liquid-smooth 45cm + 5cm extension herringbone chain',
-      'Lobster claw clasp with engraved logo tag'
-    ],
-    dimensions: 'Pendant length: 22mm | Chain length: 45cm - 50cm adjustable',
-    karatPurity: '18K Gold Vermeil over 925 Sterling Silver',
-    origin: 'Crafted in Florence, Italy',
-    inStock: true,
-    stockCount: 22,
-    isBestSeller: true,
-    rating: 4.8,
-    reviewsCount: 44,
-    availableSizes: ['Adjustable 45-50cm'],
-    availableFinishes: [
-      { name: '18K Gold Vermeil', type: 'gold-vermeil', colorHex: '#D4AF37' },
-      { name: '925 Sterling Silver', type: '925-sterling-silver', colorHex: '#DCDCDC' }
-    ],
-    reviews: [
-      {
-        id: 'rev-4',
-        author: 'Aria Thorne',
-        location: 'New York, NY',
-        rating: 5,
-        date: 'July 15, 2026',
-        title: 'Such a conversation starter',
-        comment: 'The pearl has this dreamy sculptural silhouette. It elevates an unbuttoned crisp white shirt instantly.',
-        verified: true,
-        itemPurchased: 'Soleil Droplet Pendant',
-        helpfulCount: 9
-      }
-    ]
-  },
-  {
-    id: 'naxtto-004',
-    name: 'Aura Herringbone Collar',
-    subtitle: 'Fluid 18K Solid Gold Woven Choker',
-    price: 890,
-    category: 'necklaces',
-    metal: '18k-yellow-gold',
-    metalName: '18K Solid Yellow Gold',
-    style: 'statement',
-    styleName: 'Statement Luxury',
-    images: [
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'Precision interlocking gold chevron links that drape over the collarbone with liquid fluidity. Highly reflective satin-polish mirror surface.',
-    story: 'Woven using classical Vicenza goldsmith techniques, this collar glides seamlessly against the skin like golden fabric.',
-    features: [
-      'Hand-assembled flexible herringbone links',
-      'Custom concealed safety box clasp',
-      'Reinforced anti-kink flex internal core',
-      'Includes protective velvet travel case'
-    ],
-    dimensions: 'Length: 42cm | Width: 4.2mm',
-    karatPurity: '18K Solid Gold (750 Hallmark)',
-    origin: 'Vicenza, Italy',
-    inStock: true,
-    stockCount: 8,
-    isBestSeller: true,
-    rating: 4.9,
-    reviewsCount: 27,
-    availableSizes: ['40cm Collar', '45cm Princess'],
-    availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' }
-    ],
-    reviews: [
-      {
-        id: 'rev-5',
-        author: 'Margot Laurent',
-        location: 'Geneva, Switzerland',
-        rating: 5,
-        date: 'August 1, 2026',
-        title: 'Golden silk around the neck',
-        comment: 'Lays completely flat and has never kinked. The quality of the solid 18k gold is second to none.',
-        verified: true,
-        itemPurchased: 'Aura Herringbone Collar - 42cm',
-        helpfulCount: 19
-      }
-    ]
-  },
-  {
-    id: 'naxtto-005',
-    name: 'Arcadia Sculpted Hoop Earrings',
-    subtitle: 'Tapered Hollow-Cast 18K Gold Daily Hoops',
-    price: 460,
-    category: 'earrings',
-    metal: '18k-yellow-gold',
-    metalName: '18K Recycled Solid Gold',
-    style: 'sculptural',
-    styleName: 'Sculptural Art',
-    images: [
-      'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'An architectural crescent hoop with a featherlight hollow core. Designed for 24/7 all-day comfort without lobe fatigue.',
-    story: 'Cast using advanced electroforming to achieve bold dimensional volume with an imperceptible, featherlight weight.',
-    features: [
-      'Ultra-lightweight ergonomic hollow geometry',
-      'Secure click-latch post closure with audible lock',
-      '100% Nickel-free and hypoallergenic',
-      'Subtle brushed inner chamfer'
-    ],
-    dimensions: 'Diameter: 24mm | Outer thickness: 5.5mm',
-    karatPurity: '18K Fine Solid Gold (750)',
-    origin: 'Arezzo, Italy',
-    inStock: true,
-    stockCount: 18,
-    isNewArrival: true,
-    rating: 4.9,
-    reviewsCount: 31,
-    availableSizes: ['Standard 24mm', 'Petite 18mm'],
-    availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' },
-      { name: '925 Sterling Silver', type: '925-sterling-silver', colorHex: '#DCDCDC' }
-    ],
-    reviews: [
-      {
-        id: 'rev-6',
-        author: 'Isla Bennett',
-        location: 'Melbourne, Australia',
-        rating: 5,
-        date: 'July 19, 2026',
-        title: 'Literally weightless',
-        comment: 'I can sleep in these. They give the bold chunky hoop aesthetic without any dragging. The snap clasp is very secure.',
-        verified: true,
-        itemPurchased: 'Arcadia Sculpted Hoops - 24mm',
+        itemPurchased: 'Mayur Mukhi Shankha (Pair) - Size 2.6',
         helpfulCount: 14
       }
     ]
   },
   {
-    id: 'naxtto-006',
-    name: 'Cygnus Diamond Studs',
-    subtitle: '0.60ctw Lab Diamond Trillion Cut Studs in 3-Prong Platinum',
-    price: 790,
-    category: 'earrings',
-    metal: 'platinum',
-    metalName: 'Platinum 950 & Lab Diamonds',
-    style: 'minimalist',
-    styleName: 'Minimalist Fine',
+    id: 'sp-002',
+    name: 'Raktim Premium Glossy Pola (Pair)',
+    subtitle: 'Classic Vermilion Crimson Red Daily Wear Pola Bangles',
+    price: 699,
+    originalPrice: 999,
+    category: 'pola',
+    metal: 'crimson-coral-acrylic',
+    metalName: 'High-Density Crimson Pola',
+    style: 'daily-wear',
+    styleName: 'Classic Daily Comfort',
     images: [
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'Rare trillion-cut lab-grown diamonds held in minimalist three-prong claw settings crafted in dense, eternal Platinum 950.',
-    story: 'Geometric sharpness meets incandescent brilliance. The trillion cut amplifies facet fire for dynamic sparkle in ambient room light.',
-    features: [
-      '0.60 ctw Match-Paired Trillion Cut Diamonds (E Color, VS1 Clarity)',
-      'Hypoallergenic Platinum 950 posts with double-notched security backings',
-      'Hand-set micro claw prongs',
-      'Accompanied by authenticity grading cards'
-    ],
-    dimensions: 'Width: 5.1mm | Post length: 11mm',
-    caratWeight: '0.60 ctw',
-    karatPurity: '950 Platinum / 1000',
-    origin: 'Antwerp Atelier',
-    inStock: true,
-    stockCount: 11,
-    rating: 5.0,
-    reviewsCount: 16,
-    availableFinishes: [
-      { name: 'Platinum 950', type: 'platinum', colorHex: '#E5E4E2' },
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' }
-    ],
-    reviews: [
-      {
-        id: 'rev-7',
-        author: 'Vivian Zhao',
-        location: 'San Francisco, CA',
-        rating: 5,
-        date: 'June 30, 2026',
-        title: 'Modern diamond brilliance',
-        comment: 'The trillion shape makes these look so much more bespoke than generic round studs. Platinum backing is super secure.',
-        verified: true,
-        itemPurchased: 'Cygnus Diamond Studs',
-        helpfulCount: 7
-      }
-    ]
-  },
-  {
-    id: 'naxtto-007',
-    name: 'Kallisto Hinged Bangle',
-    subtitle: 'Oval Contour 18K Solid Gold Minimalist Cuff',
-    price: 1180,
-    originalPrice: 1290,
-    category: 'bracelets',
-    metal: '18k-yellow-gold',
-    metalName: '18K Recycled Solid Gold',
-    style: 'minimalist',
-    styleName: 'Minimalist Architecture',
-    images: [
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'An ergonomic oval bangle forged to rest against the wrist bone with tailored precision. Concealed spring hinge and double-lock closure.',
-    story: 'Engineered over 14 iterations to ensure the contour never rolls or creates pressure points during keyboard work or fine dining.',
-    features: [
-      'Precision internal hidden spring hinge mechanism',
-      'Concealed double-tongue safety clasp',
-      'Cast in 100% recycled 18K solid gold (18.4 grams)',
-      'Hand-satin polished interior'
-    ],
-    dimensions: 'Inside circumference: Small (16cm), Medium (17.5cm) | Width: 4mm',
-    karatPurity: '18K Solid Gold (750 Fine)',
-    origin: 'Milan, Italy',
-    inStock: true,
-    stockCount: 7,
-    isBestSeller: true,
-    rating: 4.9,
-    reviewsCount: 22,
-    availableSizes: ['Small (16cm)', 'Medium (17.5cm)', 'Large (19cm)'],
-    availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K Rose Gold', type: '18k-rose-gold', colorHex: '#E0A899' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' }
-    ],
-    reviews: [
-      {
-        id: 'rev-8',
-        author: 'Hannah Sterling',
-        location: 'Toronto, Canada',
-        rating: 5,
-        date: 'July 11, 2026',
-        title: 'Worth every single penny',
-        comment: 'I wear this alongside my luxury watch. It never pinches and has a gorgeous, hefty gold feel.',
-        verified: true,
-        itemPurchased: 'Kallisto Hinged Bangle - Medium',
-        helpfulCount: 16
-      }
-    ]
-  },
-  {
-    id: 'naxtto-008',
-    name: 'Nyx Tennis Bracelet',
-    subtitle: 'Bezel-Set Lab Diamond Line Bracelet in 18K White Gold',
-    price: 1850,
-    category: 'bracelets',
-    metal: '18k-white-gold',
-    metalName: '18K White Gold & 2.2ctw Diamonds',
-    style: 'everyday-luxe',
-    styleName: 'Everyday Luxe',
-    images: [
-      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85'
     ],
-    description: 'A contemporary reimagining of the classic tennis bracelet featuring bezel-framed diamonds that will never catch on knitwear or lace.',
-    story: 'Individual bezel cups linked with articulated joints allow full serpentine movement across the wrist with zero stiffness.',
+    description: 'The definitive traditional crimson red pola pair, polished to a glass-like luster. Engineered with high-density break-resistant material, rounded comfort inner walls, and unfading vermilion color for daily household and festive wear.',
+    story: 'Pola is the sacred emblem of Bengali bridal marital bliss. Crafted using high-purity coral acrylic polymer that resists water, turmeric, and soaps without losing its mirror-gloss finish.',
     features: [
-      '2.20 ctw Brilliant Lab-Grown Diamonds (DEF Color, VS+ Clarity)',
-      'Protective smooth round bezel rims',
-      'Double safety clasp with hidden release latch',
-      'Laser-welded continuous articulation'
+      'Deep unfading vermilion coral red tone',
+      'Seamless rounded inner edge for round-the-clock comfort',
+      'Waterproof, sweat-proof, and tarnish-free formulation',
+      'Auspicious daily blessing pair for married women'
     ],
-    dimensions: 'Length: 17cm (6.7 in) | Bezel width: 2.8mm',
-    caratWeight: '2.20 ctw',
-    karatPurity: '18K Solid White Gold',
-    origin: 'Hand-assembled in Antwerp',
+    dimensions: 'Band width: 6.8mm | Thickness: 2.8mm',
+    karatPurity: 'High-Purity Traditional Coral-Tone Resin',
+    origin: 'Bowbazar Craft Guild, Kolkata',
     inStock: true,
-    stockCount: 5,
-    rating: 5.0,
-    reviewsCount: 15,
-    availableSizes: ['16cm (6.3")', '17.5cm (6.9")', '19cm (7.5")'],
+    stockCount: 45,
+    isBestSeller: true,
+    rating: 4.8,
+    reviewsCount: 88,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
     availableFinishes: [
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' },
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' }
+      { name: 'Glossy Vermilion Red', type: 'crimson-coral-acrylic', colorHex: '#C01A27' }
     ],
     reviews: [
       {
-        id: 'rev-9',
-        author: 'Chloe Dupont',
-        location: 'Brussels, Belgium',
+        id: 'rev-sp-3',
+        author: 'Ananya Chatterjee',
+        location: 'Siliguri, West Bengal',
         rating: 5,
-        date: 'August 10, 2026',
-        title: 'Modern luxury icon',
-        comment: 'Finally a diamond tennis bracelet that does not snag on my cashmere sweaters! The sparkle is mesmerizing.',
+        date: 'August 18, 2026',
+        title: 'Sturdy, lightweight and very radiant red',
+        comment: 'I wear these daily while doing kitchen chores and work. The color stays bright crimson without dulling or scratching easily.',
         verified: true,
-        itemPurchased: 'Nyx Tennis Bracelet - 17.5cm',
-        helpfulCount: 21
+        itemPurchased: 'Raktim Glossy Pola (Pair) - Size 2.4',
+        helpfulCount: 19
       }
     ]
   },
   {
-    id: 'naxtto-009',
-    name: 'Vesper Signet Crest',
-    subtitle: 'Fluted Brushed 18K Solid Gold Heritage Signet',
-    price: 920,
-    category: 'fine-collections',
-    metal: '18k-yellow-gold',
-    metalName: '18K Yellow Gold',
-    style: 'vintage-modern',
-    styleName: 'Vintage Modern',
+    id: 'sp-003',
+    name: '22K Hallmarked Gold Borkhi Badhano Pola (Pair)',
+    subtitle: 'Solid 22K (916) Gold Diamond-Leaf Wire Work Bound Red Pola',
+    price: 19800,
+    originalPrice: 22500,
+    category: 'gold-badhano',
+    metal: '22k-yellow-gold',
+    metalName: '22K BIS Hallmarked Solid Gold',
+    style: 'filigree-badhano',
+    styleName: 'Borkhi Diamond Wire Work',
     images: [
-      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85'
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85'
     ],
-    description: 'A solid gold signet ring featuring hand-carved lateral fluting and a satin-brushed crest face ready for complimentary bespoke monogramming.',
-    story: 'Inspired by 1920s Bauhaus watch cases, the Vesper pairs sharp industrial symmetry with organic warmth.',
+    description: 'Masterpiece Bengali bridal jewellery. Lustrous vermilion red pola bangles bound in pure 22K (916) BIS hallmarked yellow gold wire, handcrafted in the traditional geometric borkhi (rhombus diamond-cut) pattern with reinforced gold locks.',
+    story: 'Gold badhano is a time-honored tradition where fine goldsmiths hand-draw gold wire through diminishing steel dies, shaping each filigree diamond leaf around the curvature of the pola with pinpoint heat welding.',
     features: [
-      'Solid heavy gold build (approx 12.5g)',
-      'Complimentary laser or hand engraving service',
-      'Architectural fluted side detailing',
-      'Hand-satin matte face finish'
+      'Approx 4.80 grams net 22K BIS Hallmarked Solid Gold',
+      'Laser engraved with official Government BIS Hallmark & HUID',
+      'Reinforced internal anchoring to prevent wire lifting',
+      'Comes with official gold purity certificate and valuation report'
     ],
-    dimensions: 'Top face: 11mm x 9mm | Band taper: 4.2mm',
-    karatPurity: '18K Solid Gold',
-    origin: 'Florence Atelier',
+    dimensions: 'Band width: 7.5mm | Gold thickness: 1.8mm',
+    karatPurity: '22K (916/1000 BIS Hallmarked Gold)',
+    weightGrams: '4.80g Net Gold Weight',
+    origin: 'Handcrafted in Bowbazar, Kolkata',
     inStock: true,
-    stockCount: 9,
-    rating: 4.9,
-    reviewsCount: 18,
-    availableSizes: ['US 6', 'US 7', 'US 8', 'US 9', 'US 10'],
-    availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' }
-    ],
-    reviews: [
-      {
-        id: 'rev-10',
-        author: 'Julian Mercer',
-        location: 'Boston, MA',
-        rating: 5,
-        date: 'July 5, 2026',
-        title: 'Substantial, heavy heirloom',
-        comment: 'The fluted sides give it such character. Custom monogram came out crisp and flawless.',
-        verified: true,
-        itemPurchased: 'Vesper Signet Crest - US 9',
-        helpfulCount: 11
-      }
-    ]
-  },
-  {
-    id: 'naxtto-010',
-    name: 'Bespoke Atelier Commission',
-    subtitle: 'Private Custom Jewellery Consultation & Tailored Fabrication',
-    price: 2500,
-    category: 'bespoke',
-    metal: '18k-yellow-gold',
-    metalName: '18K Gold or Platinum',
-    style: 'sculptural',
-    styleName: 'Bespoke Haute Joaillerie',
-    images: [
-      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85'
-    ],
-    description: 'Direct creative collaboration with our Principal Master Jeweller. Includes 3D CAD renders, wax model trial fitting, and ethical stone sourcing.',
-    story: 'Whether re-imagining a family heirloom or designing an anniversary statement piece, our bespoke service crafts a one-of-a-kind treasure.',
-    features: [
-      '1-on-1 virtual or atelier design consultation',
-      'Photo-realistic 3D renders & physical wax prototype',
-      'Hand-sourced ethical rare gems and diamonds',
-      'Exclusive archival sketch signed by the artisan'
-    ],
-    dimensions: 'Custom tailored to client specifications',
-    karatPurity: '18K / Platinum / 24K Custom',
-    origin: 'NaxtTo Private Studio, Milan',
-    inStock: true,
-    stockCount: 3,
+    stockCount: 12,
+    isBestSeller: true,
+    isNewArrival: true,
     rating: 5.0,
-    reviewsCount: 12,
-    availableSizes: ['Custom Sized'],
+    reviewsCount: 43,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Solid Yellow Gold', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
     reviews: [
       {
-        id: 'rev-11',
-        author: 'Beatrice Rossi',
-        location: 'Milan, Italy',
+        id: 'rev-sp-4',
+        author: 'Sreemoyee Dasgupta',
+        location: 'Kolkata, West Bengal',
         rating: 5,
-        date: 'June 18, 2026',
-        title: 'A transformative bespoke experience',
-        comment: 'The atelier re-imagined my grandmother’s sapphire into the most striking modern ring. Exceptional attention to detail throughout.',
+        date: 'August 30, 2026',
+        title: 'Heirloom quality gold badhano for my wedding',
+        comment: 'Ordered this for my wedding reception. The gold wire finish is flawless, tested at my family jeweller and 22K hallmarking was 100% verified. Pure elegance!',
         verified: true,
-        itemPurchased: 'Bespoke Atelier Commission',
-        helpfulCount: 29
+        itemPurchased: '22K Gold Borkhi Badhano Pola - Size 2.6',
+        helpfulCount: 31
       }
     ]
   },
   {
-    id: 'naxtto-011',
-    name: 'Elysian Diamond Threader Earrings',
-    subtitle: 'Fluid 18K Solid Gold Box Chain & Bezel Diamond Droplets',
-    price: 540,
-    category: 'earrings',
-    metal: '18k-yellow-gold',
-    metalName: '18K Solid Yellow Gold',
-    style: 'minimalist',
-    styleName: 'Minimalist Architecture',
+    id: 'sp-004',
+    name: '22K Gold Crown Badhano Shankha (Pair)',
+    subtitle: 'Four-Corner Embossed 22K Gold Filigree Caps on Pure Conch Shell',
+    price: 26500,
+    originalPrice: 29900,
+    category: 'gold-badhano',
+    metal: '22k-yellow-gold',
+    metalName: '22K Gold & Pure Natural Conch',
+    style: 'filigree-badhano',
+    styleName: 'Royal Crown Badhano',
     images: [
       'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'Regal bridal Shankha bangles crowned with four hand-chased 22K solid gold embossed caps on each bangle. The contrast of brilliant white sea conch shell against glowing 22K gold represents pure marital nobility.',
+    story: 'Each conch shell is hand-selected for density, uniform thickness, and clean white resonance before being fitted with custom-measured 22K gold corner crowns welded with flush safety rivets.',
+    features: [
+      'Approx 6.20 grams net 22K BIS Hallmarked Solid Gold',
+      'Four hand-chased lotus petal gold crowns per bangle',
+      'Natural white conch shell base with high-luster finish',
+      'Individually inspected and stamped with BIS 916 mark'
+    ],
+    dimensions: 'Band width: 9.2mm | Gold crown height: 12mm',
+    karatPurity: '22K (916 BIS Gold - 6.20g Net)',
+    weightGrams: '6.20g Net Gold Weight',
+    origin: 'Nabadwip & Bowbazar Goldsmith Guild',
+    inStock: true,
+    stockCount: 8,
+    isBestSeller: true,
+    rating: 4.9,
+    reviewsCount: 37,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Solid Gold & White Conch', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: [
+      {
+        id: 'rev-sp-5',
+        author: 'Riya Mukherjee',
+        location: 'Mumbai, Maharashtra',
+        rating: 5,
+        date: 'July 19, 2026',
+        title: 'Royal look, feels so sacred and gorgeous',
+        comment: 'The gold crowns are firm and securely riveted into the shankha. Absolutely regal on the wedding day and pairs magically with red Benarasi.',
+        verified: true,
+        itemPurchased: '22K Gold Crown Badhano Shankha - Size 2.4',
+        helpfulCount: 27
+      }
+    ]
+  },
+  {
+    id: 'sp-005',
+    name: 'Royal Makara Mukhi 22K Gold Loha Badhano',
+    subtitle: 'Sacred Iron Core Encased in Hand-Engraved 22K Yellow Gold',
+    price: 14200,
+    originalPrice: 16500,
+    category: 'loha-badhano',
+    metal: 'iron-gold',
+    metalName: '22K Gold & Sacred Iron Core',
+    style: 'mukhi-design',
+    styleName: 'Makara Mukhi Heritage',
+    images: [
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'The sacred Bengali Loha (iron bangle), an indispensable protector for married women, masterfully encased in 22K hallmarked gold. Featuring dual mythical Makara (sea creature) terminal heads with ruby crystal accents.',
+    story: 'In Bengali tradition, the groom slips the Loha onto the bride’s left wrist as a shield of health and prosperity. We preserve the sacred pure iron core while wrapping it in warm 22K gold for lifetime beauty.',
+    features: [
+      'Approx 3.50 grams 22K Solid Gold casing with iron core',
+      'Auspicious Makara Mukhi terminals symbolizing resilience and good fortune',
+      'Curved comfort ergonomics designed for non-stop daily wear',
+      'BIS Hallmarked 916 gold guarantee'
+    ],
+    dimensions: 'Wire thickness: 3.8mm | Terminal breadth: 6.5mm',
+    karatPurity: '22K BIS Hallmarked Gold (3.50g) + Iron Core',
+    weightGrams: '3.50g Gold + Sacred Iron Core',
+    origin: 'Artisanal Gold Quarter, Kolkata',
+    inStock: true,
+    stockCount: 15,
+    isBestSeller: true,
+    rating: 5.0,
+    reviewsCount: 52,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Gold with Iron Core', type: 'iron-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: [
+      {
+        id: 'rev-sp-6',
+        author: 'Soumita Ghosh',
+        location: 'Delhi NCR',
+        rating: 5,
+        date: 'August 11, 2026',
+        title: 'Perfect weight and meaningful traditional piece',
+        comment: 'Very solid and heavy feeling. The Makara face is exquisitely sculpted without sharp edges that catch onto dupattas.',
+        verified: true,
+        itemPurchased: 'Royal Makara Mukhi Loha Badhano - Size 2.6',
+        helpfulCount: 18
+      }
+    ]
+  },
+  {
+    id: 'sp-006',
+    name: 'Sampurna Bengali Bou Bridal Set (Shakha + Pola + Loha)',
+    subtitle: 'Complete 5-Piece Ceremonial Bridal Ensemble in Keepsake Trunk',
+    price: 48900,
+    originalPrice: 56000,
+    category: 'bridal-combos',
+    metal: '22k-yellow-gold',
+    metalName: '22K Gold, Pure Shankha & Loha',
+    style: 'bridal-heritage',
+    styleName: 'Sampurna Bridal Heirloom',
+    images: [
+      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
     ],
-    description: 'Delicate box chains that thread smoothly through the lobe to create an adjustable cascading drop tipped with bezel-set lab diamonds.',
-    story: 'Engineered with a smooth curved post guide for comfortable insertion and customizable asymmetrical drop lengths.',
+    description: 'The ultimate royal Bengali bridal heirloom set. Includes 1 Pair 22K Gold Crown Badhano Shankha, 1 Pair 22K Gold Borkhi Badhano Pola, and 1 Piece 22K Gold Makara Loha Badhano, packed in a red Banarasi silk bridal box.',
+    story: 'Created for the modern bride who treasures generational sanctity. Every element of this 5-piece bridal suite is coordinated for uniform bangle sizing, gold color match, and aesthetic harmony on the wedding altar.',
     features: [
-      '0.25 ctw Round Brilliant Lab Diamonds',
-      'Silky smooth box chain construction',
-      'Adjustable hanging drop length up to 60mm',
-      'Featherlight weight for effortless evening movement'
+      'Complete 5-piece suite: 2 Shankha + 2 Pola + 1 Loha Badhano',
+      'Approx 14.50 grams total 22K BIS Hallmarked Solid Gold',
+      'Presented in a red velvet and brocade bridal memory trunk',
+      'Complimentary pure vermilion sindoor pot & conch cleansing oil',
+      'Free insured express air delivery with security seal'
     ],
-    dimensions: 'Total chain length: 85mm | Bezel drop: 3.5mm',
-    karatPurity: '18K Solid Gold (750)',
-    origin: 'Arezzo, Italy',
+    dimensions: 'Uniform bridal matching across size selection',
+    karatPurity: '22K (916 BIS Gold - 14.50g Total Gold)',
+    weightGrams: '14.50g Net Gold Total',
+    origin: 'Heritage Master Atelier, Kolkata',
     inStock: true,
-    stockCount: 16,
-    rating: 4.8,
-    reviewsCount: 14,
+    stockCount: 6,
+    isBestSeller: true,
+    isNewArrival: true,
+    rating: 5.0,
+    reviewsCount: 29,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
     availableFinishes: [
-      { name: '18K Yellow Gold', type: '18k-yellow-gold', colorHex: '#D4AF37' },
-      { name: '18K White Gold', type: '18k-white-gold', colorHex: '#E5E4E2' }
+      { name: '22K Gold & Natural Bridal Suite', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: [
+      {
+        id: 'rev-sp-7',
+        author: 'Barnali Roychowdhury',
+        location: 'London, UK',
+        rating: 5,
+        date: 'September 05, 2026',
+        title: 'Exceeded all expectations for my London wedding',
+        comment: 'Ordered this for my daughter’s wedding in the UK. The packaging is magnificent, the conch shell is snowy white and the gold work is stunning. Everyone at the reception was asking where we bought it.',
+        verified: true,
+        itemPurchased: 'Sampurna Bengali Bou Bridal Set - Size 2.4',
+        helpfulCount: 45
+      }
+    ]
+  },
+  {
+    id: 'sp-007',
+    name: 'Shankholipi Floral Jaal Carved Shankha (Pair)',
+    subtitle: 'Intricate All-Over Openwork Floral Vines in Natural White Conch',
+    price: 2250,
+    originalPrice: 2800,
+    category: 'shakha',
+    metal: 'pure-conch-shell',
+    metalName: '100% Grade-A Sea Conch Shell',
+    style: 'hand-carved',
+    styleName: 'Floral Jaal Engraving',
+    images: [
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'An ethereal expression of Bengali folk art. Continuous floral jaal (netting) and vine scrollwork hand-engraved into thick-walled conch shell by master artisans, letting skin tones peek through delicately.',
+    story: 'Taking over 8 hours of patient hand carving per bangle, the artisan uses micro-chisels to hollow out delicate floral perforations without compromising the structural hoop strength of the shell.',
+    features: [
+      'Intricate openwork floral jaal cutwork',
+      'Thick-walled shell selected to withstand daily movement',
+      'Natural porcelain-like white luster with smooth buffed edges',
+      'Hypoallergenic, cool against the skin during hot weather'
+    ],
+    dimensions: 'Band width: 9.8mm | Wall thickness: 3.4mm',
+    karatPurity: '100% Natural Organic Marine Conch Shell',
+    origin: 'Bishnupur Artisanal Cluster, West Bengal',
+    inStock: true,
+    stockCount: 20,
+    isBestSeller: false,
+    isNewArrival: true,
+    rating: 4.8,
+    reviewsCount: 31,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: 'Natural White Conch Shell', type: 'pure-conch-shell', colorHex: '#FDFBF7' }
     ],
     reviews: []
   },
   {
-    id: 'naxtto-012',
-    name: 'Serena Sculpted Wave Cuff',
-    subtitle: 'Sterling Silver 925 with 18K Heavy Vermeil Dip',
-    price: 340,
-    category: 'bracelets',
-    metal: '925-sterling-silver',
-    metalName: '925 Sterling Silver / Rhodium',
-    style: 'sculptural',
-    styleName: 'Sculptural Art',
+    id: 'sp-008',
+    name: 'Mayur Mukhi 22K Gold Cap Pola (Pair)',
+    subtitle: 'Sculpted 22K Gold Peacock Heads Meeting on Crimson Pola',
+    price: 21900,
+    originalPrice: 24500,
+    category: 'gold-badhano',
+    metal: '22k-yellow-gold',
+    metalName: '22K Gold on Vermilion Base',
+    style: 'mukhi-design',
+    styleName: 'Mayur Mukhi Royal Caps',
     images: [
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85'
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
     ],
-    description: 'A dynamic undulating wrist band mimicking natural tidal currents. Forged from high-grade recycled 925 sterling silver with a protective rhodium mirror coating.',
-    story: 'Sculpted by hand in clay before being scanned and investment-cast into precious metal.',
+    description: 'A regal twist on the traditional pola. Sculpted 22K yellow gold peacock heads meet face-to-face at the top apex with emerald stone eyes, transitioning into micro-filigree gold wire wrapping along the red body.',
+    story: 'The peacock represents sacred royalty in Vedic iconography. Hand-cast and hand-finished in Bowbazar with high-temperature precision solder.',
     features: [
-      'Certified 925 Solid Sterling Silver',
-      'Anti-tarnish mirror rhodium barrier finish',
-      'Adjustable malleable cuff structure for universal fit',
-      'Engraved atelier hallmark'
+      'Approx 5.10 grams 22K BIS Hallmarked Solid Gold',
+      'Dual sculpted Mayur Mukhi terminal caps with gemstone accents',
+      'Rich vermilion coral base that will not peel or fade',
+      'Sturdy tension fit for secure daily wear'
     ],
-    dimensions: 'Band height: 18mm at peak | Adjustable gap',
-    karatPurity: '925 Sterling Silver',
-    origin: 'Florence, Italy',
+    dimensions: 'Band width: 7.2mm | Peacock crest: 11mm',
+    karatPurity: '22K (916 BIS Gold - 5.10g Net)',
+    weightGrams: '5.10g Net Gold Weight',
+    origin: 'Bowbazar Gold Atelier, Kolkata',
     inStock: true,
-    stockCount: 20,
+    stockCount: 11,
+    isBestSeller: true,
     rating: 4.9,
-    reviewsCount: 11,
+    reviewsCount: 39,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
     availableFinishes: [
-      { name: '925 Sterling Silver', type: '925-sterling-silver', colorHex: '#DCDCDC' },
-      { name: '18K Gold Vermeil', type: 'gold-vermeil', colorHex: '#D4AF37' }
+      { name: '22K Gold on Crimson Red', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-009',
+    name: 'Kalka Embossed Textured Pola (Pair)',
+    subtitle: 'Classic Paisley Motif Rich Vermilion Daily Wear Bangles',
+    price: 799,
+    originalPrice: 1199,
+    category: 'pola',
+    metal: 'crimson-coral-acrylic',
+    metalName: 'Textured Red Coral Acrylic',
+    style: 'traditional-bengali',
+    styleName: 'Traditional Kalka Relief',
+    images: [
+      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'Features a raised relief of traditional Bengali kalka (paisley) and leafy geometric borders encircling the bangle. Provides an ornate designer appearance while remaining lightweight and effortless for daily routines.',
+    story: 'Inspired by traditional Nakshi Kantha textiles of Bengal, this pattern brings antique bridal tapestry motifs to everyday wrist adornment.',
+    features: [
+      'Embossed non-slip tactile kalka relief pattern',
+      'Deep scarlet red coral hue that retains gloss after wash',
+      'Gentle internal radius for painless slip-on application',
+      'Anti-breakage reinforced acrylic matrix'
+    ],
+    dimensions: 'Band width: 7.0mm | Wall thickness: 3.0mm',
+    karatPurity: 'High-Strength Coral-Tone Polymer',
+    origin: 'Kolkata Artisanal Guild',
+    inStock: true,
+    stockCount: 50,
+    rating: 4.7,
+    reviewsCount: 61,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: 'Embossed Vermilion Red', type: 'crimson-coral-acrylic', colorHex: '#C01A27' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-010',
+    name: 'Chata Pola Broad Bengali Bangle (Pair)',
+    subtitle: '14mm Broad Statement Red Pola with Antique Lattice Work',
+    price: 1150,
+    originalPrice: 1599,
+    category: 'pola',
+    metal: 'crimson-coral-acrylic',
+    metalName: 'Heavy Gauge Crimson Pola',
+    style: 'statement',
+    styleName: 'Broad Chata Pola',
+    images: [
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'A traditional broad 14mm royal Bengali bridal bangle pair known as "Chata Pola". Delivers unmistakable festive presence with hand-etched criss-cross lattice and diamond highlights.',
+    story: 'Favored by Bengali aristocratic families (Zamindari gharana) during Durga Puja and wedding ceremonies, broad Chata Pola represents abundance and marital pride.',
+    features: [
+      'Broad 14mm dramatic wrist silhouette',
+      'Precision lathe-cut faceted lattice etchings',
+      'Featherlight hollow core engineering prevents wrist fatigue',
+      'Pairs dramatically with broad gold bangles (bala)'
+    ],
+    dimensions: 'Band width: 14.0mm | Wall thickness: 3.5mm',
+    karatPurity: 'Premium Heavy-Gauge Pola Acrylic',
+    origin: 'Kolkata Artisanal Guild',
+    inStock: true,
+    stockCount: 22,
+    rating: 4.9,
+    reviewsCount: 41,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: 'Glossy Crimson Red', type: 'crimson-coral-acrylic', colorHex: '#B2182B' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-011',
+    name: 'Full Strip Ribbon 22K Gold Badhano Shankha (Pair)',
+    subtitle: 'Continuous 360-Degree 22K Gold Mirror Ribbon Encasing White Conch Shell',
+    price: 31500,
+    originalPrice: 35000,
+    category: 'gold-badhano',
+    metal: '22k-yellow-gold',
+    metalName: '22K Gold & Natural Conch Shell',
+    style: 'filigree-badhano',
+    styleName: 'Continuous Gold Ribbon Strip',
+    images: [
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'An unbroken, highly polished continuous 22K yellow gold ribbon encases the center circumference of genuine white conch shell bangles. Modern clean lines meet sacred Vedic matrimony.',
+    story: 'Representing an unbroken cycle of marital affection, the continuous gold band requires immaculate metallurgical bending to adhere flush against the natural variations of genuine conch shell.',
+    features: [
+      'Approx 7.40 grams net 22K BIS Hallmarked Solid Gold',
+      '360-degree seamless solid gold band casing',
+      'Triple reinforced gold rivets with flush safety joints',
+      'Comes with BIS Hallmark Certificate & Luxury Leatherette Box'
+    ],
+    dimensions: 'Band width: 10.2mm | Gold ribbon width: 5.5mm',
+    karatPurity: '22K (916 BIS Gold - 7.40g Net)',
+    weightGrams: '7.40g Net Gold Weight',
+    origin: 'Bowbazar Gold Atelier, Kolkata',
+    inStock: true,
+    stockCount: 7,
+    isBestSeller: true,
+    rating: 5.0,
+    reviewsCount: 26,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Solid Gold & White Conch', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-012',
+    name: 'Floral Wire Sleek 22K Gold Loha Badhano',
+    subtitle: 'Contemporary Minimalist 22K Gold Wrapped Sacred Iron Bangle',
+    price: 9800,
+    originalPrice: 11500,
+    category: 'loha-badhano',
+    metal: 'iron-gold',
+    metalName: '22K Gold & Sacred Iron Wire',
+    style: 'daily-wear',
+    styleName: 'Modern Minimalist Loha',
+    images: [
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'Designed for the modern professional Bengali woman. A sleek 3.2mm round sacred iron core wound with a spiral of solid 22K gold wire and topped with a tiny embossed 6-petal gold floral crest.',
+    story: 'Lightweight, ultra-durable, and snag-free—designed to slide easily underneath laptop sleeves, blazers, and saree pallus without catching or clinking.',
+    features: [
+      'Approx 2.10 grams 22K BIS Hallmarked Solid Gold wire & crest',
+      'Sacred pure iron inner core for marital blessings',
+      'Smooth micro-polished surface prevents friction against fabrics',
+      'Official BIS 916 purity hallmark'
+    ],
+    dimensions: 'Core diameter: 3.2mm | Floral crest: 5.8mm',
+    karatPurity: '22K BIS Hallmarked Gold (2.10g) + Iron Core',
+    weightGrams: '2.10g Net Gold Weight',
+    origin: 'Bengal Heritage Atelier',
+    inStock: true,
+    stockCount: 18,
+    rating: 4.8,
+    reviewsCount: 34,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Gold & Sacred Iron', type: 'iron-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-013',
+    name: 'Sleek Flat-Cut Daily Wear Shankha (Pair)',
+    subtitle: 'Plain Polished Minimalist Conch Shell Bangles for Work & Home',
+    price: 1299,
+    originalPrice: 1699,
+    category: 'shakha',
+    metal: 'pure-conch-shell',
+    metalName: '100% Pure Natural Conch Shell',
+    style: 'daily-wear',
+    styleName: 'Minimalist Plain Polished',
+    images: [
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'Clean, unembellished pure white conch shell bangles finished with a silky satin-smooth polish. Perfect for everyday wear, light cooking, and modern office styling.',
+    story: 'Highlights the untouched purity of natural sea conch shell. Sliced evenly and buffed across seven grades of emery paper for maximum tactile gentleness.',
+    features: [
+      'Featherlight ergonomic profile for 24/7 wear',
+      'Sleek flat-cut 6.5mm width',
+      'Zero sharp points; will not snag delicate silks or lace',
+      'Pure organic conch shell with cool healing energy'
+    ],
+    dimensions: 'Band width: 6.5mm | Wall thickness: 3.0mm',
+    karatPurity: '100% Certified Natural Conch Shell',
+    origin: 'Nabadwip Artisanal Guild, West Bengal',
+    inStock: true,
+    stockCount: 35,
+    rating: 4.9,
+    reviewsCount: 57,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: 'Pure Natural White Conch', type: 'pure-conch-shell', colorHex: '#FDFBF7' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-014',
+    name: 'Subho Bibaha Gold Badhano Bridal Hamper',
+    subtitle: '22K Gold Crown Shankha & 22K Gold Borkhi Pola Luxury Gift Box',
+    price: 42000,
+    originalPrice: 48000,
+    category: 'bridal-combos',
+    metal: '22k-yellow-gold',
+    metalName: '22K Gold, Pure Conch & Red Pola',
+    style: 'bridal-heritage',
+    styleName: 'Subho Bibaha Bridal Hamper',
+    images: [
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'The definitive wedding gift for a Bengali bride. Pairs our best-selling 22K Gold Crown Badhano Shankha Pair with the matching 22K Gold Borkhi Badhano Pola Pair in an ornate crimson velvet gift trunk.',
+    story: 'Prepared as an auspicious blessing package, this bridal hamper brings together the two most revered markers of Bengali womanhood with over 11 grams of certified 22K gold craft.',
+    features: [
+      '1 Pair 22K Gold Crown Shankha + 1 Pair 22K Gold Borkhi Pola',
+      'Approx 11.00 grams total 22K BIS Hallmarked Solid Gold',
+      'Includes authentic 10g 999 Silver Coin with Lakshmi Ganesh emblem',
+      'Luxury velvet keepsake box with mirror and lock',
+      'All-India insured express delivery with tamper-proof seal'
+    ],
+    dimensions: 'Customized matched pair sizes (2.2, 2.4, 2.6, 2.8, 2.10)',
+    karatPurity: '22K (916 BIS Gold - 11.00g Total Gold)',
+    weightGrams: '11.00g Net Gold Total',
+    origin: 'Bowbazar Master Guild, Kolkata',
+    inStock: true,
+    stockCount: 9,
+    isBestSeller: true,
+    isNewArrival: true,
+    rating: 5.0,
+    reviewsCount: 38,
+    availableSizes: ['2.2', '2.4', '2.6', '2.8', '2.10'],
+    availableFinishes: [
+      { name: '22K Solid Gold Bridal Suite', type: '22k-yellow-gold', colorHex: '#D4AF37' }
     ],
     reviews: []
   }
@@ -602,272 +640,218 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INSTAGRAM_FEED: InstagramPost[] = [
   {
     id: 'ig-01',
-    username: 'naxtto.jewels',
-    handle: '@naxtto.jewels',
+    username: 'naxtto.sakhapola',
+    handle: '@naxtto.sakhapola',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
-    caption: 'Quiet luxury in its purest element. The Aethel Continuous Band stacked alongside morning espresso in Mayfair. #NaxtTo #18kGold #QuietLuxury #EverydayFine',
-    likes: 1840,
-    commentsCount: 42,
+    image: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=800&q=85',
+    caption: 'Pure conch shell whispering sacred maritime heritage. The Mayur Mukhi Shankha hand-carved in Nabadwip. #SakhaPola #BengaliBride #Shankha #NaxtTo',
+    likes: 2450,
+    commentsCount: 68,
     timestamp: '2 hours ago',
-    taggedProductIds: ['naxtto-001'],
-    location: 'Mayfair, London'
+    taggedProductIds: ['sp-001'],
+    location: 'Kolkata, West Bengal'
   },
   {
     id: 'ig-02',
-    username: 'claire.vogue',
-    handle: '@claire.vogue',
+    username: 'kolkata_bridal_couture',
+    handle: '@kolkata_bridal',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85',
-    caption: 'When modern craftsmanship meets organic natural forms. Wearing the Soleil Droplet necklace with a structured linen blazer. @naxtto.jewels #NaxtToCollective',
-    likes: 2950,
-    commentsCount: 78,
+    image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=800&q=85',
+    caption: '22K gold borkhi wire wrapped around crimson pola. A bridal classic that will never go out of style. @naxtto.sakhapola #GoldBadhano #Pola #BengaliWedding',
+    likes: 3820,
+    commentsCount: 112,
     timestamp: '1 day ago',
-    taggedProductIds: ['naxtto-003', 'naxtto-004'],
-    location: 'Paris Fashion Week'
+    taggedProductIds: ['sp-003'],
+    location: 'Bowbazar, Kolkata'
   },
   {
     id: 'ig-03',
-    username: 'naxtto.jewels',
-    handle: '@naxtto.jewels',
+    username: 'naxtto.sakhapola',
+    handle: '@naxtto.sakhapola',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=85',
-    caption: 'Sculptural elegance that catches golden hour light. The Arcadia Hoops are completely hollow-formed for featherweight all-day comfort.',
-    likes: 3410,
-    commentsCount: 91,
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85',
+    caption: 'Daily wear red pola that retains its mirror shine through water, work, and festive celebrations. #DailyPola #EverydayAuspicious #BengaliTradition',
+    likes: 1940,
+    commentsCount: 45,
     timestamp: '2 days ago',
-    taggedProductIds: ['naxtto-005'],
-    location: 'Milan Atelier'
+    taggedProductIds: ['sp-002', 'sp-009'],
+    location: 'Bishnupur, West Bengal'
   },
   {
     id: 'ig-04',
-    username: 'elena_arch',
-    handle: '@elena_arch',
+    username: 'sreemoyee_diaries',
+    handle: '@sreemoyee_d',
     avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85',
-    caption: 'My everyday armor: Kallisto hinged cuff + Nyx tennis bracelet in recycled 18k gold. Understated, architectural, eternal. @naxtto.jewels #FineJewellery',
-    likes: 1620,
-    commentsCount: 35,
+    image: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=800&q=85',
+    caption: 'My complete Sampurna Bou bridal set arrived in this red silk trunk! 22K hallmarked gold badhano shankha and pola that felt so royal on my wedding day. #BengaliBou',
+    likes: 4120,
+    commentsCount: 129,
     timestamp: '4 days ago',
-    taggedProductIds: ['naxtto-007', 'naxtto-008'],
-    location: 'Zürich, Switzerland'
+    taggedProductIds: ['sp-006'],
+    location: 'Kolkata, India'
   },
   {
     id: 'ig-05',
-    username: 'naxtto.jewels',
-    handle: '@naxtto.jewels',
+    username: 'naxtto.sakhapola',
+    handle: '@naxtto.sakhapola',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=85',
-    caption: 'A modern promise. The Luminary Solitaire in our floating bezel design. Ethically grown, certified VVS1 clarity. #NaxtToBridal #EthicalDiamonds',
-    likes: 4200,
-    commentsCount: 114,
+    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
+    caption: 'Makara Mukhi 22K Gold Loha Badhano: The sacred shield of marital health and prosperity, hand-engraved with ancient Vedic iconography. #LohaBadhano',
+    likes: 2890,
+    commentsCount: 73,
     timestamp: '5 days ago',
-    taggedProductIds: ['naxtto-002'],
-    location: 'Lake Como, Italy'
+    taggedProductIds: ['sp-005'],
+    location: 'Bengal Heritage Atelier'
   },
   {
     id: 'ig-06',
-    username: 'marcus_design',
-    handle: '@marcus_design',
+    username: 'priyanka_sengupta',
+    handle: '@priyanka_sg',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=800&q=85',
-    caption: 'The fluting on this Vesper Signet ring is razor sharp yet soft to the touch. NaxtTo proves minimalism is all about micro-proportions. #SignetRing',
-    likes: 1890,
-    commentsCount: 29,
+    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85',
+    caption: 'The delicate openwork floral jaal on this shankha is pure poetry. Handcrafted in Bishnupur by true hereditary masters. #HandCarvedShankha',
+    likes: 3100,
+    commentsCount: 88,
     timestamp: '1 week ago',
-    taggedProductIds: ['naxtto-009'],
-    location: 'Stockholm, Sweden'
+    taggedProductIds: ['sp-007'],
+    location: 'Nabadwip, West Bengal'
   }
 ];
 
 export const BLOG_POSTS: BlogPost[] = [
   {
     id: 'blog-01',
-    slug: 'the-art-of-ring-stacking-minimalist-guide',
-    title: 'The Architecture of Ring Stacking: A Connoisseur’s Guide to Proportion & Harmony',
-    subtitle: 'How to balance varying widths, metal finishes, and bezel profiles for effortless daily wear.',
-    excerpt: 'Mastering the curated ring stack is a study in tension and balance. Learn how to mix textured bands, floating gemstones, and architectural silhouettes without visual clutter.',
-    category: 'Style & Stacking',
+    slug: 'sacred-symbolism-of-bengali-shakha-pola-loha',
+    title: 'The Sacred Triad: Symbolism, Origin & Cultural Importance of Shakha, Pola & Loha',
+    subtitle: 'Why the conch shell, crimson coral, and sacred iron define the soul of the Bengali bride.',
+    excerpt: 'Explore the 1,500-year history of Bengali marital jewellery. How natural conch shell, coral-hued pola, and protective iron ward off negativity and symbolize enduring love.',
+    category: 'Heritage & Rituals',
     readTime: '4 min read',
-    publishedAt: 'August 14, 2026',
-    coverImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=85',
+    publishedAt: 'September 10, 2026',
+    coverImage: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1200&q=85',
     author: {
-      name: 'Genevieve Moreau',
-      role: 'Head of Design & Atelier Director',
+      name: 'Dr. Sarmistha Sengupta',
+      role: 'Professor of Cultural Anthropology & Folklore',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
     },
     tableOfContents: [
-      { id: 'foundational-anchor', title: '1. Choosing the Anchor Band' },
-      { id: 'balancing-proportions', title: '2. The Rule of Varying Gauges' },
-      { id: 'mixing-metals', title: '3. Mixing Warm Yellow Gold & Cool Platinum' },
-      { id: 'negative-space', title: '4. The Vital Role of Negative Space' }
+      { id: 'shakha-purity', title: '1. Shankha: The Sea Conch of Purity & Calm' },
+      { id: 'pola-vitality', title: '2. Pola: The Vermilion Fire of Health & Passion' },
+      { id: 'loha-strength', title: '3. Loha: The Iron Armor of Martial Protection' },
+      { id: 'gold-badhano-tradition', title: '4. Gold Badhano: Aristocratic Heirlooms' }
     ],
     contentSections: [
       {
-        heading: '1. Choosing the Anchor Band',
+        heading: '1. Shankha: The Sea Conch of Purity & Calm',
         body: [
-          'Every captivating ring stack starts with a singular focal foundation. This is typically a piece with structural presence—such as our Aethel Continuous Band or a domed cigar band. The anchor anchors the hand and dictates the tonal palette for accompanying accents.',
-          'When selecting your base, prioritize ergonomic contouring. A ring with a rounded comfort-fit interior ensures that adding subsequent companion bands will not pinch or restrict joint articulation throughout a busy workday.'
+          'The Shankha (conch shell) is harvested from pristine sea reefs and has been worn in Bengal since the Pala empire. Symbolizing purity, mental composure, and the cosmic resonance of Om, it cools the bride’s pulse points and anchors emotional balance during the sacred ritual of Saat Paake Ghora.',
+          'Authentic Shankha must be carved from genuine marine shell (Turbinella Pyrum), distinguishable by its natural porcelain luster and cooling resonance.'
         ],
-        quote: 'True luxury in jewellery lies not in excess, but in the intentional dialogue between metal, gemstone, and the skin beneath.'
+        quote: 'Shakha and Pola are not mere adornments; they are the living breath of Vedic blessing, worn unbroken across generations of Bengali mothers and daughters.'
       },
       {
-        heading: '2. The Rule of Varying Gauges',
+        heading: '2. Pola: The Vermilion Fire of Health & Passion',
         body: [
-          'A common styling misstep is pairing three identical 2mm bands together, which often flattens the silhouette. Instead, practice the 3:1 ratio: combine one substantial band (3.5mm – 4.5mm) with a whisper-thin pavé band (1.2mm – 1.6mm) and a sculpted geometric accent.',
-          'This variation in depth invites the eye to explore subtle textural transitions, contrasting high-mirror polishes against diamond pavé or satin-brushed gold.'
-        ],
-        image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
-        imageCaption: 'The Luminary Bezel Solitaire stacked effortlessly with the Aethel 18K Solid Band.'
-      },
-      {
-        heading: '3. Mixing Warm Yellow Gold & Cool Platinum',
-        body: [
-          'The historical convention against mixing yellow gold with white gold or platinum is thoroughly obsolete in contemporary aesthetics. In fact, a bi-color stack accentuates the unique warmth of 18k yellow gold when contrasted against the icy brilliance of 950 platinum.',
-          'To achieve deliberate coherence rather than accidental mismatch, ensure that at least one piece in the stack incorporates both tones, or repeat the cool metal in an earring or wrist cuff.'
+          'The radiant red Pola symbolizes Shakti, creative life energy, and fertility. Handcrafted in intense vermilion coral hues, it balances the pristine white of the Shankha to create the sacred red-and-white visual harmony synonymous with the Bengali bride.',
+          'Daily wear Pola bangles are specifically engineered with rounded inner bevels to ensure comfort throughout domestic life, festive rituals, and professional careers.'
         ]
       },
       {
-        heading: '4. The Vital Role of Negative Space',
+        heading: '3. Loha: The Iron Armor of Martial Protection',
         body: [
-          'Allowing your knuckles and skin to breathe is essential. Rather than loading five rings onto a single finger, distribute them organically across your index, middle, and pinky fingers.',
-          'An open-ended cuff ring or a floating bezel solitaire naturally introduces negative space, giving each precious element its rightful moment to shine.'
+          'The Loha (iron bangle) is traditionally gifted by the mother-in-law on the wedding night. Iron represents grounding energy, strength against negative forces, and enduring longevity for the husband and household.',
+          'In modern bespoke ateliers like NaxtTo, the sacred iron core is elegantly wrapped in solid 22K hallmarked gold with peacock or Makara terminals for timeless luxury.'
+        ]
+      },
+      {
+        heading: '4. Gold Badhano: Aristocratic Heirlooms',
+        body: [
+          'Gold Badhano (binding in gold) originated among the Zamindari and aristocratic households of Kolkata and Bowbazar. Goldsmiths shape 22K hallmarked gold filigree wire, embossed crowns, and delicate borkhi leaves around the shell, elevating everyday sacred bangles into certified family heirlooms.'
         ]
       }
     ],
-    seoKeywords: ['ring stacking guide', 'minimalist gold rings', '18k solid gold stack', 'how to mix metals jewellery', 'sustainable diamond rings'],
-    metaDescription: 'Discover expert tips on how to curate the perfect minimalist ring stack using 18k solid gold, bezel stones, and architectural bands from NaxtTo Atelier.',
-    relatedProductIds: ['naxtto-001', 'naxtto-002', 'naxtto-009']
+    seoKeywords: ['sakha pola meaning', 'bengali bridal bangles', 'gold badhano pola', 'shakha pola gold design', 'loha badhano importance'],
+    metaDescription: 'Discover the rich Vedic history, symbolism, and artisanal craftsmanship behind authentic Bengali Shakha, Pola, and Gold Badhano bangles at NaxtTo Atelier.',
+    relatedProductIds: ['sp-001', 'sp-003', 'sp-005', 'sp-006']
   },
   {
     id: 'blog-02',
-    slug: '18k-gold-vs-14k-gold-investment-guide',
-    title: '18K Gold vs. 14K Gold: The Connoisseur’s Guide to Purity, Color & Longevity',
-    subtitle: 'Understanding metallurgy, color saturation, and why 18k remains the gold standard of fine European jewellery.',
-    excerpt: 'Is 18k gold worth the investment over 14k? We break down gold karat purity, skin hypoallergenic compatibility, and why heirloom pieces demand higher precious bullion concentration.',
-    category: 'Gemology',
-    readTime: '5 min read',
-    publishedAt: 'August 08, 2026',
-    coverImage: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=85',
+    slug: 'bengali-bangle-sizing-guide-sakha-pola',
+    title: 'How to Measure Your Bangle Size for Sakha Pola: The Complete 2.2 to 2.10 Chart',
+    subtitle: 'Step-by-step wrist circumference and inner diameter measurement guide for flawless fit.',
+    excerpt: 'Ensure your handcrafted Shankha and Pola slide on effortlessly. Learn how to convert your hand span into standard Indian bangle sizes from 2.2 up to 2.10.',
+    category: 'Sizing & Fit',
+    readTime: '3 min read',
+    publishedAt: 'September 04, 2026',
+    coverImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1200&q=85',
     author: {
-      name: 'Dr. Alistair Sterling',
-      role: 'Master Metallurgist & Gemologist',
+      name: 'Subhashish Karmakar',
+      role: 'Master Craftsman & Sizing Specialist',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
     },
     tableOfContents: [
-      { id: 'karat-science', title: '1. The Science of Karats' },
-      { id: 'visual-difference', title: '2. Richness of Color & Tone' },
-      { id: 'durability-hypoallergenic', title: '3. Durability & Skin Sensitivity' },
-      { id: 'heirloom-value', title: '4. Resale & Generational Value' }
+      { id: 'bangle-matrix', title: '1. Standard Indian Bangle Size Matrix' },
+      { id: 'measuring-hand', title: '2. Measuring Your Hand Knuckle Span' },
+      { id: 'shankha-fit-tips', title: '3. Why Shankha Requires a Snug Fit' }
     ],
     contentSections: [
       {
-        heading: '1. The Science of Karats',
+        heading: '1. Standard Indian Bangle Size Matrix',
         body: [
-          'Pure 24K gold is elemental gold (99.9% pure). However, pure gold is too malleable for intricate daily jewellery settings. To provide structural rigidity and enhance resilience, gold is alloyed with noble metals such as silver, copper, and palladium.',
-          '18K Gold comprises 75% pure solid gold (marked 750), while 14K Gold contains 58.3% gold (marked 585). That remaining difference accounts for significant differences in tactile heft, color richness, and long-term prestige.'
+          'Unlike open-ended bracelets, traditional Shakha and Pola are closed hoops. Indian bangle sizing is expressed in inches and sixteenths: Size 2.2 (2-2/16" or 54.0mm inner diameter), Size 2.4 (2-4/16" or 57.2mm), Size 2.6 (2-6/16" or 60.3mm - most common), Size 2.8 (2-8/16" or 63.5mm), and Size 2.10 (2-10/16" or 66.7mm).',
+          'Review your size against our detailed millimeter inner diameter table before selecting your pair.'
         ],
-        quote: '18K Gold represents the golden mean of fine jewellery: maximum gold purity with uncompromised daily resilience.'
+        quote: 'A well-fitted Shankha should glide past the thumb knuckle with slight soap water lubrication and rest weightlessly on the lower wrist.'
       },
       {
-        heading: '2. Richness of Color & Tone',
+        heading: '2. Measuring Your Hand Knuckle Span',
         body: [
-          'Because 18K gold contains a full 75% pure gold, its visual signature has a deep, buttery, opulent warmth that cannot be replicated in lower alloys. In contrast, 14K gold can sometimes appear paler or slightly brassy due to higher zinc and nickel content.',
-          'Under natural daylight, an 18K solid piece glows with an unmistakable golden luminosity that stands out across the room.'
-        ]
-      },
-      {
-        heading: '3. Durability & Skin Sensitivity',
-        body: [
-          'A pervasive myth suggests that 18K gold is too soft for everyday wear. In reality, modern precision heat-tempering and cold-rolling techniques give 18K gold superior structural integrity while preventing the brittleness that can affect lower karats.',
-          'Furthermore, because 18K gold minimizes non-precious base metals, it is inherently hypoallergenic and will never cause dermatitis or green discoloration on sensitive skin.'
+          'Bring your thumb and little finger together as if sliding on a bangle. Wrap a flexible string tightly around the widest part of your hand across the knuckles. Measure that length on a ruler to find your exact circumference.'
         ]
       }
     ],
-    seoKeywords: ['18k vs 14k gold', 'gold karat guide', 'solid gold jewellery investment', 'hypoallergenic gold rings', 'recycled 18k gold'],
-    metaDescription: 'Learn why 18K solid gold is the ultimate standard for minimalist fine jewellery. Compare durability, color warmth, and hypoallergenic qualities with NaxtTo.',
-    relatedProductIds: ['naxtto-001', 'naxtto-004', 'naxtto-007']
+    seoKeywords: ['sakha pola size guide', 'bengali bangle size 2.4 2.6', 'how to measure bangle size', 'indian bangle sizing chart'],
+    metaDescription: 'Find your exact Indian bangle size for Shakha and Pola bangles using our inner diameter chart and knuckle measuring technique.',
+    relatedProductIds: ['sp-001', 'sp-002', 'sp-004']
   },
   {
     id: 'blog-03',
-    slug: 'caring-for-organic-baroque-pearls',
-    title: 'Caring for Organic Pearls & Fine Gemstones: Atelier Preservation Secrets',
-    subtitle: 'How to clean, store, and preserve natural luster across decades of wear.',
-    excerpt: 'Organic baroque pearls and bezel-set gemstones require delicate reverence. Discover the simple rituals that keep your fine jewellery glowing for generations.',
-    category: 'Care Guides',
+    slug: 'caring-for-pure-conch-shell-and-gold-badhano',
+    title: 'Caring for Natural Conch Shell & 22K Gold Badhano: Atelier Maintenance Secrets',
+    subtitle: 'Preserve snowy white luster and prevent yellowing or wire loosening over decades.',
+    excerpt: 'Authentic conch shell is a natural marine gem that breathes. Discover simple ancestral methods using pure mustard oil and mild cleansing to preserve your bridal heirlooms.',
+    category: 'Care & Maintenance',
     readTime: '3 min read',
-    publishedAt: 'July 29, 2026',
+    publishedAt: 'August 28, 2026',
     coverImage: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1200&q=85',
     author: {
-      name: 'Genevieve Moreau',
-      role: 'Head of Design & Atelier Director',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
-    },
-    tableOfContents: [
-      { id: 'last-on-first-off', title: '1. The Golden Rule: Last On, First Off' },
-      { id: 'cleaning-ritual', title: '2. Gentle Ultrasonic & Microfiber Care' },
-      { id: 'proper-storage', title: '3. Storing Without Scratches' }
-    ],
-    contentSections: [
-      {
-        heading: '1. The Golden Rule: Last On, First Off',
-        body: [
-          'Organic gems like baroque pearls and emeralds are naturally porous and interact with atmospheric conditions. Perfumes, hairsprays, and skincare acids can degrade the delicate calcium nacre over time.',
-          'Always make your jewellery the final touch of your dressing ritual after perfumes have completely evaporated, and the first piece removed before evening routines.'
-        ]
-      },
-      {
-        heading: '2. Gentle Ultrasonic & Microfiber Care',
-        body: [
-          'While diamonds and solid 18k gold can be periodically cleaned with warm water, mild Castile soap, and a soft-bristled baby toothbrush, never place pearls in ultrasonic cleaners.',
-          'Simply wipe your pearls with a slightly dampened chamois or ultra-soft microfiber cloth after wear to remove skin lipids and preserve natural iridescence.'
-        ]
-      }
-    ],
-    seoKeywords: ['how to clean pearl jewellery', 'baroque pearl care', 'fine jewellery maintenance', 'protect gold necklace'],
-    metaDescription: 'Atelier preservation secrets for caring for organic freshwater baroque pearls, solid gold chains, and bezel lab diamonds.',
-    relatedProductIds: ['naxtto-003', 'naxtto-005', 'naxtto-008']
-  },
-  {
-    id: 'blog-04',
-    slug: 'sustainable-metallurgy-ethical-diamonds-future',
-    title: 'The Circular Atelier: 100% Recycled Gold and Conflict-Free Lab Metallurgy',
-    subtitle: 'Why ethical transparency is the only true modern definition of luxury.',
-    excerpt: 'Explore how NaxtTo eliminates destructive mining through closed-loop recycled precious bullion and solar-powered diamond synthesis.',
-    category: 'Sustainability',
-    readTime: '6 min read',
-    publishedAt: 'July 12, 2026',
-    coverImage: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1200&q=85',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Head of Ethical Sourcing & Sustainability',
+      name: 'Anindita Bose',
+      role: 'Atelier Head of Quality & Restoration',
       avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80'
     },
     tableOfContents: [
-      { id: 'recycled-gold-impact', title: '1. The Zero-Extraction Gold Standard' },
-      { id: 'lab-diamonds-vs-mined', title: '2. Solar-Powered Diamond Crystallization' },
-      { id: 'carbon-neutral-craft', title: '3. Carbon-Neutral Crafting & Packaging' }
+      { id: 'oil-massage', title: '1. Periodic Mustard / Coconut Oil Nourishment' },
+      { id: 'avoiding-chemicals', title: '2. Keeping Away from Bleach & Harsh Acids' },
+      { id: 'gold-wire-safety', title: '3. Protecting 22K Gold Filigree Wire' }
     ],
     contentSections: [
       {
-        heading: '1. The Zero-Extraction Gold Standard',
+        heading: '1. Periodic Mustard / Coconut Oil Nourishment',
         body: [
-          'Gold is inherently infinite: it can be melted, purified, and re-refined indefinitely without degrading its atomic purity or crystalline structure. All NaxtTo pieces utilize 100% certified recycled gold derived from ethically audited secondary sources.',
-          'This closed-loop system reduces carbon emissions by over 99.7% compared to traditional open-pit mining, protecting fragile ecosystems and watersheds.'
-        ],
-        quote: 'True beauty should never come at the cost of the Earth. Modern fine jewellery must be as pure in its origin as it is in its form.'
+          'Natural conch shell is composed of calcium carbonate and micro-crystalline proteins. Once a month, apply two drops of pure mustard oil or coconut oil with a soft cotton pad over the carved Shankha. This seals natural hydration, repels turmeric stains, and enhances the porcelain-white glow.',
+          'Let the oil absorb for 30 minutes, then gently wipe dry with a clean microfiber cloth.'
+        ]
       },
       {
-        heading: '2. Solar-Powered Diamond Crystallization',
+        heading: '2. Keeping Away from Bleach & Harsh Acids',
         body: [
-          'Our lab-grown diamonds are created using Chemical Vapor Deposition (CVD) powered by 100% renewable solar energy in state-of-the-art European laboratories.',
-          'They possess the exact same physical, optical, and chemical matrix (10 on the Mohs hardness scale, refractive index of 2.42) as mined stones, but without conflict, habitat destruction, or opaque supply chains.'
+          'Never use chlorine bleach, toilet cleaning acids, or abrasive scrub pads on pure conch shell or gold badhano. If turmeric stains occur, simple lukewarm water with mild baby soap will safely lift discoloration.'
         ]
       }
     ],
-    seoKeywords: ['recycled gold jewellery', 'ethical lab grown diamonds', 'sustainable luxury jewellery', 'eco friendly fine jewellery brand'],
-    metaDescription: 'Learn about NaxtTo circular metallurgy, 100% certified recycled 18k solid gold, and solar-crystallized ethical diamonds.',
-    relatedProductIds: ['naxtto-001', 'naxtto-002', 'naxtto-006']
+    seoKeywords: ['how to clean shankha', 'how to maintain gold badhano pola', 'cleaning conch shell bangles', 'sakha pola care tips'],
+    metaDescription: 'Atelier secrets on cleaning and preserving 100% natural conch shell Shankha, 22K gold badhano wire, and vermilion Pola bangles.',
+    relatedProductIds: ['sp-001', 'sp-003', 'sp-004']
   }
 ];
 
@@ -882,8 +866,8 @@ export const DEMO_USER: UserProfile = {
   savedAddresses: [],
   orderHistory: [],
   preferences: {
-    metalPreferences: ['18K Recycled Yellow Gold'],
-    ringSize: 'US 6',
+    metalPreferences: ['22K BIS Hallmarked Solid Gold', 'Pure Natural Conch Shell'],
+    ringSize: '2.6 (Indian Bangle)',
     newsletterSubscribed: false
   }
 };

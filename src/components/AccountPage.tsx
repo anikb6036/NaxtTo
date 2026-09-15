@@ -760,7 +760,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     return (
       <div id="login-page" className="w-full bg-[#fdf0f4] min-h-screen flex flex-col justify-between font-sans selection:bg-[#ff3f6c]/20">
         {/* Top Header Bar */}
-        <header className="w-full px-6 sm:px-12 py-4 flex items-center justify-between">
+        <header className="w-full px-6 sm:px-12 py-4 flex items-center">
           {/* Left: Back to boutique */}
           <button
             type="button"
@@ -770,13 +770,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Shop</span>
           </button>
-
-          {/* Right: NaxtTo Brand Typography */}
-          <div className="flex items-center select-none cursor-pointer" onClick={onBackToShop}>
-            <span className="font-extrabold text-xl tracking-tighter text-[#282c3f]">
-              Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
-            </span>
-          </div>
         </header>
 
         {/* Center Main Login Card matching screenshot */}

@@ -57,7 +57,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   size = 'md',
   variant = 'bronze',
   showSubtitle = false,
-  subtitleText = 'FINE JEWELLERY',
+  subtitleText = 'SAKHA POLA ATELIER',
   showIcon = true,
   className = '',
   onClick,
