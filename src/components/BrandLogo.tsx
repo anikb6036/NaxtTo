@@ -204,13 +204,13 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       )}
 
 
-      {/* Typography Brand Mark (NaxtTo with vibrant Myntra accent) */}
+      {/* Typography Brand Mark (NaxtTo with solid pink 'To') */}
       {layout !== 'icon-only' && (
         <div className={`flex flex-col ${layout === 'vertical' ? 'items-center' : 'items-start'} justify-center leading-none`}>
           <span 
             className={`font-sans tracking-tight ${currentSize.title} ${currentColors.text}`}
           >
-            Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
+            Naxt<span className="text-[#FF3F6C]">To</span>
           </span>
           {showSubtitle && (
             <span 

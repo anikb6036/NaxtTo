@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Brand Typography */}
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-xl sm:text-2xl tracking-tighter text-[#282c3f] transition-transform group-hover:scale-[1.02] duration-200">
-                  Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
+                  Naxt<span className="text-[#FF3F6C]">To</span>
                 </span>
                 <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#696e79] font-bold hidden xs:block">
                   SAKHA POLA ATELIER
@@ -391,7 +391,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-lg tracking-tighter text-[#282c3f]">
-                Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
+                Naxt<span className="text-[#FF3F6C]">To</span>
               </span>
               <span className="text-[8px] uppercase tracking-[0.2em] text-[#696e79] font-bold">
                 SAKHA POLA ATELIER
