@@ -4,9 +4,9 @@ import { ProductCategory } from '../types';
 import { BankOfferLogos } from './BankOfferLogos';
 
 import bannerPaydayModel from '../assets/images/payday_hero_model_1788375869668.jpg';
-import bannerLoveSilver from '../assets/images/banner_love_silver_1788375478655.jpg';
-import bannerSilverAnklets from '../assets/images/banner_silver_anklets_1788375493949.jpg';
-import bannerFreshDrops from '../assets/images/banner_fresh_drops_1788375506896.jpg';
+import bannerSakhaPola from '../assets/images/sakha_pola_banner_1789477939234.jpg';
+import bannerBengaliBridal from '../assets/images/bengali_bridal_bangles_1789477964190.jpg';
+import bannerLohaBadhano from '../assets/images/loha_badhano_banner_1789477986635.jpg';
 
 interface HeroSectionProps {
   onExploreCatalog: () => void;
@@ -20,7 +20,7 @@ interface SlideData {
   image: string;
   bgGradient: string;
   accentColor: string;
-  type: 'payday' | 'sale-50' | 'anklets' | 'fresh-drops';
+  type: 'payday' | 'sakha-pola' | 'bridal-combos' | 'loha-badhano';
   targetCategory?: ProductCategory;
 }
 
@@ -35,27 +35,27 @@ const SLIDES: SlideData[] = [
   },
   {
     id: 1,
-    image: bannerLoveSilver,
+    image: bannerSakhaPola,
     bgGradient: 'from-[#320612] via-[#24030d] to-[#1a0108]',
-    accentColor: '#FF6000',
-    type: 'sale-50',
-    targetCategory: 'all'
+    accentColor: '#FFD700',
+    type: 'sakha-pola',
+    targetCategory: 'gold-badhano'
   },
   {
     id: 2,
-    image: bannerSilverAnklets,
+    image: bannerBengaliBridal,
     bgGradient: 'from-[#2e0510] via-[#20020a] to-[#180107]',
     accentColor: '#FFFFFF',
-    type: 'anklets',
-    targetCategory: 'bracelets'
+    type: 'bridal-combos',
+    targetCategory: 'bridal-combos'
   },
   {
     id: 3,
-    image: bannerFreshDrops,
+    image: bannerLohaBadhano,
     bgGradient: 'from-[#340715] via-[#23030d] to-[#190208]',
     accentColor: '#FFAEC0',
-    type: 'fresh-drops',
-    targetCategory: 'necklaces'
+    type: 'loha-badhano',
+    targetCategory: 'loha-badhano'
   }
 ];
 
@@ -141,7 +141,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="absolute inset-0 w-full h-full">
                 <img
                   src={slide.image}
-                  alt="Fine Silver Jewellery Banner"
+                  alt={slide.type === 'payday' ? 'Payday Jewellery Sale' : 'Bengali Sakha Pola Banner'}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover object-center"
                 />
@@ -245,93 +245,102 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
               )}
 
-              {/* Slide 1: Love for Silver / UPTO 50% OFF */}
-              {slide.type === 'sale-50' && (
+              {/* Slide 1: Bengali Sakha Pola - 22K Gold Badhano */}
+              {slide.type === 'sakha-pola' && (
                 <div className="relative z-20 h-full w-full max-w-7xl mx-auto px-6 sm:px-12 md:px-16 flex flex-col justify-center items-center text-center">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/85 via-[#24030d]/45 to-[#24030d]/20 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/85 via-[#24030d]/50 to-[#24030d]/30 pointer-events-none" />
 
                   <div className="relative z-30 flex flex-col items-center">
                     <p
                       className="text-[#ffdbe4] text-2xl sm:text-3xl md:text-4xl lg:text-5xl drop-shadow-md"
                       style={{ fontFamily: "'Great Vibes', cursive" }}
                     >
-                      Love for Silver
+                      Royal Bengali Heritage
                     </p>
 
                     <h2
                       className="text-white font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-tight mt-1 sm:mt-2 drop-shadow-lg"
                       style={{ fontFamily: "'Montserrat', sans-serif" }}
                     >
-                      UPTO 50% OFF
+                      22K GOLD BADHANO
                     </h2>
 
-                    <p className="text-white/95 text-xs sm:text-sm md:text-base font-normal tracking-wide mt-1 drop-shadow-xs">
-                      on Silver Jewellery
+                    <p className="text-white/95 text-xs sm:text-sm md:text-base font-medium tracking-wide mt-1 drop-shadow-xs max-w-lg">
+                      Handcrafted Shankha &amp; Coral Pola with Certified Hallmark Gold
                     </p>
 
                     <button
+                      type="button"
                       onClick={() => handleSlideClick(slide)}
-                      className="mt-4 sm:mt-6 px-7 sm:px-9 py-2 sm:py-2.5 bg-white hover:bg-[#fff0f4] text-[#1d1d1f] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                      className="mt-4 sm:mt-6 px-7 sm:px-9 py-2 sm:py-2.5 bg-white hover:bg-[#fff0f4] text-[#E61D72] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                     >
-                      SHOP NOW
+                      SHOP GOLD BADHANO
                     </button>
 
-                    <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-8 text-[9px] sm:text-[10px] text-white/60 tracking-wider font-light uppercase">
-                      *T&C APPLY
+                    <div className="absolute bottom-3 sm:bottom-4 right-4 sm:right-8 text-[9px] sm:text-[10px] text-white/70 tracking-wider font-light uppercase">
+                      *100% BIS HALLMARK CERTIFIED
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Slide 2: Anklets / Walk in the charm of silver */}
-              {slide.type === 'anklets' && (
+              {/* Slide 2: Bengali Bridal Shankha Pola */}
+              {slide.type === 'bridal-combos' && (
                 <div className="relative z-20 h-full w-full max-w-7xl mx-auto px-6 sm:px-12 md:px-20 flex flex-col justify-center items-start text-left">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/85 via-[#24030d]/45 to-[#24030d]/20 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/90 via-[#24030d]/50 to-transparent pointer-events-none" />
 
-                  <div className="relative z-30 max-w-md">
+                  <div className="relative z-30 max-w-lg">
+                    <span className="inline-block px-3 py-1 mb-2 rounded-full bg-[#ff3e6c]/25 border border-[#ff3e6c]/40 text-[#ffadc2] text-[11px] font-bold uppercase tracking-wider">
+                      Bengali Wedding Special
+                    </span>
                     <h2
                       className="text-white font-serif font-normal text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-wide drop-shadow-lg"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
-                      Anklets
+                      Bridal Shankha Pola
                     </h2>
 
-                    <p className="text-white/95 font-light text-sm sm:text-lg md:text-xl tracking-wide mt-2 sm:mt-3 drop-shadow-md">
-                      Walk in the charm of silver
+                    <p className="text-white/95 font-light text-sm sm:text-base md:text-lg tracking-wide mt-2 sm:mt-3 drop-shadow-md">
+                      The sacred tradition of Bengali matrimony crafted with pure conch shell, coral &amp; 22K gold
                     </p>
 
                     <button
+                      type="button"
                       onClick={() => handleSlideClick(slide)}
-                      className="mt-5 sm:mt-7 px-7 sm:px-9 py-2 sm:py-2.5 bg-white/95 hover:bg-white text-[#1d1d1f] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                      className="mt-5 sm:mt-7 px-7 sm:px-9 py-2 sm:py-2.5 bg-white hover:bg-[#fff0f4] text-[#E61D72] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                     >
-                      EXPLORE ANKLETS
+                      EXPLORE BRIDAL COMBOS
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Slide 3: Fresh Drops / Silver feels... recently upgraded */}
-              {slide.type === 'fresh-drops' && (
+              {/* Slide 3: Artisanal Loha Badhano */}
+              {slide.type === 'loha-badhano' && (
                 <div className="relative z-20 h-full w-full max-w-7xl mx-auto px-6 sm:px-12 md:px-20 flex flex-col justify-center items-start text-left">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/85 via-[#24030d]/45 to-[#24030d]/20 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#24030d]/90 via-[#24030d]/50 to-transparent pointer-events-none" />
 
                   <div className="relative z-30 max-w-lg">
+                    <span className="inline-block px-3 py-1 mb-2 rounded-full bg-[#ffd700]/25 border border-[#ffd700]/40 text-[#ffe57f] text-[11px] font-bold uppercase tracking-wider">
+                      Auspicious Protection
+                    </span>
                     <h2
                       className="text-white font-serif font-normal text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-wide drop-shadow-lg"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
-                      Fresh Drops
+                      Artisan Loha Badhano
                     </h2>
 
-                    <p className="text-white/95 font-light text-sm sm:text-lg md:text-xl tracking-wide mt-2 sm:mt-3 drop-shadow-md">
-                      Silver feels... recently upgraded
+                    <p className="text-white/95 font-light text-sm sm:text-base md:text-lg tracking-wide mt-2 sm:mt-3 drop-shadow-md">
+                      Pure iron core bound in 22K hallmarked gold filigree with matching handcrafted Pola
                     </p>
 
                     <button
+                      type="button"
                       onClick={() => handleSlideClick(slide)}
-                      className="mt-5 sm:mt-7 px-7 sm:px-9 py-2 sm:py-2.5 bg-white/95 hover:bg-white text-[#1d1d1f] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                      className="mt-5 sm:mt-7 px-7 sm:px-9 py-2 sm:py-2.5 bg-white hover:bg-[#fff0f4] text-[#E61D72] text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xs shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                     >
-                      SHOP NEW ARRIVALS
+                      SHOP LOHA BADHANO
                     </button>
                   </div>
                 </div>
