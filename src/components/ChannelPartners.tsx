@@ -114,6 +114,20 @@ export const CHANNEL_PARTNERS: ChannelPartnerItem[] = [
     logoUrl: '/partners/zepto.svg',
     imgClass: 'h-6 sm:h-7 max-w-[80%] object-contain',
   },
+  {
+    id: 'meesho',
+    name: 'Meesho',
+    category: 'Social Commerce & Marketplace',
+    logoUrl: '/partners/meesho.svg',
+    imgClass: 'h-8 sm:h-9 max-w-[85%] object-contain',
+  },
+  {
+    id: 'valmo',
+    name: 'Valmo',
+    category: 'Meesho Logistics & Fulfilment Network',
+    logoUrl: '/partners/valmo.svg',
+    imgClass: 'h-8 sm:h-9 max-w-[85%] object-contain',
+  },
 ];
 
 export const ChannelPartners: React.FC<{ className?: string }> = ({ className = '' }) => {

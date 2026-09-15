@@ -133,7 +133,7 @@ export const StaffAuthModal: React.FC<StaffAuthModalProps> = ({
           </button>
 
           <div className="flex items-center justify-between mb-3">
-            <BrandLogo layout="horizontal" size="xs" variant="gold" showSubtitle subtitleText="STAFF ATELIER" />
+            <BrandLogo layout="horizontal" size="xs" variant="gold" showSubtitle subtitleText="STAFF ATELIER" showIcon={false} />
             <span className="text-[9px] uppercase tracking-[0.25em] text-[#d4af37] font-semibold bg-white/5 px-2 py-0.5 rounded border border-white/10">
               Security Gate
             </span>

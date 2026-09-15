@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import userBrandLogo from '../assets/images/user_brand_logo.svg';
 import { 
   ShoppingBag, 
   Heart, 
@@ -127,21 +126,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onSelectCategory('all');
                 onNavigateToShop();
               }}
-              className="cursor-pointer flex items-center gap-1.5 sm:gap-2 group select-none shrink-0"
+              className="cursor-pointer flex items-center group select-none shrink-0"
             >
-              {/* Vibrant Brand Logo Provided by User */}
-              <div className="relative w-8 h-6 sm:w-11 sm:h-8 flex items-center justify-center shrink-0">
-                <img
-                  src={userBrandLogo}
-                  alt="NaxtTo Brand Logo"
-                  className="w-full h-full object-contain drop-shadow-xs transition-transform group-hover:scale-105 duration-200"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-
               {/* Brand Typography */}
               <div className="flex flex-col leading-none">
-                <span className="font-extrabold text-lg sm:text-2xl tracking-tighter text-[#282c3f]">
+                <span className="font-extrabold text-xl sm:text-2xl tracking-tighter text-[#282c3f] transition-transform group-hover:scale-[1.02] duration-200">
                   Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>
                 </span>
                 <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#696e79] font-bold hidden xs:block">
@@ -394,13 +383,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onNavigateToShop();
               setMobileMenuOpen(false);
             }}
-            className="cursor-pointer flex items-center gap-2 select-none"
+            className="cursor-pointer flex items-center select-none"
           >
-            <img
-              src={userBrandLogo}
-              alt="NaxtTo Brand Logo"
-              className="w-7 h-5 object-contain"
-            />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-lg tracking-tighter text-[#282c3f]">
                 Naxt<span className="bg-gradient-to-r from-[#F50087] via-[#F0501A] to-[#FFA033] bg-clip-text text-transparent">To</span>

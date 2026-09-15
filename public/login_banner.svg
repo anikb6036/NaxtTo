@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="100%" height="100%">
+  <defs>
+    <!-- Background Peach/Cream Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fce7d8" />
+      <stop offset="50%" stop-color="#fde5e3" />
+      <stop offset="100%" stop-color="#fcd7e2" />
+    </linearGradient>
+
+    <!-- Top-right pink badge gradient -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff1a75" />
+      <stop offset="100%" stop-color="#ff0055" />
+    </linearGradient>
+
+    <!-- Coupon ticket gradient -->
+    <linearGradient id="ticketGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f85764" />
+      <stop offset="100%" stop-color="#ff6b6b" />
+    </linearGradient>
+
+    <!-- Drop shadow for ticket -->
+    <filter id="ticketShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#da4a57" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="800" height="360" fill="url(#bgGrad)" />
+
+  <!-- Subtle festive confetti dots & sparkle elements -->
+  <circle cx="90" cy="50" r="3" fill="#ff6b8b" opacity="0.4" />
+  <circle cx="280" cy="40" r="2.5" fill="#f89a42" opacity="0.5" />
+  <circle cx="420" cy="90" r="3" fill="#ff4d79" opacity="0.3" />
+  <circle cx="60" cy="270" r="3.5" fill="#f89a42" opacity="0.3" />
+  <circle cx="340" cy="310" r="2.5" fill="#ff4d79" opacity="0.4" />
+
+  <!-- Four-point sparkle star 1 -->
+  <path d="M 335 55 Q 335 70 350 70 Q 335 70 335 85 Q 335 70 320 70 Q 335 70 335 55 Z" fill="#ff5c8a" opacity="0.8" />
+  <!-- Sparkle star 2 -->
+  <path d="M 370 85 Q 370 95 380 95 Q 370 95 370 105 Q 370 95 360 95 Q 370 95 370 85 Z" fill="#ff5c8a" opacity="0.6" />
+
+  <!-- LEFT TEXT GROUP -->
+  <g transform="translate(45, 0)">
+    <!-- Headline: GET 25% OFF, -->
+    <text x="0" y="115" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="44" fill="#d91456" letter-spacing="-0.5">
+      GET 25% OFF,
+    </text>
+
+    <!-- Sub-headline: UP TO ₹200 -->
+    <text x="0" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="46" fill="#d91456" letter-spacing="-0.5">
+      UP TO ₹200
+    </text>
+
+    <!-- Subtitle: ON YOUR 1ST ORDER -->
+    <text x="0" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="16" fill="#7a2048" letter-spacing="0.5">
+      ON YOUR 1<tspan dy="-6" font-size="11">ST</tspan><tspan dy="6"> ORDER</tspan>
+    </text>
+    <!-- + EXCITING OFFERS* -->
+    <text x="0" y="230" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="15" fill="#7a2048" letter-spacing="0.4">
+      + EXCITING OFFERS*
+    </text>
+
+    <!-- COUPON TICKET BADGE -->
+    <g transform="translate(0, 255)" filter="url(#ticketShadow)">
+      <!-- Left Pink Tab (CODE:) -->
+      <path d="M 0 4 Q 0 0 4 0 L 34 0 L 34 56 L 4 56 Q 0 56 0 52 Z" fill="#d91456" />
+      <text x="17" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="11" fill="#ffffff" letter-spacing="1.5" text-anchor="middle" transform="rotate(-90 17 32)">CODE:</text>
+
+      <!-- Main Ticket Body (Coral/Pink) -->
+      <path d="M 34 0 L 220 0 Q 224 0 224 4 L 224 52 Q 224 56 220 56 L 34 56 Z" fill="url(#ticketGrad)" stroke="#fcd2d8" stroke-width="1.5" stroke-dasharray="4,3" />
+
+      <!-- Ticket text: NAXTTOSAVE -->
+      <text x="129" y="37" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="20" fill="#ffffff" letter-spacing="1.5" text-anchor="middle">
+        NAXTTOSAVE
+      </text>
+
+      <!-- Little coupon cutouts on top and bottom border -->
+      <circle cx="34" cy="0" r="5" fill="#fde5e3" />
+      <circle cx="34" cy="56" r="5" fill="#fde5e3" />
+    </g>
+  </g>
+
+  <!-- RIGHT SIDE: MODEL ILLUSTRATION / ARTWORK & GRAPHICS -->
+  <g transform="translate(430, 15)">
+    <!-- Cheerful Fashion Models Silhouette / Stylized Vector Representation matching photo -->
+    <!-- Model 1 (Standing in vibrant sunshine yellow outfit) -->
+    <g transform="translate(100, 40)">
+      <!-- Megaphone (celebratory announcement) -->
+      <path d="M 15 65 L 5 55 L -15 60 L -15 80 L 5 85 L 15 75 Z" fill="#ffffff" stroke="#e0e0e0" stroke-width="1.5" />
+      <ellipse cx="15" cy="70" rx="5" ry="12" fill="#d91456" />
+      <path d="M -15 65 L -25 68 L -25 74 L -15 75 Z" fill="#ffffff" />
+      
+      <!-- Woman in Yellow Hair & Face -->
+      <circle cx="55" cy="40" r="22" fill="#8d5b4c" />
+      <path d="M 38 25 Q 55 12 72 25 Q 82 50 72 65 Q 62 48 55 52 Q 48 48 38 65 Q 28 50 38 25 Z" fill="#1f1815" />
+      <!-- Earrings -->
+      <circle cx="35" cy="48" r="5" fill="#d91456" />
+      <circle cx="75" cy="48" r="5" fill="#d91456" />
+
+      <!-- Yellow Ruffled Top -->
+      <path d="M 28 65 Q 55 60 82 65 L 98 140 Q 55 145 12 140 Z" fill="#ffce00" />
+      <!-- Ruffle sleeves -->
+      <path d="M 28 65 Q 10 90 20 120 Q 30 110 32 85 Z" fill="#ffb700" />
+      <path d="M 82 65 Q 100 90 90 120 Q 80 110 78 85 Z" fill="#ffb700" />
+
+      <!-- Smile & Features -->
+      <ellipse cx="55" cy="44" rx="14" ry="16" fill="#f5c2a5" />
+      <path d="M 48 48 Q 55 56 62 48" stroke="#d91456" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      <circle cx="47" cy="40" r="2" fill="#2d1b16" />
+      <circle cx="63" cy="40" r="2" fill="#2d1b16" />
+    </g>
+
+    <!-- Model 2 (Front sitting in denim / blue patterned dress with joyful expression) -->
+    <g transform="translate(40, 110)">
+      <!-- Long dark hair -->
+      <path d="M 25 30 Q 55 10 85 30 Q 105 85 95 140 Q 80 100 55 105 Q 30 100 15 140 Q 5 85 25 30 Z" fill="#141110" />
+      <!-- Face -->
+      <ellipse cx="55" cy="52" rx="18" ry="22" fill="#f7c8b0" />
+      <!-- Happy eyes & bright smile -->
+      <path d="M 46 56 Q 55 68 64 56" stroke="#d91456" stroke-width="3" fill="#ffffff" stroke-linecap="round" />
+      <path d="M 44 48 Q 48 45 52 48" stroke="#3d271d" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M 58 48 Q 62 45 66 48" stroke="#3d271d" stroke-width="2" fill="none" stroke-linecap="round" />
+
+      <!-- Gingham / Blue Sky Dress -->
+      <path d="M 22 85 Q 55 78 88 85 L 115 220 Q 55 225 -5 220 Z" fill="#5ba4e6" />
+      <!-- White floral/plaid pattern lines -->
+      <path d="M 10 110 L 100 110 M 0 140 L 110 140 M -5 170 L 115 170" stroke="#ffffff" stroke-width="2" stroke-opacity="0.5" />
+      <path d="M 30 85 L 15 220 M 55 80 L 55 225 M 80 85 L 95 220" stroke="#ffffff" stroke-width="2" stroke-opacity="0.5" />
+    </g>
+  </g>
+
+  <!-- TOP-RIGHT HOT PINK PILL BADGE: UP TO ₹200 -->
+  <g transform="translate(640, 0)">
+    <!-- Pill Tab hanging from top -->
+    <path d="M 0 0 L 125 0 Q 135 0 135 10 L 135 75 Q 135 100 110 100 L 25 100 Q 0 100 0 75 Z" fill="url(#badgeGrad)" />
+    <!-- White text inside badge -->
+    <text x="67" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="18" fill="#ffffff" letter-spacing="1" text-anchor="middle">
+      UP TO
+    </text>
+    <text x="67" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" fill="#ffffff" letter-spacing="-0.5" text-anchor="middle">
+      ₹200
+    </text>
+  </g>
+
+  <!-- BOTTOM-RIGHT FINE PRINT DISCLAIMER -->
+  <text x="765" y="340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="10.5" fill="#87606e" text-anchor="end" letter-spacing="0.2">
+    *T&amp;C Applied | Limited Time Offer
+  </text>
+</svg>
