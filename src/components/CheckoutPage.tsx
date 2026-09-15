@@ -648,10 +648,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               className="flex items-center gap-1.5 text-[#1d1d1f] hover:text-[#0071e3] font-medium transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <span>Back to Store</span>
             </button>
-            <span className="text-[#d2d2d7]">/</span>
-            <BrandLogo layout="horizontal" size="xs" variant="dark" onClick={onBackToShop} />
             <span className="text-[#d2d2d7]">/</span>
             <span className="text-[#1d1d1f] font-medium">Checkout</span>
           </div>
@@ -1589,7 +1587,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             {/* Receipt Summary Card */}
             <div className="p-6 sm:p-8 rounded-3xl bg-transparent border border-[#e5e5ea] text-left space-y-5 text-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
-                <BrandLogo layout="horizontal" size="sm" showSubtitle subtitleText="Authenticated Certificate" />
+                <BrandLogo layout="horizontal" size="sm" showIcon={false} showSubtitle subtitleText="Authenticated Certificate" />
                 <span className="text-[10px] uppercase font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                   Official Atelier Receipt
                 </span>
