@@ -9,7 +9,10 @@ import {
   UserProfile, 
   Order, 
   BlogPost,
-  Address 
+  Address,
+  WowDealItem,
+  TopRatedItem,
+  HeroBannerSlide
 } from './types';
 import { 
   INITIAL_PRODUCTS, 
@@ -20,15 +23,15 @@ import {
 import { Navbar } from './components/Navbar';
 import { MyntraCouponStrip } from './components/MyntraCouponStrip';
 import { MyntraHeroBanner } from './components/MyntraHeroBanner';
-import { MyntraWowDeals } from './components/MyntraWowDeals';
+import { MyntraWowDeals, DEFAULT_WOW_DEALS } from './components/MyntraWowDeals';
 import { MyntraSideRibbon } from './components/MyntraSideRibbon';
 import { MyntraNotificationFab } from './components/MyntraNotificationFab';
 import { CategoryNavStrip } from './components/CategoryNavStrip';
 import { DealsCarousel } from './components/DealsCarousel';
-import { TopRatedSection } from './components/TopRatedSection';
+import { TopRatedSection, DEFAULT_TOP_RATED_ITEMS } from './components/TopRatedSection';
 import { FlashSaleBanner } from './components/FlashSaleBanner';
 import { QuickServicesStrip } from './components/QuickServicesStrip';
-import { HeroSection } from './components/HeroSection';
+import { HeroSection, DEFAULT_HERO_SLIDES } from './components/HeroSection';
 import { ProductFilter } from './components/ProductFilter';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
@@ -157,6 +160,153 @@ export default function App() {
     }
     return [];
   });
+
+  // Storefront WOW DEALS Merchandising State
+  const [wowDeals, setWowDeals] = useState<WowDealItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_wow_deals');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved wow deals', e);
+    }
+    return DEFAULT_WOW_DEALS;
+  });
+
+  const [wowDealsHeader, setWowDealsHeader] = useState<{ headline: string; subheadline: string; emoji: string }>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_wow_deals_header');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { headline: 'WOW DEALS', subheadline: 'Big Brands, Even Bigger Savings', emoji: '🤩' };
+  });
+
+  // Fetch backend wow deals on initial mount
+  useEffect(() => {
+    apiClient.getWowDeals().then(res => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        setWowDeals(res.data);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleUpdateWowDeals = async (newDeals: WowDealItem[]) => {
+    setWowDeals(newDeals);
+    safeSetItem('naxtto_wow_deals', JSON.stringify(newDeals));
+    try {
+      await apiClient.updateWowDeals(newDeals);
+    } catch (err) {
+      console.warn('Failed to sync wow deals to backend', err);
+    }
+  };
+
+  const handleUpdateWowDealsHeader = (headline: string, subheadline: string, emoji: string) => {
+    const updated = { headline, subheadline, emoji };
+    setWowDealsHeader(updated);
+    safeSetItem('naxtto_wow_deals_header', JSON.stringify(updated));
+  };
+
+  // Storefront Top Rated in Fine Jewellery Merchandising State
+  const [topRatedItems, setTopRatedItems] = useState<TopRatedItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_top_rated_items');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved top rated items', e);
+    }
+    return DEFAULT_TOP_RATED_ITEMS;
+  });
+
+  const [topRatedHeader, setTopRatedHeader] = useState<{ headline: string; subheadline: string; buttonText: string }>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_top_rated_header');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      headline: 'Top Rated in Fine Jewellery',
+      subheadline: 'Certified 18K Hallmarked pieces trusted by 10,000+ patrons',
+      buttonText: 'VIEW ALL'
+    };
+  });
+
+  // Fetch backend top rated on initial mount
+  useEffect(() => {
+    apiClient.getTopRated().then(res => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        setTopRatedItems(res.data);
+      }
+      if (res?.header) {
+        setTopRatedHeader(prev => ({
+          headline: res.header.title || prev.headline,
+          subheadline: res.header.subtitle || prev.subheadline,
+          buttonText: res.header.buttonText || prev.buttonText
+        }));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleUpdateTopRatedItems = async (newItems: TopRatedItem[]) => {
+    setTopRatedItems(newItems);
+    safeSetItem('naxtto_top_rated_items', JSON.stringify(newItems));
+    try {
+      await apiClient.updateTopRated(newItems);
+    } catch (err) {
+      console.warn('Failed to sync top rated to backend', err);
+    }
+  };
+
+  const handleUpdateTopRatedHeader = async (headline: string, subheadline: string, buttonText: string) => {
+    const updated = { headline, subheadline, buttonText };
+    setTopRatedHeader(updated);
+    safeSetItem('naxtto_top_rated_header', JSON.stringify(updated));
+    try {
+      await apiClient.updateTopRated(topRatedItems, {
+        title: headline,
+        subtitle: subheadline,
+        buttonText: buttonText
+      });
+    } catch (err) {
+      console.warn('Failed to sync top rated header to backend', err);
+    }
+  };
+
+  // Storefront Hero Banner Carousel State (managed via admin panel)
+  const [heroBanners, setHeroBanners] = useState<HeroBannerSlide[]>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_hero_banners');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved hero banners', e);
+    }
+    return DEFAULT_HERO_SLIDES;
+  });
+
+  // Fetch backend hero banners on initial mount
+  useEffect(() => {
+    apiClient.getHeroBanners().then(res => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        setHeroBanners(res.data);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleUpdateHeroBanners = async (newSlides: HeroBannerSlide[]) => {
+    setHeroBanners(newSlides);
+    safeSetItem('naxtto_hero_banners', JSON.stringify(newSlides));
+    try {
+      await apiClient.updateHeroBanners(newSlides);
+    } catch (err) {
+      console.warn('Failed to sync hero banners to backend', err);
+    }
+  };
 
   // Fetch orders from backend API and sync with local state & storage
   const refreshOrders = useCallback(async () => {
@@ -1184,6 +1334,20 @@ export default function App() {
           currencySymbol={currencySymbol}
           staffInfo={staffUser}
           onRefreshOrders={refreshOrders}
+          wowDeals={wowDeals}
+          onUpdateWowDeals={handleUpdateWowDeals}
+          wowDealsHeadline={wowDealsHeader.headline}
+          wowDealsSubheadline={wowDealsHeader.subheadline}
+          wowDealsEmoji={wowDealsHeader.emoji}
+          onUpdateWowDealsHeader={handleUpdateWowDealsHeader}
+          topRatedItems={topRatedItems}
+          onUpdateTopRatedItems={handleUpdateTopRatedItems}
+          topRatedHeadline={topRatedHeader.headline}
+          topRatedSubheadline={topRatedHeader.subheadline}
+          topRatedButtonText={topRatedHeader.buttonText}
+          onUpdateTopRatedHeader={handleUpdateTopRatedHeader}
+          heroBanners={heroBanners}
+          onUpdateHeroBanners={handleUpdateHeroBanners}
         />
       ) : currentView === 'account' ? (
         <AccountPage
@@ -1303,6 +1467,7 @@ export default function App() {
         <>
           {/* Hero Banner: FLAT 20% OFF PAY DAY SALE (Exact Screenshot Match) */}
           <HeroSection
+            slides={heroBanners}
             onExploreCatalog={scrollToCatalog}
             onSelectCategory={(cat) => {
               setSelectedProduct(null);
@@ -1314,6 +1479,10 @@ export default function App() {
 
           {/* Myntra WOW DEALS (Matches Screenshot: Big Brands, Even Bigger Savings) */}
           <MyntraWowDeals
+            deals={wowDeals}
+            headline={wowDealsHeader.headline}
+            subheadline={wowDealsHeader.subheadline}
+            emoji={wowDealsHeader.emoji}
             onSelectCategory={(cat) => {
               setSelectedProduct(null);
               setCurrentView('shop');
@@ -1326,6 +1495,10 @@ export default function App() {
           {/* Curated Top Rated Section */}
           <TopRatedSection
             products={products}
+            items={topRatedItems}
+            headline={topRatedHeader.headline}
+            subheadline={topRatedHeader.subheadline}
+            buttonText={topRatedHeader.buttonText}
             onSelectProduct={(p) => {
               setSelectedProduct(p);
               setCurrentView('product-detail');

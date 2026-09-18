@@ -1,78 +1,102 @@
 import React from 'react';
 import { Sparkles, ChevronRight, ArrowRight } from 'lucide-react';
-import { ProductCategory } from '../types';
+import { ProductCategory, WowDealItem } from '../types';
+
+export const DEFAULT_WOW_DEALS: WowDealItem[] = [
+  {
+    id: 'rings',
+    category: 'rings',
+    title: 'Solitaire Rings',
+    brand: 'NAXTTO DIAMONDS',
+    discount: '40-60% OFF',
+    tagline: 'Certified 18K Gold',
+    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
+    priceNotice: 'Starting ₹4,990',
+    badgeColor: '#ff3e6c',
+    active: true
+  },
+  {
+    id: 'necklaces',
+    category: 'necklaces',
+    title: 'Chokers & Pendants',
+    brand: 'HERITAGE ATELIER',
+    discount: 'MIN. 50% OFF',
+    tagline: 'Handcrafted Perfection',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
+    priceNotice: 'Starting ₹8,490',
+    badgeColor: '#ff3e6c',
+    active: true
+  },
+  {
+    id: 'earrings',
+    category: 'earrings',
+    title: 'Diamond Studs & Jhumkas',
+    brand: 'MIA LUXE',
+    discount: 'UNDER ₹9,999',
+    tagline: 'Daily Sparkle',
+    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=600&q=80',
+    priceNotice: 'Best Seller',
+    badgeColor: '#ff3e6c',
+    active: true
+  },
+  {
+    id: 'bracelets',
+    category: 'bracelets',
+    title: 'Tennis Bracelets & Bangles',
+    brand: 'CARAT COUTURE',
+    discount: 'FLAT 45% OFF',
+    tagline: 'Hallmarked 916',
+    image: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=600&q=80',
+    priceNotice: 'Starting ₹12,990',
+    badgeColor: '#ff3e6c',
+    active: true
+  },
+  {
+    id: 'bridal',
+    category: 'bridal-combos',
+    title: 'Grand Bridal Trousseau',
+    brand: 'ROYAL HEIRLOOM',
+    discount: '50-70% OFF',
+    tagline: 'Kundan & Polki Sets',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80',
+    priceNotice: 'VIP Making Charges Free',
+    badgeColor: '#ff3e6c',
+    active: true
+  },
+  {
+    id: 'coins',
+    category: 'gold-badhano',
+    title: '24K 999 Pure Gold Coins',
+    brand: 'NAXTTO BULLION',
+    discount: 'ZERO MAKING CHARGES',
+    tagline: 'Tamper-Proof Certi-Card',
+    image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80',
+    priceNotice: '1g, 5g, 10g, 50g',
+    badgeColor: '#ff3e6c',
+    active: true
+  }
+];
 
 interface MyntraWowDealsProps {
   onSelectCategory: (category: ProductCategory) => void;
   onExploreCatalog: () => void;
+  deals?: WowDealItem[];
+  headline?: string;
+  subheadline?: string;
+  emoji?: string;
 }
 
 export const MyntraWowDeals: React.FC<MyntraWowDealsProps> = ({
   onSelectCategory,
   onExploreCatalog,
+  deals = DEFAULT_WOW_DEALS,
+  headline = 'WOW DEALS',
+  subheadline = 'Big Brands, Even Bigger Savings',
+  emoji = '🤩'
 }) => {
-  const deals = [
-    {
-      id: 'rings',
-      category: 'rings' as ProductCategory,
-      title: 'Solitaire Rings',
-      brand: 'NAXTTO DIAMONDS',
-      discount: '40-60% OFF',
-      tagline: 'Certified 18K Gold',
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
-      priceNotice: 'Starting ₹4,990'
-    },
-    {
-      id: 'necklaces',
-      category: 'necklaces' as ProductCategory,
-      title: 'Chokers & Pendants',
-      brand: 'HERITAGE ATELIER',
-      discount: 'MIN. 50% OFF',
-      tagline: 'Handcrafted Perfection',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
-      priceNotice: 'Starting ₹8,490'
-    },
-    {
-      id: 'earrings',
-      category: 'earrings' as ProductCategory,
-      title: 'Diamond Studs & Jhumkas',
-      brand: 'MIA LUXE',
-      discount: 'UNDER ₹9,999',
-      tagline: 'Daily Sparkle',
-      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=600&q=80',
-      priceNotice: 'Best Seller'
-    },
-    {
-      id: 'bracelets',
-      category: 'bracelets' as ProductCategory,
-      title: 'Tennis Bracelets & Bangles',
-      brand: 'CARAT COUTURE',
-      discount: 'FLAT 45% OFF',
-      tagline: 'Hallmarked 916',
-      image: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=600&q=80',
-      priceNotice: 'Starting ₹12,990'
-    },
-    {
-      id: 'bridal',
-      category: 'bridal' as ProductCategory,
-      title: 'Grand Bridal Trousseau',
-      brand: 'ROYAL HEIRLOOM',
-      discount: '50-70% OFF',
-      tagline: 'Kundan & Polki Sets',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80',
-      priceNotice: 'VIP Making Charges Free'
-    },
-    {
-      id: 'coins',
-      category: 'coins' as ProductCategory,
-      title: '24K 999 Pure Gold Coins',
-      brand: 'NAXTTO BULLION',
-      discount: 'ZERO MAKING CHARGES',
-      tagline: 'Tamper-Proof Certi-Card',
-      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80',
-      priceNotice: '1g, 5g, 10g, 50g'
-    }
-  ];
+  const displayDeals = (deals && deals.length > 0 ? deals : DEFAULT_WOW_DEALS).filter(
+    (d) => d.active !== false
+  );
 
   return (
     <section id="myntra-wow-deals-section" className="w-full bg-[#fdfaf3] py-8 sm:py-12 border-b border-[#eaeaec]">
@@ -83,19 +107,19 @@ export const MyntraWowDeals: React.FC<MyntraWowDealsProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#f59e0b] via-[#ef4444] to-[#ec4899] drop-shadow-xs font-sans">
-                WOW DEALS
+                {headline}
               </span>
-              <span className="text-2xl sm:text-3xl animate-bounce">🤩</span>
+              <span className="text-2xl sm:text-3xl animate-bounce">{emoji}</span>
             </div>
             <p className="text-xs sm:text-sm font-bold text-[#282c3f] mt-1 flex items-center gap-1 cursor-pointer hover:text-[#ff3e6c]" onClick={onExploreCatalog}>
-              <span>Big Brands, Even Bigger Savings</span>
+              <span>{subheadline}</span>
               <ChevronRight className="w-4 h-4 text-[#ff3e6c]" />
             </p>
           </div>
 
           <button
             onClick={onExploreCatalog}
-            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#ff3e6c] hover:text-[#e02d5b] bg-white px-4 py-2 rounded-full border border-[#ff3e6c]/30 shadow-xs hover:shadow transition-all"
+            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#ff3e6c] hover:text-[#e02d5b] bg-white px-4 py-2 rounded-full border border-[#ff3e6c]/30 shadow-xs hover:shadow transition-all cursor-pointer"
           >
             <span>View All Deals</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -104,7 +128,7 @@ export const MyntraWowDeals: React.FC<MyntraWowDealsProps> = ({
 
         {/* Deals Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          {deals.map((deal) => (
+          {displayDeals.map((deal) => (
             <div
               key={deal.id}
               onClick={() => onSelectCategory(deal.category)}
@@ -122,7 +146,10 @@ export const MyntraWowDeals: React.FC<MyntraWowDealsProps> = ({
                   }}
                 />
                 {/* Discount Badge */}
-                <div className="absolute top-2 left-2 bg-[#ff3e6c] text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded shadow-sm tracking-wide">
+                <div 
+                  className="absolute top-2 left-2 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded shadow-sm tracking-wide"
+                  style={{ backgroundColor: deal.badgeColor || '#ff3e6c' }}
+                >
                   {deal.discount}
                 </div>
               </div>

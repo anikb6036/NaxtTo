@@ -13,7 +13,10 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Flame,
+  ArrowRight,
+  Layout
 } from 'lucide-react';
 import { AdminUserAccount, SellerAccount, Order, Product } from '../../types';
 import { AdminTab } from './AdminSidebar';
@@ -160,6 +163,97 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Merchandising & Storefront Showcase Spotlight Banners */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Hero Banners Card */}
+        <div className="bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 p-4 sm:p-5 rounded-2xl border border-pink-200/80 shadow-xs flex flex-col justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-600 via-rose-500 to-[#E61D72] flex items-center justify-center text-white shadow-xs shrink-0">
+              <Layout className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">Hero Banners &amp; Slider</h3>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-[#E61D72] text-white rounded-full uppercase">
+                  Storefront Top
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Edit hero banner images, headline titles, auspicious badges, and CTA button destinations for the carousel.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('hero_banners')}
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#E61D72] border border-[#E61D72]/30 rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all flex items-center justify-between cursor-pointer"
+          >
+            <span>Edit Hero Banners</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Top Rated in Fine Jewellery Banner */}
+        <div className="bg-gradient-to-r from-blue-50 via-emerald-50 to-teal-50 p-4 sm:p-5 rounded-2xl border border-emerald-200/80 shadow-xs flex flex-col justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-teal-600 to-emerald-600 flex items-center justify-center text-white shadow-xs shrink-0">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">Top Rated in Fine Jewellery</h3>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-[#2874f0] text-white rounded-full uppercase">
+                  Bestsellers
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Certified 18K Hallmarked pieces trusted by 10,000+ patrons with custom badge tags and prices.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('top_rated')}
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#2874f0] border border-[#2874f0]/30 rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all flex items-center justify-between cursor-pointer"
+          >
+            <span>Edit Top Rated Showcase</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* WOW Deals Banner */}
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 p-4 sm:p-5 rounded-2xl border border-rose-200/80 shadow-xs flex flex-col justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center text-white shadow-xs shrink-0">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">Storefront WOW DEALS</h3>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-[#ff3e6c] text-white rounded-full uppercase">
+                  Active Promo
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                Live discount badges, brands, price teasers, and categories featured on the homepage carousel.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigateTab('wow_deals')}
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#ff3e6c] border border-[#ff3e6c]/30 rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all flex items-center justify-between cursor-pointer"
+          >
+            <span>Edit WOW Deals</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
 
       {/* Two Columns: Recent Patrons & Top Artisan Guilds */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

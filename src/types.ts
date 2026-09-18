@@ -247,3 +247,44 @@ export interface FilterOptions {
   sortBy: 'featured' | 'price-low' | 'price-high' | 'newest' | 'rating';
   searchQuery: string;
 }
+
+export interface WowDealItem {
+  id: string;
+  category: ProductCategory;
+  title: string;
+  brand: string;
+  discount: string;
+  tagline?: string;
+  image: string;
+  priceNotice: string;
+  badgeColor?: string;
+  active?: boolean;
+}
+
+export interface TopRatedItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  price: string;
+  category: ProductCategory;
+  image: string;
+  badge: string;
+  badgeColor?: string;
+  active?: boolean;
+}
+
+export interface HeroBannerSlide {
+  id: string;
+  image: string;
+  title: string;
+  subtitle: string;
+  badge?: string;
+  buttonText: string;
+  targetCategory?: ProductCategory;
+  couponCode?: string;
+  note?: string;
+  bgGradient?: string;
+  accentColor?: string;
+  type?: 'payday' | 'sakha-pola' | 'bridal-combos' | 'loha-badhano' | 'custom';
+  active?: boolean;
+}

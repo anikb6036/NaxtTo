@@ -1,6 +1,53 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Product, ProductCategory } from '../types';
+import { Product, ProductCategory, TopRatedItem } from '../types';
+
+export const DEFAULT_TOP_RATED_ITEMS: TopRatedItem[] = [
+  {
+    id: 'gold-chains',
+    title: 'Solid Gold Chains',
+    subtitle: "Don't Miss",
+    price: 'From ₹4,990',
+    category: 'necklaces',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80',
+    badge: 'Bestseller',
+    badgeColor: '#388e3c',
+    active: true
+  },
+  {
+    id: 'solitaire-studs',
+    title: 'Solitaire Studs',
+    subtitle: 'Flat 35% Off',
+    price: 'From ₹7,490',
+    category: 'earrings',
+    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80',
+    badge: 'Top Pick',
+    badgeColor: '#388e3c',
+    active: true
+  },
+  {
+    id: 'tennis-bracelets',
+    title: 'Tennis Bracelets',
+    subtitle: 'Popular',
+    price: 'From ₹12,990',
+    category: 'bracelets',
+    image: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=400&q=80',
+    badge: 'Trending',
+    badgeColor: '#388e3c',
+    active: true
+  },
+  {
+    id: 'bridal-chokers',
+    title: 'Bridal Chokers',
+    subtitle: 'Milan Atelier',
+    price: 'From ₹18,990',
+    category: 'fine-collections',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=400&q=80',
+    badge: 'Heritage',
+    badgeColor: '#388e3c',
+    active: true
+  }
+];
 
 interface TopRatedSectionProps {
   products: Product[];
@@ -8,6 +55,10 @@ interface TopRatedSectionProps {
   onSelectCategory: (category: ProductCategory) => void;
   onExploreCatalog: () => void;
   currencySymbol: string;
+  items?: TopRatedItem[];
+  headline?: string;
+  subheadline?: string;
+  buttonText?: string;
 }
 
 export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
@@ -15,45 +66,15 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
   onSelectProduct,
   onSelectCategory,
   onExploreCatalog,
-  currencySymbol
+  currencySymbol,
+  items = DEFAULT_TOP_RATED_ITEMS,
+  headline = 'Top Rated in Fine Jewellery',
+  subheadline = 'Certified 18K Hallmarked pieces trusted by 10,000+ patrons',
+  buttonText = 'VIEW ALL'
 }) => {
-  // Select 4-6 top-rated items
-  const topItems = products.slice(0, 6);
-
-  const curatedCollections = [
-    {
-      title: 'Solid Gold Chains',
-      subtitle: "Don't Miss",
-      price: 'From ₹4,990',
-      category: 'necklaces' as ProductCategory,
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80',
-      badge: 'Bestseller'
-    },
-    {
-      title: 'Solitaire Studs',
-      subtitle: 'Flat 35% Off',
-      price: 'From ₹7,490',
-      category: 'earrings' as ProductCategory,
-      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80',
-      badge: 'Top Pick'
-    },
-    {
-      title: 'Tennis Bracelets',
-      subtitle: 'Popular',
-      price: 'From ₹12,990',
-      category: 'bracelets' as ProductCategory,
-      image: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=400&q=80',
-      badge: 'Trending'
-    },
-    {
-      title: 'Bridal Chokers',
-      subtitle: 'Milan Atelier',
-      price: 'From ₹18,990',
-      category: 'fine-collections' as ProductCategory,
-      image: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=400&q=80',
-      badge: 'Heritage'
-    }
-  ];
+  const displayItems = (items && items.length > 0 ? items : DEFAULT_TOP_RATED_ITEMS).filter(
+    (item) => item.active !== false
+  );
 
   return (
     <section 
@@ -67,10 +88,10 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-[#f0f0f0] mb-4">
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[#212121]">
-                Top Rated in Fine Jewellery
+                {headline}
               </h3>
               <p className="text-xs text-[#878787] hidden sm:block">
-                Certified 18K Hallmarked pieces trusted by 10,000+ patrons
+                {subheadline}
               </p>
             </div>
 
@@ -79,18 +100,18 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
                 onSelectCategory('all');
                 onExploreCatalog();
               }}
-              className="px-3.5 py-1.5 bg-[#2874f0] hover:bg-[#1259c7] text-white text-xs font-bold rounded-sm shadow-xs transition-colors flex items-center gap-1 shrink-0"
+              className="px-3.5 py-1.5 bg-[#2874f0] hover:bg-[#1259c7] text-white text-xs font-bold rounded-sm shadow-xs transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
             >
-              <span>VIEW ALL</span>
+              <span>{buttonText}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Curated Grid of 4 Cards (Matches Video 0:04-0:06) */}
+          {/* Curated Grid of Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            {curatedCollections.map((col, idx) => (
+            {displayItems.map((col) => (
               <div
-                key={idx}
+                key={col.id}
                 onClick={() => {
                   onSelectCategory(col.category);
                   onExploreCatalog();
@@ -104,8 +125,15 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
                     alt={col.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80';
+                    }}
                   />
-                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-[#388e3c] text-white text-[9px] font-bold rounded-xs shadow-2xs">
+                  <span 
+                    className="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-white text-[9px] font-bold rounded-xs shadow-2xs"
+                    style={{ backgroundColor: col.badgeColor || '#388e3c' }}
+                  >
                     {col.badge}
                   </span>
                 </div>
@@ -132,3 +160,4 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
     </section>
   );
 };
+

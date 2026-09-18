@@ -7,6 +7,9 @@ import { newsletterRouter } from './routes/newsletter';
 import { aiRouter } from './routes/ai';
 import { paymentRouter } from './routes/payment';
 import { supabaseRouter } from './routes/supabase';
+import { dealsRouter } from './routes/deals';
+import { topRatedRouter } from './routes/topRated';
+import { heroBannerRouter } from './routes/heroBanner';
 
 export function createExpressApp(): Express {
   const app = express();
@@ -100,6 +103,9 @@ export function createExpressApp(): Express {
   app.use('/api/ai', aiRouter);
   app.use('/api/payment', paymentRouter);
   app.use('/api/supabase', supabaseRouter);
+  app.use('/api/deals', dealsRouter);
+  app.use('/api/top-rated', topRatedRouter);
+  app.use('/api/hero-banners', heroBannerRouter);
 
   // Global API 404 handler
   app.all('/api/*', (req: Request, res: Response) => {

@@ -9,7 +9,10 @@ import {
   Settings, 
   ChevronRight,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Flame,
+  Award,
+  Layout
 } from 'lucide-react';
 
 export type AdminTab = 
@@ -17,6 +20,9 @@ export type AdminTab =
   | 'users'
   | 'sellers'
   | 'products'
+  | 'wow_deals'
+  | 'top_rated'
+  | 'hero_banners'
   | 'orders'
   | 'security';
 
@@ -27,6 +33,9 @@ interface AdminSidebarProps {
   sellersCount: number;
   ordersCount: number;
   productsCount: number;
+  wowDealsCount?: number;
+  topRatedCount?: number;
+  heroBannersCount?: number;
   onExitToStorefront: () => void;
 }
 
@@ -37,6 +46,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   sellersCount,
   ordersCount,
   productsCount,
+  wowDealsCount = 6,
+  topRatedCount = 4,
+  heroBannersCount = 4,
   onExitToStorefront
 }) => {
   const navItems = [
@@ -45,6 +57,34 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       label: 'Executive Overview',
       icon: LayoutDashboard,
       badge: null
+    },
+    {
+      id: 'hero_banners' as AdminTab,
+      label: 'Hero Banners & Slider',
+      icon: Layout,
+      badge: `${heroBannersCount} Slides`,
+      badgeColor: 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+    },
+    {
+      id: 'top_rated' as AdminTab,
+      label: 'Top Rated Jewellery',
+      icon: Award,
+      badge: `${topRatedCount} Cards`,
+      badgeColor: 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+    },
+    {
+      id: 'wow_deals' as AdminTab,
+      label: 'WOW Deals & Promos',
+      icon: Flame,
+      badge: `${wowDealsCount} Deals`,
+      badgeColor: 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+    },
+    {
+      id: 'products' as AdminTab,
+      label: 'Master Catalog Pieces',
+      icon: ShoppingBag,
+      badge: productsCount,
+      badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
     },
     {
       id: 'users' as AdminTab,
@@ -59,13 +99,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       icon: Store,
       badge: sellersCount,
       badgeColor: 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-    },
-    {
-      id: 'products' as AdminTab,
-      label: 'Master Catalog Pieces',
-      icon: ShoppingBag,
-      badge: productsCount,
-      badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
     },
     {
       id: 'orders' as AdminTab,

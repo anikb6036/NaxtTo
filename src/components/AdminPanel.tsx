@@ -29,7 +29,10 @@ import {
   MetalType, 
   JewelleryStyle,
   AdminUserAccount,
-  SellerAccount
+  SellerAccount,
+  WowDealItem,
+  TopRatedItem,
+  HeroBannerSlide
 } from '../types';
 
 // Seller Hub Components
@@ -52,6 +55,9 @@ import { ExecutiveDashboardView } from './admin/ExecutiveDashboardView';
 import { AdminOrdersView } from './admin/AdminOrdersView';
 import { MasterCatalogView } from './admin/MasterCatalogView';
 import { SecurityAuditView } from './admin/SecurityAuditView';
+import { WowDealsEditorView } from './admin/WowDealsEditorView';
+import { TopRatedEditorView } from './admin/TopRatedEditorView';
+import { HeroBannerEditorView } from './admin/HeroBannerEditorView';
 import { apiClient } from '../services/api';
 
 interface AdminPanelProps {
@@ -66,6 +72,20 @@ interface AdminPanelProps {
   currencySymbol: string;
   staffInfo?: { email: string; role: string; name: string } | null;
   onRefreshOrders?: () => void;
+  wowDeals?: WowDealItem[];
+  onUpdateWowDeals?: (deals: WowDealItem[]) => void;
+  wowDealsHeadline?: string;
+  wowDealsSubheadline?: string;
+  wowDealsEmoji?: string;
+  onUpdateWowDealsHeader?: (headline: string, subheadline: string, emoji: string) => void;
+  topRatedItems?: TopRatedItem[];
+  onUpdateTopRatedItems?: (items: TopRatedItem[]) => void;
+  topRatedHeadline?: string;
+  topRatedSubheadline?: string;
+  topRatedButtonText?: string;
+  onUpdateTopRatedHeader?: (headline: string, subheadline: string, buttonText: string) => void;
+  heroBanners?: HeroBannerSlide[];
+  onUpdateHeroBanners?: (slides: HeroBannerSlide[]) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -79,7 +99,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onSignOut,
   currencySymbol,
   staffInfo,
-  onRefreshOrders
+  onRefreshOrders,
+  wowDeals,
+  onUpdateWowDeals,
+  wowDealsHeadline,
+  wowDealsSubheadline,
+  wowDealsEmoji,
+  onUpdateWowDealsHeader,
+  topRatedItems,
+  onUpdateTopRatedItems,
+  topRatedHeadline,
+  topRatedSubheadline,
+  topRatedButtonText,
+  onUpdateTopRatedHeader,
+  heroBanners,
+  onUpdateHeroBanners
 }) => {
   // Determine if logged-in staff member is Administrator
   const isAdmin = useMemo(() => {
@@ -331,6 +365,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             sellersCount={sellersList.length}
             ordersCount={orders.length}
             productsCount={products.length}
+            wowDealsCount={wowDeals?.length || 6}
+            topRatedCount={topRatedItems?.length || 4}
+            heroBannersCount={heroBanners?.length || 4}
             onExitToStorefront={onBackToShop}
           />
 
@@ -345,6 +382,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   products={products}
                   onNavigateTab={setAdminTab}
                   currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'hero_banners' && (
+                <HeroBannerEditorView
+                  slides={heroBanners || []}
+                  onSaveSlides={(updatedSlides) => {
+                    if (onUpdateHeroBanners) {
+                      onUpdateHeroBanners(updatedSlides);
+                    }
+                    showToast('Hero banners updated successfully on storefront carousel!');
+                  }}
+                  onExploreCatalog={onBackToShop}
                 />
               )}
 
@@ -374,6 +424,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onUpdateProduct={onUpdateProduct}
                   onDeleteProduct={onDeleteProduct}
                   currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'wow_deals' && (
+                <WowDealsEditorView
+                  deals={wowDeals || []}
+                  onSaveDeals={(updatedDeals) => {
+                    if (onUpdateWowDeals) {
+                      onUpdateWowDeals(updatedDeals);
+                    }
+                    showToast('WOW Deals showcase saved and updated on storefront!');
+                  }}
+                  products={products}
+                  currencySymbol={currencySymbol}
+                  headline={wowDealsHeadline}
+                  subheadline={wowDealsSubheadline}
+                  emoji={wowDealsEmoji}
+                  onUpdateHeader={onUpdateWowDealsHeader}
+                />
+              )}
+
+              {adminTab === 'top_rated' && (
+                <TopRatedEditorView
+                  items={topRatedItems || []}
+                  onSaveItems={(updatedItems) => {
+                    if (onUpdateTopRatedItems) {
+                      onUpdateTopRatedItems(updatedItems);
+                    }
+                    showToast('Top Rated in Fine Jewellery showcase saved and updated on storefront!');
+                  }}
+                  products={products}
+                  currencySymbol={currencySymbol}
+                  headline={topRatedHeadline}
+                  subheadline={topRatedSubheadline}
+                  buttonText={topRatedButtonText}
+                  onUpdateHeader={onUpdateTopRatedHeader}
                 />
               )}
 

@@ -311,6 +311,126 @@ export const apiClient = {
       console.warn('API syncSupabase fallback:', err);
       return { success: false, message: 'Could not trigger Supabase sync' };
     }
+  },
+
+  // WOW Deals Management
+  async getWowDeals(): Promise<any> {
+    try {
+      const res = await fetch('/api/deals');
+      if (!res.ok) throw new Error('Failed to fetch WOW deals');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getWowDeals fallback:', err);
+      return null;
+    }
+  },
+
+  async updateWowDeals(deals: any[]): Promise<any> {
+    try {
+      const res = await fetch('/api/deals', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deals })
+      });
+      if (!res.ok) throw new Error('Failed to update WOW deals');
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateWowDeals fallback:', err);
+      return null;
+    }
+  },
+
+  async resetWowDeals(): Promise<any> {
+    try {
+      const res = await fetch('/api/deals/reset', {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to reset WOW deals');
+      return await res.json();
+    } catch (err) {
+      console.warn('API resetWowDeals fallback:', err);
+      return null;
+    }
+  },
+
+  // Top Rated in Fine Jewellery Management
+  async getTopRated(): Promise<any> {
+    try {
+      const res = await fetch('/api/top-rated');
+      if (!res.ok) throw new Error('Failed to fetch Top Rated collection');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getTopRated fallback:', err);
+      return null;
+    }
+  },
+
+  async updateTopRated(items: any[], header?: any): Promise<any> {
+    try {
+      const res = await fetch('/api/top-rated', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, header })
+      });
+      if (!res.ok) throw new Error('Failed to update Top Rated collection');
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateTopRated fallback:', err);
+      return null;
+    }
+  },
+
+  async resetTopRated(): Promise<any> {
+    try {
+      const res = await fetch('/api/top-rated/reset', {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to reset Top Rated collection');
+      return await res.json();
+    } catch (err) {
+      console.warn('API resetTopRated fallback:', err);
+      return null;
+    }
+  },
+
+  // Hero Banners & Slider Merchandising Management
+  async getHeroBanners(): Promise<any> {
+    try {
+      const res = await fetch('/api/hero-banners');
+      if (!res.ok) throw new Error('Failed to fetch Hero Banners');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getHeroBanners fallback:', err);
+      return null;
+    }
+  },
+
+  async updateHeroBanners(slides: any[]): Promise<any> {
+    try {
+      const res = await fetch('/api/hero-banners', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slides })
+      });
+      if (!res.ok) throw new Error('Failed to update Hero Banners');
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateHeroBanners fallback:', err);
+      return null;
+    }
+  },
+
+  async resetHeroBanners(): Promise<any> {
+    try {
+      const res = await fetch('/api/hero-banners/reset', {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to reset Hero Banners');
+      return await res.json();
+    } catch (err) {
+      console.warn('API resetHeroBanners fallback:', err);
+      return null;
+    }
   }
 };
 
