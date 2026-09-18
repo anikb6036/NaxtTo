@@ -42,6 +42,23 @@
       },
       "required": ["id", "orderNumber", "total", "status"]
     },
+    "Product": {
+      "title": "Product",
+      "description": "Artisanal fine jewellery catalog piece",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "metal": { "type": "string" },
+        "stockCount": { "type": "number" },
+        "inStock": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "price"]
+    },
     "NewsletterSubscriber": {
       "title": "NewsletterSubscriber",
       "description": "Atelier newsletter subscriber",
@@ -51,6 +68,24 @@
         "subscribedAt": { "type": "string" }
       },
       "required": ["email"]
+    },
+    "Seller": {
+      "title": "Seller",
+      "description": "Certified atelier artisan & seller partner account",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "storeName": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string" },
+        "rating": { "type": "number" },
+        "city": { "type": "string" },
+        "commissionRate": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "storeName", "email"]
     }
   },
   "firestore": {
@@ -58,9 +93,17 @@
       "schema": "User",
       "description": "Stores patron account data, carts, wishlists, and addresses"
     },
+    "/sellers/{sellerId}": {
+      "schema": "Seller",
+      "description": "Stores registered artisan & seller partner accounts"
+    },
     "/orders/{orderId}": {
       "schema": "Order",
       "description": "Stores confirmed atelier jewellery orders"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Stores custom and atelier jewellery catalog products"
     },
     "/newsletterSubscribers/{subId}": {
       "schema": "NewsletterSubscriber",

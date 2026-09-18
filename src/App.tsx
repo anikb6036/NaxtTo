@@ -526,6 +526,9 @@ export default function App() {
     }
   });
 
+  // Dedicated Admin / Seller Hub view flag
+  const isAdminMode = currentView === 'admin' && isStaffAuthenticated;
+
   // Drawers & Overlays Visibility State
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
@@ -1103,61 +1106,65 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Navbar */}
-      <Navbar
-        activeCategory={filterOptions.category}
-        onSelectCategory={(cat) => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          setFilterOptions({ ...filterOptions, category: cat });
-          scrollToCatalog();
-        }}
-        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
-        wishlistCount={wishlistItems.length}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenWishlist={handleOpenWishlist}
-        onOpenAccount={handleOpenAccount}
-        onNavigateToAdmin={handleRequestStaffAccess}
-        onOpenPdfCatalogue={() => setIsPdfCatalogueOpen(true)}
-        onNavigateToJournal={() => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          scrollToJournal();
-        }}
-        onNavigateToAtelier={() => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          scrollToEthos();
-        }}
-        onNavigateToShop={() => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          scrollToCatalog();
-        }}
-        currentCurrency={currency}
-        onChangeCurrency={setCurrency}
-        user={user}
-        searchQuery={filterOptions.searchQuery}
-        onSearchChange={(query) => {
-          setFilterOptions(prev => ({ ...prev, searchQuery: query }));
-        }}
-        cartTotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
-        onSelectGender={(gender) => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          if (gender === 'men') {
-            setFilterOptions(prev => ({ ...prev, searchQuery: 'men' }));
-          } else {
-            setFilterOptions(prev => ({ ...prev, searchQuery: '' }));
-          }
-          scrollToCatalog();
-        }}
-      />
+      {/* Main Navbar & Coupon Strip (Hidden in Admin/Seller Hub mode) */}
+      {!isAdminMode && (
+        <>
+          <Navbar
+            activeCategory={filterOptions.category}
+            onSelectCategory={(cat) => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              setFilterOptions({ ...filterOptions, category: cat });
+              scrollToCatalog();
+            }}
+            cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+            wishlistCount={wishlistItems.length}
+            onOpenCart={() => setIsCartOpen(true)}
+            onOpenWishlist={handleOpenWishlist}
+            onOpenAccount={handleOpenAccount}
+            onNavigateToAdmin={handleRequestStaffAccess}
+            onOpenPdfCatalogue={() => setIsPdfCatalogueOpen(true)}
+            onNavigateToJournal={() => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              scrollToJournal();
+            }}
+            onNavigateToAtelier={() => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              scrollToEthos();
+            }}
+            onNavigateToShop={() => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              scrollToCatalog();
+            }}
+            currentCurrency={currency}
+            onChangeCurrency={setCurrency}
+            user={user}
+            searchQuery={filterOptions.searchQuery}
+            onSearchChange={(query) => {
+              setFilterOptions(prev => ({ ...prev, searchQuery: query }));
+            }}
+            cartTotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
+            onSelectGender={(gender) => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              if (gender === 'men') {
+                setFilterOptions(prev => ({ ...prev, searchQuery: 'men' }));
+              } else {
+                setFilterOptions(prev => ({ ...prev, searchQuery: '' }));
+              }
+              scrollToCatalog();
+            }}
+          />
 
-      {/* Myntra Orange Coupon Voucher Strip (FLAT ₹300 OFF on 1st purchase) */}
-      <MyntraCouponStrip 
-        onApplyCoupon={(code) => showToast(`Voucher code "${code}" claimed! Extra ₹300 discount active.`)} 
-      />
+          {/* Myntra Orange Coupon Voucher Strip (FLAT ₹300 OFF on 1st purchase) */}
+          <MyntraCouponStrip 
+            onApplyCoupon={(code) => showToast(`Voucher code "${code}" claimed! Extra ₹300 discount active.`)} 
+          />
+        </>
+      )}
 
       {/* Dynamic Page Views: Dedicated Account Page, Admin Panel, Dedicated Checkout Page, Product Detail Page, or Home Catalog */}
       {currentView === 'admin' && isStaffAuthenticated ? (
@@ -1456,30 +1463,34 @@ export default function App() {
         </>
       )}
 
-      {/* Official Channel Partners Strip (All 21 Marketplaces & Quick-Commerce Partners) */}
-      <ChannelPartners />
+      {/* Official Channel Partners Strip & Luxury Footer (Hidden in Admin/Seller Hub mode) */}
+      {!isAdminMode && (
+        <>
+          <ChannelPartners />
 
-      {/* Comprehensive Luxury Footer */}
-      <Footer
-        onSelectCategory={(cat) => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          setFilterOptions({ ...filterOptions, category: cat });
-          scrollToCatalog();
-        }}
-        onNavigateToJournal={() => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          scrollToJournal();
-        }}
-        onNavigateToAtelier={() => {
-          setSelectedProduct(null);
-          setCurrentView('shop');
-          scrollToEthos();
-        }}
-        onOpenWishlist={handleOpenWishlist}
-        onNavigateToAdmin={handleRequestStaffAccess}
-      />
+          {/* Comprehensive Luxury Footer */}
+          <Footer
+            onSelectCategory={(cat) => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              setFilterOptions({ ...filterOptions, category: cat });
+              scrollToCatalog();
+            }}
+            onNavigateToJournal={() => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              scrollToJournal();
+            }}
+            onNavigateToAtelier={() => {
+              setSelectedProduct(null);
+              setCurrentView('shop');
+              scrollToEthos();
+            }}
+            onOpenWishlist={handleOpenWishlist}
+            onNavigateToAdmin={handleRequestStaffAccess}
+          />
+        </>
+      )}
 
       {/* Drawers and Overlays */}
       {/* 1. Cart Drawer */}

@@ -1,13 +1,73 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import dns from 'dns';
 import { Product, Order } from '../../src/types';
 
 let supabaseClient: SupabaseClient | null = null;
+let supabaseUnreachableUntil = 0;
+let hostResolutionFailed = false;
+
+function checkDnsResolution(urlStr?: string): Promise<boolean> {
+  if (!urlStr) return Promise.resolve(false);
+  try {
+    const hostname = new URL(urlStr).hostname;
+    return new Promise((resolve) => {
+      dns.lookup(hostname, (err) => {
+        if (err) {
+          hostResolutionFailed = true;
+          supabaseUnreachableUntil = Date.now() + 10 * 60 * 1000;
+          resolve(false);
+        } else {
+          hostResolutionFailed = false;
+          resolve(true);
+        }
+      });
+    });
+  } catch {
+    hostResolutionFailed = true;
+    supabaseUnreachableUntil = Date.now() + 10 * 60 * 1000;
+    return Promise.resolve(false);
+  }
+}
+
+// Initial non-blocking pre-check on boot
+if (process.env.SUPABASE_URL) {
+  checkDnsResolution(process.env.SUPABASE_URL);
+}
+
+function isNetworkOrFetchError(errOrMessage: any): boolean {
+  if (!errOrMessage) return false;
+  const str = typeof errOrMessage === 'string'
+    ? errOrMessage
+    : (errOrMessage.message || errOrMessage.details || errOrMessage.name || String(errOrMessage));
+  return (
+    str.includes('fetch failed') ||
+    str.includes('ENOTFOUND') ||
+    str.includes('ECONNREFUSED') ||
+    str.includes('Failed to fetch') ||
+    str.includes('TypeError: fetch') ||
+    str.includes('getaddrinfo') ||
+    str.includes('AbortError') ||
+    str.includes('TimeoutError') ||
+    str.includes('aborted')
+  );
+}
+
+function handleSupabaseFailure(error: any) {
+  if (isNetworkOrFetchError(error)) {
+    // Supabase host is unreachable or not yet active; back off for 10 minutes to avoid repeated failed lookups
+    supabaseUnreachableUntil = Date.now() + 10 * 60 * 1000;
+  }
+}
 
 /**
  * Lazy initialization for Supabase client.
  * Does not throw if credentials are not yet defined.
  */
 export function getSupabase(): SupabaseClient | null {
+  if (hostResolutionFailed || Date.now() < supabaseUnreachableUntil) {
+    return null;
+  }
+
   if (supabaseClient) return supabaseClient;
 
   const url = process.env.SUPABASE_URL;
@@ -22,17 +82,31 @@ export function getSupabase(): SupabaseClient | null {
       auth: {
         persistSession: false,
         autoRefreshToken: false
+      },
+      global: {
+        fetch: (input: any, init?: any) => {
+          return fetch(input, {
+            ...init,
+            signal: init?.signal || AbortSignal.timeout(3000)
+          });
+        }
       }
     });
     return supabaseClient;
-  } catch (err) {
-    console.warn('Failed to initialize Supabase client:', err);
+  } catch {
     return null;
   }
 }
 
 export function isSupabaseConfigured(): boolean {
-  return !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
+  if (!process.env.SUPABASE_URL || !(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)) {
+    return false;
+  }
+  // If host is unreachable or failed DNS lookup, treat as temporarily unconfigured
+  if (hostResolutionFailed || Date.now() < supabaseUnreachableUntil) {
+    return false;
+  }
+  return true;
 }
 
 export async function testSupabaseConnection(): Promise<{
@@ -42,8 +116,8 @@ export async function testSupabaseConnection(): Promise<{
   tables?: { products: boolean; orders: boolean; newsletter: boolean };
   error?: string;
 }> {
-  const configured = isSupabaseConfigured();
-  if (!configured) {
+  const hasEnv = !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
+  if (!hasEnv) {
     return {
       connected: false,
       configured: false,
@@ -51,6 +125,20 @@ export async function testSupabaseConnection(): Promise<{
     };
   }
 
+  // Check DNS resolution first
+  const dnsOk = await checkDnsResolution(process.env.SUPABASE_URL);
+  if (!dnsOk) {
+    return {
+      connected: false,
+      configured: true,
+      url: process.env.SUPABASE_URL,
+      error: 'Cannot resolve Supabase domain (ENOTFOUND). Please verify your Project URL.'
+    };
+  }
+
+  // Reset backoff on explicit test
+  supabaseUnreachableUntil = 0;
+  hostResolutionFailed = false;
   const client = getSupabase();
   if (!client) {
     return {
@@ -63,6 +151,16 @@ export async function testSupabaseConnection(): Promise<{
   try {
     // Check if products table exists
     const { error: prodErr } = await client.from('products').select('id').limit(1);
+    if (prodErr && isNetworkOrFetchError(prodErr)) {
+      handleSupabaseFailure(prodErr);
+      return {
+        connected: false,
+        configured: true,
+        url: process.env.SUPABASE_URL,
+        error: 'Host unreachable or invalid Supabase URL'
+      };
+    }
+
     const { error: ordErr } = await client.from('orders').select('id').limit(1);
     const { error: newsErr } = await client.from('newsletter_subscribers').select('id').limit(1);
 
@@ -80,11 +178,12 @@ export async function testSupabaseConnection(): Promise<{
       error: prodErr ? prodErr.message : undefined
     };
   } catch (err: any) {
+    handleSupabaseFailure(err);
     return {
       connected: false,
       configured: true,
       url: process.env.SUPABASE_URL,
-      error: err.message || 'Error connecting to Supabase'
+      error: isNetworkOrFetchError(err) ? 'Host unreachable or invalid Supabase URL' : (err.message || 'Error connecting to Supabase')
     };
   }
 }
@@ -92,6 +191,9 @@ export async function testSupabaseConnection(): Promise<{
 // ---------------- PRODUCTS ----------------
 
 export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
+  if (!isSupabaseConfigured()) return null;
+  const dnsOk = await checkDnsResolution(process.env.SUPABASE_URL);
+  if (!dnsOk) return null;
   const client = getSupabase();
   if (!client) return null;
 
@@ -102,7 +204,7 @@ export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Supabase fetchProducts warning:', error.message);
+      handleSupabaseFailure(error);
       return null;
     }
 
@@ -137,12 +239,13 @@ export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
       reviews: Array.isArray(r.reviews) ? r.reviews : []
     }));
   } catch (err) {
-    console.warn('Supabase fetchProducts error:', err);
+    handleSupabaseFailure(err);
     return null;
   }
 }
 
 export async function saveProductToSupabase(product: Product): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
@@ -179,17 +282,18 @@ export async function saveProductToSupabase(product: Product): Promise<boolean> 
 
     const { error } = await client.from('products').upsert(row);
     if (error) {
-      console.warn('Supabase saveProduct warning:', error.message);
+      handleSupabaseFailure(error);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn('Supabase saveProduct error:', err);
+    handleSupabaseFailure(err);
     return false;
   }
 }
 
 export async function updateProductInSupabase(id: string, updates: Partial<Product>): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
@@ -224,24 +328,30 @@ export async function updateProductInSupabase(id: string, updates: Partial<Produ
 
     const { error } = await client.from('products').update(payload).eq('id', id);
     if (error) {
-      console.warn('Supabase updateProduct warning:', error.message);
+      handleSupabaseFailure(error);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn('Supabase updateProduct error:', err);
+    handleSupabaseFailure(err);
     return false;
   }
 }
 
 export async function deleteProductFromSupabase(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
   try {
     const { error } = await client.from('products').delete().eq('id', id);
-    return !error;
-  } catch {
+    if (error) {
+      handleSupabaseFailure(error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    handleSupabaseFailure(err);
     return false;
   }
 }
@@ -249,6 +359,9 @@ export async function deleteProductFromSupabase(id: string): Promise<boolean> {
 // ---------------- ORDERS ----------------
 
 export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
+  if (!isSupabaseConfigured()) return null;
+  const dnsOk = await checkDnsResolution(process.env.SUPABASE_URL);
+  if (!dnsOk) return null;
   const client = getSupabase();
   if (!client) return null;
 
@@ -259,7 +372,7 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Supabase fetchOrders warning:', error.message);
+      handleSupabaseFailure(error);
       return null;
     }
 
@@ -282,12 +395,13 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
       estimatedDelivery: r.estimated_delivery || undefined
     }));
   } catch (err) {
-    console.warn('Supabase fetchOrders error:', err);
+    handleSupabaseFailure(err);
     return null;
   }
 }
 
 export async function saveOrderToSupabase(order: Order): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
@@ -312,17 +426,18 @@ export async function saveOrderToSupabase(order: Order): Promise<boolean> {
 
     const { error } = await client.from('orders').upsert(row);
     if (error) {
-      console.warn('Supabase saveOrder warning:', error.message);
+      handleSupabaseFailure(error);
       return false;
     }
     return true;
   } catch (err) {
-    console.warn('Supabase saveOrder error:', err);
+    handleSupabaseFailure(err);
     return false;
   }
 }
 
 export async function updateOrderStatusInSupabase(id: string, status: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
@@ -331,8 +446,13 @@ export async function updateOrderStatusInSupabase(id: string, status: string): P
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id);
-    return !error;
-  } catch {
+    if (error) {
+      handleSupabaseFailure(error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    handleSupabaseFailure(err);
     return false;
   }
 }
@@ -340,6 +460,7 @@ export async function updateOrderStatusInSupabase(id: string, status: string): P
 // ---------------- NEWSLETTER ----------------
 
 export async function saveNewsletterSubscriberToSupabase(email: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   const client = getSupabase();
   if (!client) return false;
 
@@ -350,8 +471,13 @@ export async function saveNewsletterSubscriberToSupabase(email: string): Promise
       email: clean,
       subscribed_at: new Date().toISOString()
     }, { onConflict: 'email' });
-    return !error;
-  } catch {
+    if (error) {
+      handleSupabaseFailure(error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    handleSupabaseFailure(err);
     return false;
   }
 }

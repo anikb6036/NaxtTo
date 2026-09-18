@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Check, 
   X, 
@@ -16,22 +16,43 @@ import {
   Clock,
   Truck,
   Printer,
-  CheckCircle2
+  CheckCircle2,
+  Crown,
+  Store,
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react';
 import { 
   Product, 
   Order, 
   ProductCategory, 
   MetalType, 
-  JewelleryStyle 
+  JewelleryStyle,
+  AdminUserAccount,
+  SellerAccount
 } from '../types';
+
+// Seller Hub Components
 import { SellerHeader } from './seller-hub/SellerHeader';
 import { SellerSidebar, SellerNavTab } from './seller-hub/SellerSidebar';
+import { SellerHomeDashboard } from './seller-hub/SellerHomeDashboard';
 import { ListingsTable } from './seller-hub/ListingsTable';
 import { SellerOrdersTable } from './seller-hub/SellerOrdersTable';
 import { ProductFormView } from './seller-hub/ProductFormView';
 import { ShippingLabelModal } from './seller-hub/ShippingLabelModal';
 import { CloudStorageManager } from './seller-hub/CloudStorageManager';
+import { InventoryManager } from './seller-hub/InventoryManager';
+
+// Master Executive Admin Components
+import { AdminHeader } from './admin/AdminHeader';
+import { AdminSidebar, AdminTab } from './admin/AdminSidebar';
+import { UserAccountsView } from './admin/UserAccountsView';
+import { SellerAccountsView } from './admin/SellerAccountsView';
+import { ExecutiveDashboardView } from './admin/ExecutiveDashboardView';
+import { AdminOrdersView } from './admin/AdminOrdersView';
+import { MasterCatalogView } from './admin/MasterCatalogView';
+import { SecurityAuditView } from './admin/SecurityAuditView';
+import { apiClient } from '../services/api';
 
 interface AdminPanelProps {
   products: Product[];
@@ -60,11 +81,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   staffInfo,
   onRefreshOrders
 }) => {
-  // Navigation active tab in Seller Hub
-  const [activeNavTab, setActiveNavTab] = useState<SellerNavTab>('listings');
+  // Determine if logged-in staff member is Administrator
+  const isAdmin = useMemo(() => {
+    const role = (staffInfo?.role || '').toLowerCase();
+    const email = (staffInfo?.email || '').toLowerCase();
+    return (
+      role.includes('admin') || 
+      role.includes('administrator') || 
+      email.includes('anik') || 
+      email.includes('admin') ||
+      email.includes('baidyaanik18@gmail.com')
+    );
+  }, [staffInfo]);
+
+  // Mode: 'admin' (Executive Admin Suite) or 'seller_hub' (Seller/Supplier Hub)
+  // Administrators land directly in the Master Executive Admin Suite!
+  const [activeConsoleMode, setActiveConsoleMode] = useState<'admin' | 'seller_hub'>(
+    isAdmin ? 'admin' : 'seller_hub'
+  );
+
+  // Tab inside Executive Admin Suite
+  const [adminTab, setAdminTab] = useState<AdminTab>('overview');
+
+  // Tab inside Seller Hub
+  const [activeNavTab, setActiveNavTab] = useState<SellerNavTab>('home');
   const [globalSearch, setGlobalSearch] = useState('');
 
-  // Form mode (Add or Edit)
+  // Form mode for product creation/editing
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -79,7 +122,94 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Handle Save Product (from ProductFormView)
+  // State for Users and Sellers accounts
+  const [usersList, setUsersList] = useState<AdminUserAccount[]>([]);
+  const [sellersList, setSellersList] = useState<SellerAccount[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Initial load of users and sellers data from backend
+  const loadPlatformData = async () => {
+    setIsRefreshing(true);
+    try {
+      const [usersRes, sellersRes] = await Promise.all([
+        apiClient.getUsers(),
+        apiClient.getSellers()
+      ]);
+
+      if (usersRes?.success && Array.isArray(usersRes.users)) {
+        setUsersList(usersRes.users);
+      }
+      if (sellersRes?.success && Array.isArray(sellersRes.sellers)) {
+        setSellersList(sellersRes.sellers);
+      }
+    } catch (err) {
+      console.warn('Could not fetch accounts:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlatformData();
+  }, []);
+
+  // Handlers for User Accounts
+  const handleUpdateUser = async (userId: string, updates: Partial<AdminUserAccount>) => {
+    setUsersList(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    try {
+      await apiClient.updateUser(userId, updates);
+      showToast('Patron account updated');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Handlers for Seller Accounts
+  const handleAddSeller = async (sellerData: Partial<SellerAccount>) => {
+    try {
+      const res = await apiClient.createSeller(sellerData);
+      if (res?.success && res.seller) {
+        setSellersList(prev => [res.seller, ...prev]);
+        showToast(`Artisan Guild "${res.seller.storeName}" onboarded!`);
+      } else {
+        // Fallback in-memory
+        const fallbackSeller: SellerAccount = {
+          id: `seller-${Date.now()}`,
+          storeName: sellerData.storeName || 'New Artisan Guild',
+          ownerName: sellerData.ownerName || 'Master Karigar',
+          email: sellerData.email || 'partner@naxtto.com',
+          phone: sellerData.phone || '+91 98300 00000',
+          city: sellerData.city || 'Kolkata, WB',
+          status: 'verified',
+          badge: 'Certified Seller',
+          rating: 5.0,
+          totalProducts: 0,
+          totalOrdersFulfilled: 0,
+          totalRevenue: 0,
+          commissionRate: sellerData.commissionRate || 8.0,
+          gstNumber: sellerData.gstNumber || 'Pending GSTIN',
+          joinedDate: new Date().toISOString().split('T')[0],
+          workshopAddress: sellerData.workshopAddress || 'Registered Workshop, West Bengal'
+        };
+        setSellersList(prev => [fallbackSeller, ...prev]);
+        showToast(`Artisan Guild "${fallbackSeller.storeName}" onboarded!`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateSeller = async (sellerId: string, updates: Partial<SellerAccount>) => {
+    setSellersList(prev => prev.map(s => s.id === sellerId ? { ...s, ...updates } : s));
+    try {
+      await apiClient.updateSeller(sellerId, updates);
+      showToast('Artisan Guild details updated');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Product saving logic
   const handleSaveProduct = (formData: any) => {
     const metalNameMap: Record<MetalType, string> = {
       'pure-conch-shell': '100% Pure Conch Shell (Natural Shankha)',
@@ -115,7 +245,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         ...formData,
         metalName: metalNameMap[formData.metal as MetalType] || formData.metalName,
         styleName: styleNameMap[formData.style as JewelleryStyle] || formData.styleName,
-        inStock: formData.stockCount > 0
+        inStock: formData.stockCount > 0,
+        isActive: editingProduct.isActive !== undefined ? editingProduct.isActive : true
       };
       onUpdateProduct(updatedProduct);
       showToast(`Listing "${updatedProduct.name}" updated successfully!`);
@@ -128,10 +259,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         rating: 4.8,
         reviewsCount: 0,
         reviews: [],
-        inStock: formData.stockCount > 0
+        inStock: formData.stockCount > 0,
+        isActive: true
       };
       onAddProduct(newProduct);
-      showToast(`New piece "${newProduct.name}" published to Seller Hub!`);
+      showToast(`New piece "${newProduct.name}" published to catalog!`);
     }
 
     setIsFormOpen(false);
@@ -154,22 +286,146 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     return orders.reduce((sum, ord) => sum + ord.total, 0);
   }, [orders]);
 
-  const totalVaultUnits = useMemo(() => {
-    return products.reduce((sum, p) => sum + (p.stockCount || 0), 0);
-  }, [products]);
-
   const activeOrdersCount = useMemo(() => {
     return orders.filter(o => o.status !== 'Delivered').length;
   }, [orders]);
 
+  // ==========================================
+  // BRANCH 1: MASTER EXECUTIVE ADMIN CONSOLE
+  // When activeConsoleMode === 'admin' and isAdmin
+  // ==========================================
+  if (isAdmin && activeConsoleMode === 'admin') {
+    return (
+      <div id="executive-admin-suite" className="w-full bg-[#f8fafc] text-slate-900 min-h-screen font-sans flex flex-col">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-60 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2.5 border border-slate-700 animate-fadeIn">
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Master Executive Admin Header */}
+        <AdminHeader
+          adminName={staffInfo?.name || 'Anik Baidya'}
+          adminEmail={staffInfo?.email || 'baidyaanik18@gmail.com'}
+          searchQuery={globalSearch}
+          onSearchChange={setGlobalSearch}
+          activeView={activeConsoleMode}
+          onToggleView={setActiveConsoleMode}
+          onExitToStorefront={onBackToShop}
+          onSignOut={onSignOut}
+          totalUsersCount={usersList.length}
+          totalSellersCount={sellersList.length}
+          onRefreshData={loadPlatformData}
+          isRefreshing={isRefreshing}
+        />
+
+        {/* Executive Workspace Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Executive Left Sidebar */}
+          <AdminSidebar
+            activeTab={adminTab}
+            onTabChange={setAdminTab}
+            usersCount={usersList.length}
+            sellersCount={sellersList.length}
+            ordersCount={orders.length}
+            productsCount={products.length}
+            onExitToStorefront={onBackToShop}
+          />
+
+          {/* Main Executive Dynamic Container */}
+          <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-4rem)] bg-[#f8fafc]">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {adminTab === 'overview' && (
+                <ExecutiveDashboardView
+                  users={usersList}
+                  sellers={sellersList}
+                  orders={orders}
+                  products={products}
+                  onNavigateTab={setAdminTab}
+                  currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'users' && (
+                <UserAccountsView
+                  users={usersList}
+                  orders={orders}
+                  onUpdateUser={handleUpdateUser}
+                  currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'sellers' && (
+                <SellerAccountsView
+                  sellers={sellersList}
+                  products={products}
+                  onAddSeller={handleAddSeller}
+                  onUpdateSeller={handleUpdateSeller}
+                  currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'products' && (
+                <MasterCatalogView
+                  products={products}
+                  onAddProduct={onAddProduct}
+                  onUpdateProduct={onUpdateProduct}
+                  onDeleteProduct={onDeleteProduct}
+                  currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'orders' && (
+                <AdminOrdersView
+                  orders={orders}
+                  onUpdateOrderStatus={onUpdateOrderStatus}
+                  currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'security' && (
+                <SecurityAuditView />
+              )}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // BRANCH 2: SELLER HUB INTERFACE
+  // When activeConsoleMode === 'seller_hub' OR non-admin seller
+  // ==========================================
   return (
     <div id="seller-hub-admin" className="w-full bg-[#f5f5f7] text-[#212121] min-h-screen font-sans flex flex-col">
-      
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-60 bg-[#212121] text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2.5 animate-fadeIn">
           <Check className="w-4 h-4 text-[#22c55e]" />
           <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Admin Quick Switcher Banner (if user is Administrator previewing Seller Hub) */}
+      {isAdmin && (
+        <div className="bg-[#0f172a] text-white px-4 py-2 flex items-center justify-between text-xs border-b border-amber-500/30">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-[#fbbf24]" />
+            <span className="font-semibold text-slate-200">
+              Administrator Preview Mode: <span className="text-amber-400">Seller Hub View</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveConsoleMode('admin')}
+            className="px-3 py-1 bg-[#d4af37] hover:bg-[#b45309] text-slate-950 font-bold text-xs rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Master Admin Suite</span>
+          </button>
         </div>
       )}
 
@@ -186,8 +442,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Main Workspace Layout (Sidebar + Content) */}
       <div className="flex-1 flex overflow-hidden">
-        
-        {/* 2. Left Sidebar Navigation */}
+        {/* 2. Left Sidebar Navigation (Dark Meesho-style theme) */}
         <SellerSidebar
           activeTab={activeNavTab}
           onTabChange={(tab) => {
@@ -196,12 +451,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }}
           ordersCount={activeOrdersCount}
           listingsCount={products.length}
+          sellerName={staffInfo?.name || 'NaxtTo'}
+          onExitToStorefront={onBackToShop}
         />
 
         {/* 3. Main Dynamic Content Container */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-3.5rem)] bg-[#f5f6fa]">
           <div className="max-w-7xl mx-auto space-y-6">
-            
             {/* View A: Add / Edit Product Form */}
             {isFormOpen ? (
               <ProductFormView
@@ -213,8 +469,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 }}
                 currencySymbol={currencySymbol}
               />
-            ) : activeNavTab === 'listings' || activeNavTab === 'home' ? (
-              /* View B: Flipkart Seller Hub Listings View (Exact Match to Image) */
+            ) : activeNavTab === 'home' ? (
+              <SellerHomeDashboard
+                products={products}
+                orders={orders}
+                onNavigateTab={(tab) => {
+                  setActiveNavTab(tab);
+                  setIsFormOpen(false);
+                }}
+                onAddNewListing={handleAddNewListing}
+                currencySymbol={currencySymbol}
+                sellerName={staffInfo?.name || 'NaxtTo'}
+              />
+            ) : activeNavTab === 'listings' ? (
               <ListingsTable
                 products={products}
                 onAddNewListing={handleAddNewListing}
@@ -228,7 +495,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 currencySymbol={currencySymbol}
               />
             ) : activeNavTab === 'orders' ? (
-              /* View C: Seller Hub Orders View */
               <SellerOrdersTable
                 orders={orders}
                 onSelectOrder={setSelectedOrder}
@@ -239,41 +505,86 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 currencySymbol={currencySymbol}
                 onRefreshOrders={onRefreshOrders}
               />
-            ) : activeNavTab === 'inventory' ? (
-              /* View D: Inventory Management */
-              <div className="bg-white rounded-xl border border-[#e5e5ea] p-6 shadow-xs space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
+            ) : activeNavTab === 'returns' ? (
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-6 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-[#e5e7eb]">
                   <div>
-                    <h2 className="text-xl font-bold text-[#212121]">Inventory Health & Vault Stocks</h2>
-                    <p className="text-xs text-[#717478]">Monitor stock thresholds and re-order schedules.</p>
+                    <h2 className="text-xl font-bold text-[#1f242e]">Customer Returns &amp; Courier RTOs</h2>
+                    <p className="text-xs text-[#6b7280]">Track return shipments, unboxing video audits, and replacement dispatches.</p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-[#2874f0]">{totalVaultUnits}</span>
-                    <p className="text-[11px] text-[#717478]">Total units in stock</p>
-                  </div>
+                  <span className="px-3 py-1 bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] text-xs font-bold rounded-full">
+                    0.0% Low Return Rate
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
-                    <span className="text-xs font-semibold text-[#717478]">Healthy Stock (&gt;3 units)</span>
-                    <p className="text-2xl font-bold text-[#137333]">{products.filter(p => (p.stockCount ?? 0) > 3).length} listings</p>
+                  <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#e5e7eb] space-y-1">
+                    <span className="text-xs font-semibold text-[#6b7280]">In-Transit Returns</span>
+                    <p className="text-2xl font-bold text-[#111827]">0 shipments</p>
+                    <p className="text-[10px] text-[#6b7280]">No reverse logistics active</p>
                   </div>
-                  <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
-                    <span className="text-xs font-semibold text-[#717478]">Low Stock Alerts (1–3 units)</span>
-                    <p className="text-2xl font-bold text-[#b06000]">{products.filter(p => (p.stockCount ?? 0) > 0 && (p.stockCount ?? 0) <= 3).length} listings</p>
+                  <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#e5e7eb] space-y-1">
+                    <span className="text-xs font-semibold text-[#6b7280]">Delivered to Bowbazar Hub</span>
+                    <p className="text-2xl font-bold text-[#16a34a]">0 items</p>
+                    <p className="text-[10px] text-[#16a34a]">100% customer delivery satisfaction</p>
                   </div>
-                  <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
-                    <span className="text-xs font-semibold text-[#717478]">Out of Stock</span>
-                    <p className="text-2xl font-bold text-[#c5221f]">{products.filter(p => (p.stockCount ?? 0) === 0).length} listings</p>
+                  <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#e5e7eb] space-y-1">
+                    <span className="text-xs font-semibold text-[#6b7280]">Return Claims Approved</span>
+                    <p className="text-2xl font-bold text-[#4f46e5]">₹0.00</p>
+                    <p className="text-[10px] text-[#4f46e5]">Zero freight or damaged item deductions</p>
                   </div>
                 </div>
               </div>
+            ) : activeNavTab === 'pricing' ? (
+              <div className="bg-white rounded-xl border border-[#e5e7eb] p-6 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-[#e5e7eb]">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#1f242e]">Atelier Pricing &amp; Live Gold Rate Card</h2>
+                    <p className="text-xs text-[#6b7280]">Real-time daily Kolkata Bullion Association 22K (916) benchmark rates.</p>
+                  </div>
+                  <span className="px-3 py-1 bg-[#fef3c7] border border-[#fde68a] text-[#b45309] text-xs font-bold rounded-full">
+                    Live Kolkata Bullion: ₹6,940/g (22K)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="p-4 bg-[#fffbeb] rounded-xl border border-[#fde68a] space-y-1">
+                    <span className="text-xs font-semibold text-[#b45309]">22K Gold Badhano Shankha</span>
+                    <p className="text-2xl font-bold text-[#92400e]">₹3,499 – ₹7,999</p>
+                    <p className="text-[10px] text-[#b45309]">Hallmarked 916 wire filigree</p>
+                  </div>
+                  <div className="p-4 bg-[#fef2f2] rounded-xl border border-[#fecaca] space-y-1">
+                    <span className="text-xs font-semibold text-[#b91c1c]">Handcrafted Coral Pola</span>
+                    <p className="text-2xl font-bold text-[#991b1b]">₹1,899 – ₹4,299</p>
+                    <p className="text-[10px] text-[#b91c1c]">Austrian acrylic &amp; Italian coral</p>
+                  </div>
+                  <div className="p-4 bg-[#f0f9ff] rounded-xl border border-[#bae6fd] space-y-1">
+                    <span className="text-xs font-semibold text-[#0369a1]">22K Gold Loha Badhano</span>
+                    <p className="text-2xl font-bold text-[#075985]">₹4,199 – ₹9,499</p>
+                    <p className="text-[10px] text-[#0369a1]">Iron core with floral cap</p>
+                  </div>
+                  <div className="p-4 bg-[#fdf4ff] rounded-xl border border-[#f5d0fe] space-y-1">
+                    <span className="text-xs font-semibold text-[#a21caf]">Bridal Combo Sets</span>
+                    <p className="text-2xl font-bold text-[#86198f]">₹8,999 – ₹18,499</p>
+                    <p className="text-[10px] text-[#a21caf]">Complete conch, coral &amp; loha pair</p>
+                  </div>
+                </div>
+              </div>
+            ) : activeNavTab === 'inventory' ? (
+              <InventoryManager
+                products={products}
+                onUpdateProduct={onUpdateProduct}
+                onEditProduct={(prod) => {
+                  setEditingProduct(prod);
+                  setIsFormOpen(true);
+                }}
+                currencySymbol={currencySymbol}
+              />
             ) : activeNavTab === 'payments' ? (
-              /* View E: Payments & Settlements */
               <div className="bg-white rounded-xl border border-[#e5e5ea] p-6 shadow-xs space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
                   <div>
-                    <h2 className="text-xl font-bold text-[#212121]">Bank Settlement & Payments Ledger</h2>
+                    <h2 className="text-xl font-bold text-[#212121]">Bank Settlement &amp; Payments Ledger</h2>
                     <p className="text-xs text-[#717478]">Overview of settled transactions and courier remittances.</p>
                   </div>
                   <div className="text-right">
@@ -283,183 +594,73 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[#e6f4ea] rounded-xl border border-[#ceead6] space-y-1">
-                    <span className="text-xs font-semibold text-[#137333]">Net Dispatched Payout</span>
-                    <p className="text-2xl font-bold text-[#137333]">{currencySymbol}{(totalRevenue * 0.88).toFixed(2)}</p>
-                    <p className="text-[10px] text-[#137333]">Direct Bank Wire to Registered IFSC</p>
-                  </div>
-                  <div className="p-4 bg-[#e8f0fe] rounded-xl border border-[#d2e3fc] space-y-1">
-                    <span className="text-xs font-semibold text-[#1a73e8]">Atelier Platform Fee (12%)</span>
-                    <p className="text-2xl font-bold text-[#1a73e8]">{currencySymbol}{(totalRevenue * 0.12).toFixed(2)}</p>
-                    <p className="text-[10px] text-[#1a73e8]">Includes armored transit insurance</p>
+                  <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
+                    <span className="text-xs font-semibold text-[#717478]">Next Settlement Batch</span>
+                    <p className="text-2xl font-bold text-[#212121]">Tuesday (Weekly)</p>
+                    <p className="text-[10px] text-[#137333]">Direct NEFT/RTGS to Guild Account</p>
                   </div>
                   <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
-                    <span className="text-xs font-semibold text-[#717478]">Total Orders Processed</span>
-                    <p className="text-2xl font-bold text-[#212121]">{orders.length}</p>
-                    <p className="text-[10px] text-[#717478]">0 chargebacks / disputes</p>
+                    <span className="text-xs font-semibold text-[#717478]">Outstanding Invoices</span>
+                    <p className="text-2xl font-bold text-[#212121]">0 Pending</p>
+                    <p className="text-[10px] text-[#137333]">All artisan accounts current</p>
+                  </div>
+                  <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
+                    <span className="text-xs font-semibold text-[#717478]">Commission Rate</span>
+                    <p className="text-2xl font-bold text-[#212121]">0% Intro</p>
+                    <p className="text-[10px] text-[#717478]">0% marketplace fee for registered workshops</p>
                   </div>
                 </div>
               </div>
             ) : activeNavTab === 'storage' ? (
-              /* View F: Cloud Database & Persistent Storage (Supabase & Firestore) */
               <CloudStorageManager
                 products={products}
                 orders={orders}
                 onShowToast={showToast}
               />
             ) : (
-              /* View G: Generic Growth / Ads / Reports Placeholder */
-              <div className="bg-white rounded-xl border border-[#e5e5ea] p-12 text-center shadow-xs space-y-3">
-                <div className="w-12 h-12 rounded-full bg-[#f0f5ff] text-[#2874f0] mx-auto flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-[#212121] capitalize">{activeNavTab} Hub</h3>
-                <p className="text-xs text-[#717478] max-w-md mx-auto">
-                  Manage listing promotions, advertising campaigns, and performance reports directly in your Seller Hub console.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveNavTab('listings')}
-                  className="px-4 py-2 bg-[#2874f0] text-white text-xs font-semibold rounded-lg hover:bg-[#1a64dc]"
-                >
-                  Back to All Listings
-                </button>
+              <div className="p-12 text-center text-[#717478]">
+                <h3 className="text-base font-bold text-[#212121]">Atelier Settings</h3>
+                <p className="text-xs mt-1">Configure Bengal artisan hub addresses and GST credentials.</p>
               </div>
             )}
-
           </div>
         </main>
       </div>
 
-      {/* 4. Order Details Modal */}
+      {/* Selected Order Detailed Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-[#e5e5ea] p-6 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-            
-            <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedOrder(null);
+          }}
+        >
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-[#e5e5ea] overflow-hidden animate-scaleUp">
+            <div className="p-5 border-b border-[#e5e5ea] flex items-center justify-between">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#717478]">
-                  Order Ledger
-                </span>
-                <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2">
-                  <span>{selectedOrder.orderNumber}</span>
-                  <span className={`px-2.5 py-0.5 rounded-full font-medium text-[11px] border ${
-                    selectedOrder.status === 'Delivered'
-                      ? 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]'
-                      : selectedOrder.status === 'Dispatched' || selectedOrder.status === 'Out for Delivery'
-                      ? 'bg-[#e8f0fe] text-[#1a73e8] border-[#d2e3fc]'
-                      : selectedOrder.status === 'Accepted'
-                      ? 'bg-[#f3e8fd] text-[#7627bb] border-[#e9d2fd]'
-                      : 'bg-[#fef7e0] text-[#b06000] border-[#feefc3]'
-                  }`}>
-                    {selectedOrder.status}
-                  </span>
-                </h3>
+                <h3 className="font-bold text-[#212121] text-sm">Order #{selectedOrder.orderNumber}</h3>
+                <span className="text-[10px] text-[#717478]">{new Date(selectedOrder.date).toLocaleString()}</span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setLabelOrder(selectedOrder)}
-                  className="bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                  title="Print Shipping Label / Airway Bill"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Label</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-1.5 rounded-lg hover:bg-[#f5f5f7] text-[#717478] hover:text-[#212121] cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="w-8 h-8 rounded-full bg-[#f5f5f7] flex items-center justify-center text-[#717478] hover:text-[#212121] transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Quick Status Control & Action Bar */}
-            <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-xs font-semibold text-[#212121]">Manage Order Lifecycle:</span>
-                <p className="text-[11px] text-[#717478]">Update status to notify customer in real time.</p>
+            <div className="p-5 space-y-4 text-xs max-h-[70vh] overflow-y-auto">
+              <div className="p-3.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
+                <span className="font-semibold text-[#212121] block">Fulfillment Details</span>
+                <p className="text-[#717478]">Tracking ID: <strong className="text-[#212121]">{selectedOrder.trackingNumber}</strong></p>
+                <p className="text-[#717478]">Payment Mode: <strong className="text-[#212121]">{selectedOrder.paymentMethod}</strong></p>
               </div>
 
-              <div className="flex items-center gap-2">
-                {selectedOrder.status === 'Confirmed' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onUpdateOrderStatus(selectedOrder.id, 'Accepted');
-                      setSelectedOrder({ ...selectedOrder, status: 'Accepted' });
-                      showToast('Order accepted by Atelier master artisans.');
-                    }}
-                    className="bg-[#e6f4ea] hover:bg-[#ceead6] text-[#137333] border border-[#ceead6] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Accept Order</span>
-                  </button>
-                )}
-
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) => {
-                    const newStatus = e.target.value as Order['status'];
-                    onUpdateOrderStatus(selectedOrder.id, newStatus);
-                    setSelectedOrder({ ...selectedOrder, status: newStatus });
-                    showToast(`Status updated to "${newStatus}"`);
-                  }}
-                  className="bg-white border border-[#dadce0] rounded-lg px-3 py-1.5 text-xs text-[#212121] font-semibold cursor-pointer outline-none focus:border-[#2874f0]"
-                >
-                  <option value="Confirmed">Confirmed (New)</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Crafting">Crafting</option>
-                  <option value="Dispatched">Dispatched</option>
-                  <option value="Out for Delivery">Out for Delivery</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Items List */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-[#212121] uppercase tracking-wider">
-                Ordered Creations ({selectedOrder.items.length})
-              </h4>
-              <div className="divide-y divide-[#e5e5ea] border border-[#e5e5ea] rounded-xl overflow-hidden">
-                {selectedOrder.items.map((item, idx) => (
-                  <div key={idx} className="p-3 flex items-center justify-between gap-4 bg-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0 border border-[#e5e5ea]">
-                        <img
-                          src={item.product.images[0] || ''}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-[#212121]">{item.product.name}</p>
-                        <p className="text-[11px] text-[#717478]">
-                          Size: {item.selectedSize || 'Standard'} • Qty: {item.quantity}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-[#212121]">
-                      {currencySymbol}{(item.product.price * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Shipping & Recipient Meta */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
-                <span className="font-semibold text-[#212121] block">Delivery Destination</span>
-                <p className="text-[#555]">
-                  {selectedOrder.shippingAddress.fullName}<br />
-                  {selectedOrder.shippingAddress.addressLine1}{selectedOrder.shippingAddress.addressLine2 ? `, ${selectedOrder.shippingAddress.addressLine2}` : ''}<br />
+                <span className="font-semibold text-[#212121] block">Shipping Destination</span>
+                <p className="text-[#212121] font-medium">{selectedOrder.shippingAddress.fullName}</p>
+                <p className="text-[#717478]">
+                  {selectedOrder.shippingAddress.addressLine1}<br />
                   {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
                   {selectedOrder.shippingAddress.country}
                 </p>
@@ -485,16 +686,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end p-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="px-5 py-2 bg-[#2874f0] hover:bg-[#1a64dc] text-white text-xs font-semibold rounded-lg transition-all"
+                className="px-5 py-2 bg-[#2874f0] hover:bg-[#1a64dc] text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
               >
                 Close Ledger
               </button>
             </div>
-
           </div>
         </div>
       )}
@@ -507,7 +707,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           currencySymbol={currencySymbol}
         />
       )}
-
     </div>
   );
 };

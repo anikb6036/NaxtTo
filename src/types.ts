@@ -75,6 +75,7 @@ export interface Product {
   origin: string;
   inStock: boolean;
   stockCount: number;
+  isActive?: boolean;
   isBestSeller?: boolean;
   isNewArrival?: boolean;
   rating: number;
@@ -197,6 +198,44 @@ export interface UserProfile {
     ringSize?: string;
     newsletterSubscribed: boolean;
   };
+}
+
+export interface AdminUserAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  memberTier: string;
+  status: 'active' | 'verified' | 'vip' | 'suspended';
+  createdAt: string;
+  lastActiveAt?: string;
+  ordersCount: number;
+  totalSpent: number;
+  savedAddressesCount: number;
+  cartItemsCount?: number;
+  wishlistItemsCount?: number;
+  savedAddresses?: Address[];
+  notes?: string;
+}
+
+export interface SellerAccount {
+  id: string;
+  storeName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  status: 'verified' | 'active' | 'pending_kyc' | 'suspended';
+  badge: 'Master Artisan Guild' | 'Certified Seller' | 'Heritage Workshop' | 'Direct Artisan';
+  city: string;
+  rating: number;
+  totalProducts: number;
+  totalOrdersFulfilled: number;
+  totalRevenue: number;
+  commissionRate: number;
+  gstNumber?: string;
+  joinedDate: string;
+  workshopAddress?: string;
+  bankAccountLast4?: string;
 }
 
 export interface FilterOptions {

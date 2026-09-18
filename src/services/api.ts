@@ -135,6 +135,86 @@ export const apiClient = {
     }
   },
 
+  // Secure Staff & Seller Hub Authentication
+  async staffLogin(identifier: string, passkey: string, portalRole?: 'admin' | 'seller') {
+    try {
+      const res = await fetch('/api/auth/staff-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, passkey, portalRole })
+      });
+      const data = await res.json();
+      return { ok: res.ok, status: res.status, ...data };
+    } catch (err) {
+      console.warn('API staff login fallback:', err);
+      return null;
+    }
+  },
+
+  // Admin User Directory endpoints
+  async getUsers() {
+    try {
+      const res = await fetch('/api/auth/users');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getUsers fallback:', err);
+      return { success: false, users: [] };
+    }
+  },
+
+  async updateUser(id: string, updates: any) {
+    try {
+      const res = await fetch(`/api/auth/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateUser fallback:', err);
+      return { success: false, message: 'Update failed' };
+    }
+  },
+
+  // Admin Seller Directory endpoints
+  async getSellers() {
+    try {
+      const res = await fetch('/api/auth/sellers');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getSellers fallback:', err);
+      return { success: false, sellers: [] };
+    }
+  },
+
+  async createSeller(sellerData: any) {
+    try {
+      const res = await fetch('/api/auth/sellers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sellerData)
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('API createSeller fallback:', err);
+      return { success: false, message: 'Creation failed' };
+    }
+  },
+
+  async updateSeller(id: string, updates: any) {
+    try {
+      const res = await fetch(`/api/auth/sellers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateSeller fallback:', err);
+      return { success: false, message: 'Update failed' };
+    }
+  },
+
   // Newsletter subscription
   async subscribeNewsletter(email: string) {
     try {

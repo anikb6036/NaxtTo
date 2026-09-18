@@ -42,7 +42,7 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
   currencySymbol
 }) => {
   // Status tab filter
-  const [listingStatusTab, setListingStatusTab] = useState<'all' | 'active' | 'low_stock' | 'out_of_stock'>('all');
+  const [listingStatusTab, setListingStatusTab] = useState<'all' | 'active' | 'deactive' | 'low_stock' | 'out_of_stock'>('all');
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -64,14 +64,17 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
   }, [products]);
 
   // Dynamic counts
-  const activeProducts = useMemo(() => products.filter(p => p.inStock !== false && (p.stockCount ?? 0) > 0), [products]);
-  const lowStockProducts = useMemo(() => products.filter(p => p.inStock !== false && (p.stockCount ?? 0) > 0 && (p.stockCount ?? 0) <= 3), [products]);
-  const outOfStockProducts = useMemo(() => products.filter(p => !p.inStock || (p.stockCount ?? 0) === 0), [products]);
+  const activeProducts = useMemo(() => products.filter(p => p.isActive !== false && p.inStock !== false && (p.stockCount ?? 0) > 0), [products]);
+  const deactiveProducts = useMemo(() => products.filter(p => p.isActive === false), [products]);
+  const lowStockProducts = useMemo(() => products.filter(p => p.isActive !== false && p.inStock !== false && (p.stockCount ?? 0) > 0 && (p.stockCount ?? 0) <= 3), [products]);
+  const outOfStockProducts = useMemo(() => products.filter(p => p.isActive !== false && (!p.inStock || (p.stockCount ?? 0) === 0)), [products]);
 
   const currentDisplayList = useMemo(() => {
     let list = products;
     if (listingStatusTab === 'active') {
       list = activeProducts;
+    } else if (listingStatusTab === 'deactive') {
+      list = deactiveProducts;
     } else if (listingStatusTab === 'low_stock') {
       list = lowStockProducts;
     } else if (listingStatusTab === 'out_of_stock') {
@@ -228,8 +231,21 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
               : 'border-transparent text-[#717478] hover:text-[#212121]'
           }`}
         >
-          <span>In Stock</span>
+          <span>Active</span>
           <span className="text-[11px] font-normal text-[#878787]">{activeProducts.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setListingStatusTab('deactive')}
+          className={`py-3.5 border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
+            listingStatusTab === 'deactive'
+              ? 'border-amber-600 text-amber-700 font-bold'
+              : 'border-transparent text-[#717478] hover:text-[#212121]'
+          }`}
+        >
+          <span>Deactivated</span>
+          <span className="text-[11px] font-normal text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-full">{deactiveProducts.length}</span>
         </button>
 
         <button
@@ -389,8 +405,9 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
                   const netSettlement = Math.round(prod.price * 0.90);
                   const skuCode = `SKU-${prod.id.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase()}`;
                   const stockQty = prod.stockCount ?? 0;
-                  const isLowStock = prod.inStock !== false && stockQty > 0 && stockQty <= 3;
-                  const isOutOfStock = !prod.inStock || stockQty === 0;
+                  const isDeactivated = prod.isActive === false;
+                  const isLowStock = !isDeactivated && prod.inStock !== false && stockQty > 0 && stockQty <= 3;
+                  const isOutOfStock = !isDeactivated && (!prod.inStock || stockQty === 0);
 
                   return (
                     <tr key={prod.id} className={`hover:bg-[#f8f9fa] transition-colors ${isChecked ? 'bg-[#f0f5ff]' : ''}`}>
@@ -456,13 +473,15 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
                       <td className="py-3 px-4">
                         <div className="space-y-1">
                           <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold inline-block bg-transparent ${
-                            isOutOfStock
+                            isDeactivated
+                              ? 'text-amber-700 border border-amber-300 bg-amber-50/60'
+                              : isOutOfStock
                               ? 'text-rose-600 border border-rose-200'
                               : isLowStock
                               ? 'text-amber-700 border border-amber-200'
                               : 'text-emerald-700 border border-emerald-300'
                           }`}>
-                            {isOutOfStock ? 'Out of Stock' : `${stockQty} available`}
+                            {isDeactivated ? 'Deactivated' : isOutOfStock ? 'Out of Stock' : `${stockQty} available`}
                           </span>
                           {prod.availableSizes && prod.availableSizes.length > 0 && (
                             <p className="text-[10px] text-[#717478]">

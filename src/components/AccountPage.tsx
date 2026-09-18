@@ -275,21 +275,60 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       return;
     }
 
-    // Check if entered credentials match Admin credentials: username 'anik', password 'anik'
+    // Check if entered credentials match Admin credentials
     const adminIdentifiers = ['anik', 'anik@naxtto.com', 'admin', 'admin@naxtto.com', 'admin@atelier.com', 'baidyaanik18@gmail.com'];
     const isAdminUser = adminIdentifiers.includes(identifier.toLowerCase());
     const isAdminPass = enteredPassword === 'anik' || enteredPassword === 'admin123' || enteredPassword === 'naxtto2026';
 
-    if (isAdminUser && isAdminPass) {
-      if (rememberMe) {
-        localStorage.setItem('naxtto_admin_auth', 'true');
+    if (isAdminUser) {
+      if (isAdminPass) {
+        if (rememberMe) {
+          localStorage.setItem('naxtto_admin_auth', 'true');
+        } else {
+          sessionStorage.setItem('naxtto_admin_auth', 'true');
+        }
+        sessionStorage.setItem('naxtto_staff_auth', 'true');
+        sessionStorage.setItem('naxtto_staff_info', JSON.stringify({
+          email: identifier.includes('@') ? identifier : `${identifier}@naxtto.com`,
+          role: 'Atelier Administrator',
+          name: 'Anik (Administrator)'
+        }));
+        if (onNavigateToAdmin) {
+          onNavigateToAdmin();
+        }
+        return;
       } else {
-        sessionStorage.setItem('naxtto_admin_auth', 'true');
+        setAuthError('Access Denied: Incorrect administrator passkey. Negative credentials rejected.');
+        return;
       }
-      if (onNavigateToAdmin) {
-        onNavigateToAdmin();
+    }
+
+    // Check if entered credentials match Seller credentials
+    const sellerIdentifiers = ['seller', 'seller@naxtto.com', 'staff', 'staff@naxtto.com', 'director', 'director@naxtto.com', 'supplier', 'artisan'];
+    const isSellerUser = sellerIdentifiers.includes(identifier.toLowerCase());
+    const isSellerPass = enteredPassword === 'naxtto2026' || enteredPassword === 'seller123' || enteredPassword === 'staff123' || enteredPassword === 'director750' || enteredPassword === 'atelier2026';
+
+    if (isSellerUser) {
+      if (isSellerPass) {
+        if (rememberMe) {
+          localStorage.setItem('naxtto_admin_auth', 'true');
+        } else {
+          sessionStorage.setItem('naxtto_admin_auth', 'true');
+        }
+        sessionStorage.setItem('naxtto_staff_auth', 'true');
+        sessionStorage.setItem('naxtto_staff_info', JSON.stringify({
+          email: identifier.includes('@') ? identifier : `${identifier}@naxtto.com`,
+          role: 'Certified Atelier Seller',
+          name: identifier.toUpperCase()
+        }));
+        if (onNavigateToAdmin) {
+          onNavigateToAdmin();
+        }
+        return;
+      } else {
+        setAuthError('Access Denied: Incorrect seller passkey. Negative credentials rejected.');
+        return;
       }
-      return;
     }
 
     // Client-side email validation to prevent Firebase auth/invalid-email errors

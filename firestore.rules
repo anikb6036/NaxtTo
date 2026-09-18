@@ -16,11 +16,23 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Sellers & artisan partners directory
+    match /sellers/{sellerId} {
+      allow read, write: if true;
+    }
+
     // Orders collection:
     // Anyone can create an order (guests and logged-in patrons)
     // Anyone can read orders (for order confirmation, tracking, and atelier admin management)
     // Admin or patron can update order status (such as status, tracking, or delivery updates)
     match /orders/{orderId} {
+      allow read, write: if true;
+    }
+
+    // Products collection:
+    // Anyone can read product catalog
+    // Atelier admins can create, update, or delete products
+    match /products/{productId} {
       allow read, write: if true;
     }
 

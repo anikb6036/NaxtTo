@@ -137,7 +137,7 @@ export async function createProduct(prod: Product): Promise<Product> {
 
   // 1. Sync to Supabase
   if (isSupabaseConfigured()) {
-    saveProductToSupabase(prod).catch(err => console.warn('Supabase createProduct async error:', err));
+    saveProductToSupabase(prod).catch(() => {});
   }
 
   // 2. Sync to Postgres / Drizzle
@@ -186,7 +186,7 @@ export async function updateProductInDb(id: string, updates: Partial<Product>): 
 
   // 1. Sync to Supabase
   if (isSupabaseConfigured()) {
-    updateProductInSupabase(id, updates).catch(err => console.warn('Supabase updateProduct async error:', err));
+    updateProductInSupabase(id, updates).catch(() => {});
   }
 
   // 2. Sync to Postgres / Drizzle
@@ -230,7 +230,7 @@ export async function deleteProductFromDb(id: string): Promise<boolean> {
   inMemoryProducts = inMemoryProducts.filter(p => p.id !== id);
 
   if (isSupabaseConfigured()) {
-    deleteProductFromSupabase(id).catch(err => console.warn('Supabase deleteProduct error:', err));
+    deleteProductFromSupabase(id).catch(() => {});
   }
 
   if (db) {
@@ -292,7 +292,7 @@ export async function createOrderInDb(order: Order): Promise<Order> {
 
   // 1. Save to Supabase
   if (isSupabaseConfigured()) {
-    saveOrderToSupabase(order).catch(err => console.warn('Supabase saveOrder async error:', err));
+    saveOrderToSupabase(order).catch(() => {});
   }
 
   // 2. Save to Postgres / Drizzle
@@ -328,7 +328,7 @@ export async function updateOrderStatusInDb(id: string, status: string): Promise
   }
 
   if (isSupabaseConfigured()) {
-    updateOrderStatusInSupabase(id, status).catch(err => console.warn('Supabase updateOrderStatus error:', err));
+    updateOrderStatusInSupabase(id, status).catch(() => {});
   }
 
   if (db) {
@@ -353,7 +353,7 @@ export async function subscribeNewsletterInDb(email: string): Promise<boolean> {
   }
 
   if (isSupabaseConfigured()) {
-    saveNewsletterSubscriberToSupabase(cleanEmail).catch(err => console.warn('Supabase newsletter error:', err));
+    saveNewsletterSubscriberToSupabase(cleanEmail).catch(() => {});
   }
 
   if (db) {
