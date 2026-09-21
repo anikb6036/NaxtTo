@@ -72,6 +72,7 @@ import {
   deleteProductFromFirestore,
   subscribeToAllProducts
 } from './utils/userStorage';
+import { parseRouteFromLocation, syncBrowserUrl, AppView } from './utils/routes';
 
 export default function App() {
   // 1. Core State & Local Persistence (Empty by default)
@@ -648,9 +649,48 @@ export default function App() {
   };
   const currencySymbol = currencySymbols[currency] || '₹';
 
-  // 3. Navigation View State: 'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'
-  const [currentView, setCurrentView] = useState<'shop' | 'product-detail' | 'account' | 'checkout' | 'admin'>('shop');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // 3. Navigation View State with URL mapping & refresh persistence
+  // Direct support for: /login (stays on login after refresh), /account, /checkout, /admin, /product/:id, and /
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    const initialRoute = parseRouteFromLocation(products, user.isLoggedIn);
+    return initialRoute.view;
+  });
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(() => {
+    const initialRoute = parseRouteFromLocation(products, user.isLoggedIn);
+    return initialRoute.product;
+  });
+
+  // Synchronize browser address bar and history stack whenever view, login status, or selected product changes
+  useEffect(() => {
+    syncBrowserUrl(currentView, user.isLoggedIn, selectedProduct);
+  }, [currentView, user.isLoggedIn, selectedProduct]);
+
+  // Initial URL synchronization without creating duplicate back-history entry
+  useEffect(() => {
+    syncBrowserUrl(currentView, user.isLoggedIn, selectedProduct, { replace: true });
+  }, []);
+
+  // Listen to browser Back / Forward buttons (popstate events)
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = parseRouteFromLocation(products, user.isLoggedIn);
+      setCurrentView(route.view);
+      setSelectedProduct(route.product);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products, user.isLoggedIn]);
+
+  // If products arrive from API and we were on /product/:id route without matching product initially
+  useEffect(() => {
+    if (currentView === 'product-detail' && !selectedProduct && products.length > 0) {
+      const route = parseRouteFromLocation(products, user.isLoggedIn);
+      if (route.product) {
+        setSelectedProduct(route.product);
+      }
+    }
+  }, [products, currentView, selectedProduct, user.isLoggedIn]);
 
   // Sync orders periodically when viewing the Admin Panel so live orders reflect immediately
   useEffect(() => {

@@ -45,6 +45,9 @@ import { UserProfile, Order, Address, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
 import loginBannerImg from '../assets/images/login_banner_promo_1789452195509.jpg';
 import { apiClient } from '../services/api';
+import { OrderStatusProgressBar } from './OrderStatusProgressBar';
+import { OrderDetailModal } from './OrderDetailModal';
+import { subscribeToUserOrders, subscribeToSingleOrder, updateOrderStatusInFirestore } from '../utils/userStorage';
 
 interface AccountPageProps {
   user: UserProfile;
@@ -219,6 +222,85 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [copiedTrackingId, setCopiedTrackingId] = useState<string | null>(null);
   const [expandedTimelineOrderId, setExpandedTimelineOrderId] = useState<string | null>(null);
+  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'active'>('all');
+  const [modalOrder, setModalOrder] = useState<Order | null>(null);
+
+  // Real-time Firestore orders state
+  const [realtimeOrders, setRealtimeOrders] = useState<Order[]>([]);
+
+  // 1. Real-time Firestore subscription for this patron's orders
+  useEffect(() => {
+    const unsub = subscribeToUserOrders(user.id, user.email, (liveOrders) => {
+      if (liveOrders && liveOrders.length > 0) {
+        setRealtimeOrders(liveOrders);
+      }
+    });
+    return () => {
+      unsub();
+    };
+  }, [user.id, user.email]);
+
+  // 2. Real-time Firestore subscription for trackedOrder (searched consignment)
+  useEffect(() => {
+    if (!trackedOrder?.id) return;
+    const unsub = subscribeToSingleOrder(trackedOrder.id, (updated) => {
+      if (updated) {
+        setTrackedOrder(updated);
+      }
+    });
+    return () => {
+      unsub();
+    };
+  }, [trackedOrder?.id]);
+
+  // Combined real-time synchronized orders pool
+  const displayOrders = React.useMemo(() => {
+    const map = new Map<string, Order>();
+
+    // Initial from user profile
+    (user.orderHistory || []).forEach(o => {
+      if (o.id) map.set(o.id, o);
+    });
+
+    // Merge from allOrders passed from parent
+    (allOrders || []).forEach(o => {
+      const isUserOrder = 
+        (user.id && user.id !== 'guest' && o.userId === user.id) ||
+        (user.email && o.customerEmail?.toLowerCase() === user.email.toLowerCase()) ||
+        map.has(o.id);
+      if (isUserOrder && o.id) {
+        map.set(o.id, { ...map.get(o.id), ...o });
+      }
+    });
+
+    // Real-time Firestore snapshot takes highest priority
+    realtimeOrders.forEach(o => {
+      if (o.id) {
+        map.set(o.id, o);
+      }
+    });
+
+    const list = Array.from(map.values());
+    list.sort((a, b) => {
+      const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+      const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+    return list;
+  }, [user.orderHistory, allOrders, realtimeOrders, user.id, user.email]);
+
+  // Handler for live status transitions
+  const handleOrderStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
+    setRealtimeOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    if (trackedOrder?.id === orderId) {
+      setTrackedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+    }
+    onUpdateUser({
+      ...user,
+      orderHistory: (user.orderHistory || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    });
+    await updateOrderStatusInFirestore(orderId, newStatus);
+  };
 
   const handleCopyTracking = (text: string, id: string) => {
     try {
@@ -238,7 +320,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       setTrackedOrder(null);
       return;
     }
-    const pool = [...(user.orderHistory || []), ...(allOrders || [])];
+    const pool = [...displayOrders, ...(allOrders || [])];
     const match = pool.find(o => 
       (o.id && o.id.toLowerCase() === query) ||
       (o.orderNumber && o.orderNumber.toLowerCase() === query) ||
@@ -1190,361 +1272,19 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     );
   }
 
-  // Helper to render rich, real-time order tracking card
+  // Helper to render rich, real-time order tracking card with 4-stage progress bar
   const renderOrderCard = (order: Order, isHighlighted = false) => {
-    const isCancelled = order.status === 'Cancelled';
-    const isOutForDelivery = order.status === 'Out for Delivery';
-    const isDelivered = order.status === 'Delivered';
-    const isDispatched = order.status === 'Dispatched';
-    const isAccepted = order.status === 'Accepted';
-    const isCrafting = order.status === 'Crafting';
-
-    let currentStep = 0;
-    if (order.status === 'Accepted') currentStep = 1;
-    else if (order.status === 'Crafting') currentStep = 2;
-    else if (isDispatched) currentStep = 3;
-    else if (isOutForDelivery) currentStep = 3.5;
-    else if (isDelivered) currentStep = 4;
-
-    const steps = [
-      { id: 'confirmed', label: 'Order Placed', sub: 'Verified & Logged', icon: PackageCheck },
-      { id: 'accepted', label: 'Atelier Accepted', sub: 'Artisan Assigned', icon: CheckCircle2 },
-      { id: 'crafting', label: 'In Handcrafting', sub: 'Hallmarking & Polish', icon: Sparkles },
-      { 
-        id: 'dispatch', 
-        label: isOutForDelivery ? 'Out for Delivery' : 'In Transit', 
-        sub: isOutForDelivery ? 'Arriving Today' : 'Insured Courier', 
-        icon: Truck 
-      },
-      { id: 'delivered', label: 'Delivered', sub: 'Signed by Patron', icon: Home }
-    ];
-
     return (
-      <div 
+      <OrderStatusProgressBar
         key={order.id}
-        className={`p-6 sm:p-7 rounded-2xl border bg-white space-y-6 shadow-xs hover:shadow-md transition-all ${
-          isHighlighted ? 'border-[#0071e3]/40 ring-2 ring-[#0071e3]/10' : 'border-[#e5e5ea]'
-        }`}
-      >
-        {/* Header: Order ID, Date & Dynamic Status Badge */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#e5e5ea] text-xs">
-          <div className="space-y-0.5">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#86868b]">
-              Atelier Consignment
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm sm:text-base text-[#1d1d1f] font-mono">
-                {order.orderNumber}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCopyTracking(order.orderNumber, `ord-${order.id}`)}
-                className="text-[#86868b] hover:text-[#1d1d1f] transition-colors p-1"
-                title="Copy Order ID"
-              >
-                {copiedTrackingId === `ord-${order.id}` ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-[#86868b]">Placed: {order.date}</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 ${
-              isDelivered
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : isOutForDelivery
-                ? 'bg-indigo-50 text-indigo-900 border-indigo-300 ring-2 ring-indigo-200 shadow-2xs'
-                : isDispatched
-                ? 'bg-blue-50 text-blue-800 border-blue-200'
-                : isCrafting
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : isAccepted
-                ? 'bg-purple-50 text-purple-800 border-purple-200'
-                : isCancelled
-                ? 'bg-rose-50 text-rose-800 border-rose-200'
-                : 'bg-amber-50 text-amber-800 border-amber-200'
-            }`}>
-              {isOutForDelivery && (
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600" />
-                </span>
-              )}
-              {isCrafting && <Sparkles className="w-3 h-3 text-amber-600" />}
-              {isAccepted && <CheckCircle2 className="w-3 h-3 text-purple-600" />}
-              {isDispatched && <Truck className="w-3 h-3 text-blue-600" />}
-              {isDelivered && <Check className="w-3 h-3 text-emerald-600" />}
-              <span>{order.status}</span>
-            </span>
-          </div>
-        </div>
-
-        {/* 5-Step Visual Milestone Stepper */}
-        {!isCancelled && (
-          <div className="py-2">
-            <div className="relative">
-              {/* Connecting background bar */}
-              <div className="absolute top-4 left-4 right-4 h-0.5 bg-[#e5e5ea] -z-0" />
-              {/* Filled progress bar */}
-              <div 
-                className="absolute top-4 left-4 h-0.5 bg-[#1d1d1f] transition-all duration-500 -z-0"
-                style={{ 
-                  width: `${Math.min(100, Math.max(0, (currentStep / 4) * 100))}%` 
-                }}
-              />
-
-              <div className="grid grid-cols-5 relative z-10 text-center">
-                {steps.map((step, idx) => {
-                  const Icon = step.icon;
-                  const isCompleted = currentStep > idx;
-                  const isCurrent = (currentStep === idx) || (idx === 3 && isOutForDelivery);
-                  
-                  return (
-                    <div key={step.id} className="flex flex-col items-center group">
-                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${
-                        isCompleted
-                          ? 'bg-[#1d1d1f] text-white ring-4 ring-white shadow-xs'
-                          : isCurrent
-                          ? isOutForDelivery
-                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-md animate-pulse'
-                            : 'bg-[#1d1d1f] text-white ring-4 ring-gray-100 shadow-xs'
-                          : 'bg-white border-2 border-[#e5e5ea] text-[#86868b]'
-                      }`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span className={`mt-2 text-[10px] sm:text-xs font-semibold leading-tight ${
-                        isCurrent ? (isOutForDelivery ? 'text-indigo-900 font-bold' : 'text-[#1d1d1f]') : isCompleted ? 'text-[#1d1d1f]' : 'text-[#86868b]'
-                      }`}>
-                        {step.label}
-                      </span>
-                      <span className="text-[9px] text-[#86868b] hidden sm:block">
-                        {step.sub}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Live Milestone Explanatory Card */}
-        <div className={`p-4 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-          isOutForDelivery
-            ? 'bg-indigo-50/80 border border-indigo-200 text-indigo-950'
-            : isDelivered
-            ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950'
-            : isDispatched
-            ? 'bg-blue-50/80 border border-blue-200 text-blue-950'
-            : isCrafting
-            ? 'bg-amber-50/80 border border-amber-200 text-amber-950'
-            : isAccepted
-            ? 'bg-purple-50/80 border border-purple-200 text-purple-950'
-            : 'bg-[#f5f5f7] border border-[#e5e5ea] text-[#555]'
-        }`}>
-          <div className="space-y-0.5">
-            <div className="font-semibold flex items-center gap-1.5">
-              {isOutForDelivery ? (
-                <>
-                  <Truck className="w-4 h-4 text-indigo-700 animate-bounce" />
-                  <span>Out with Express Courier for Personal Handover</span>
-                </>
-              ) : isDelivered ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  <span>Consignment Delivered & Signed</span>
-                </>
-              ) : isDispatched ? (
-                <>
-                  <Truck className="w-4 h-4 text-blue-700" />
-                  <span>Handed to Armored Express Carrier</span>
-                </>
-              ) : isCrafting ? (
-                <>
-                  <Sparkles className="w-4 h-4 text-amber-700" />
-                  <span>Atelier Artisans Crafting & Hallmarking</span>
-                </>
-              ) : isAccepted ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-purple-700" />
-                  <span>Commission Accepted by Master Goldsmith</span>
-                </>
-              ) : (
-                <>
-                  <Clock className="w-4 h-4 text-amber-700" />
-                  <span>Order Placed & Awaiting Master Jeweler Review</span>
-                </>
-              )}
-            </div>
-            <p className="text-[11px] opacity-90">
-              {isOutForDelivery
-                ? 'Your courier van has departed the local distribution hub. Signature is required upon delivery.'
-                : isDelivered
-                ? 'Package has been delivered to your destination address. Certificate of authenticity enclosed.'
-                : isDispatched
-                ? 'Your order has cleared the atelier vault and is in transit via insured priority courier.'
-                : isCrafting
-                ? 'Our master jewelers are currently setting, polishing, and stamping your solid gold pieces.'
-                : isAccepted
-                ? 'Your commission was reviewed and accepted by the atelier. Materials have been allocated.'
-                : 'Your order was successfully recorded. The atelier will accept and begin crafting shortly.'}
-            </p>
-          </div>
-
-          {order.estimatedDelivery && (
-            <div className="shrink-0 text-left sm:text-right bg-white/70 px-3 py-1.5 rounded-lg border border-black/5">
-              <span className="text-[10px] text-[#86868b] block uppercase font-bold">Estimated Handover</span>
-              <span className="font-bold text-[#1d1d1f]">{order.estimatedDelivery}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Courier Airway Bill & Destination Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="p-3.5 bg-[#fbfbfd] rounded-xl border border-[#e5e5ea] space-y-1">
-            <span className="font-semibold text-[#1d1d1f] flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5 text-[#86868b]" />
-              Consignment Tracking & Courier
-            </span>
-            {order.trackingNumber ? (
-              <div className="flex items-center justify-between pt-1">
-                <span className="font-mono text-xs font-bold text-[#1d1d1f] bg-white px-2 py-0.5 rounded border border-[#dadce0]">
-                  {order.trackingNumber}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleCopyTracking(order.trackingNumber || '', `track-${order.id}`)}
-                  className="px-2 py-1 bg-white hover:bg-gray-100 text-[#1d1d1f] rounded border border-[#dadce0] text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  {copiedTrackingId === `track-${order.id}` ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-600" />
-                      <span>Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>Copy AWB</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <p className="text-[#86868b] text-[11px] pt-1">
-                Airway bill generated upon courier pickup.
-              </p>
-            )}
-          </div>
-
-          <div className="p-3.5 bg-[#fbfbfd] rounded-xl border border-[#e5e5ea] space-y-1">
-            <span className="font-semibold text-[#1d1d1f] flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#86868b]" />
-              Delivery Destination
-            </span>
-            <p className="text-[#555] text-[11px] truncate">
-              {order.shippingAddress.fullName} • {order.shippingAddress.addressLine1}, {order.shippingAddress.city} {order.shippingAddress.postalCode}
-            </p>
-          </div>
-        </div>
-
-        {/* Chronological Status History Log (Collapsible) */}
-        {order.statusUpdates && order.statusUpdates.length > 0 && (
-          <div className="border border-[#e5e5ea] rounded-xl overflow-hidden text-xs">
-            <button
-              type="button"
-              onClick={() => setExpandedTimelineOrderId(
-                expandedTimelineOrderId === order.id ? null : order.id
-              )}
-              className="w-full p-3 bg-[#fbfbfd] hover:bg-[#f5f5f7] flex items-center justify-between font-semibold text-[#1d1d1f] transition-colors cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-[#86868b]" />
-                Dispatch Timeline & Activity Logs ({order.statusUpdates.length})
-              </span>
-              <ChevronDown className={`w-4 h-4 text-[#86868b] transition-transform ${
-                expandedTimelineOrderId === order.id ? 'rotate-180' : ''
-              }`} />
-            </button>
-            
-            {expandedTimelineOrderId === order.id && (
-              <div className="p-3.5 space-y-3 bg-white divide-y divide-[#f5f5f7]">
-                {order.statusUpdates.map((update, idx) => (
-                  <div key={idx} className="pt-2.5 first:pt-0 flex items-start gap-3 text-xs">
-                    <span className="w-2 h-2 rounded-full bg-[#1d1d1f] mt-1.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-bold text-[#1d1d1f]">{update.status}</span>
-                        <span className="text-[10px] text-[#86868b]">
-                          {new Date(update.timestamp).toLocaleString(undefined, { 
-                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#6e6e73] mt-0.5">{update.note}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Order Items List */}
-        <div className="space-y-3">
-          <span className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider block">
-            Creations ({order.items.length})
-          </span>
-          <div className="divide-y divide-[#e5e5ea] border border-[#e5e5ea] rounded-xl overflow-hidden">
-            {order.items.map((item, idx) => (
-              <div key={idx} className="p-3.5 flex items-center justify-between gap-4 bg-white">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={item.product.images[0] || ''}
-                    alt={item.product.name}
-                    className="w-14 h-14 rounded-lg object-cover bg-[#f5f5f7] border border-[#e5e5ea] shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-[#1d1d1f] truncate">
-                      {item.product.name}
-                    </h4>
-                    <p className="text-[11px] text-[#6e6e73]">
-                      Size: {item.selectedSize || 'Standard'} • {item.selectedFinish?.replace(/-/g, ' ') || 'Solid 18k Gold'} • Qty: {item.quantity}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-xs font-bold text-[#1d1d1f] shrink-0">
-                  {currencySymbol}{item.product.price * item.quantity}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Financial Settlement & Actions */}
-        <div className="pt-3 border-t border-[#e5e5ea] flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Invoice</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-[#6e6e73]">Total Settled:</span>
-            <span className="text-base font-bold text-[#1d1d1f]">
-              {currencySymbol}{order.total}
-            </span>
-          </div>
-        </div>
-      </div>
+        order={order}
+        user={user}
+        currencySymbol={currencySymbol}
+        isHighlighted={isHighlighted}
+        onStatusUpdated={(newStatus) => handleOrderStatusUpdate(order.id, newStatus)}
+        showAdminControls={true}
+        onOpenDetailModal={(o) => setModalOrder(o)}
+      />
     );
   };
 
@@ -1840,13 +1580,41 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Active In-Flight Commission Progress Bar (If active order exists) */}
+                {displayOrders.some(o => o.status !== 'Delivered' && o.status !== 'Cancelled') && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <h3 className="text-sm font-semibold text-[#1d1d1f]">
+                          Active Bespoke Commission in Progress
+                        </h3>
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
+                          Live Tracking
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('orders')}
+                        className="text-xs text-[#0071e3] hover:underline font-medium cursor-pointer"
+                      >
+                        View All Orders ({displayOrders.length}) →
+                      </button>
+                    </div>
+                    {renderOrderCard(
+                      displayOrders.find(o => o.status !== 'Delivered' && o.status !== 'Cancelled')!,
+                      true
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* TAB 2: Order History */}
+            {/* TAB 2: Order History & Consignment Tracker */}
             {activeTab === 'orders' && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="pb-4 border-b border-[#e5e5ea]">
+                <div className="pb-4 border-b border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f]">
                       Order History & Consignment Tracker
@@ -1854,6 +1622,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">
                       Real-time artisan progress, courier dispatch tracking, and certificates
                     </p>
+                  </div>
+
+                  {/* Real-time sync badge */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium self-start sm:self-auto">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+                    </span>
+                    <span>Real-Time Firestore Updates Active</span>
                   </div>
                 </div>
 
@@ -1915,10 +1692,73 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                 )}
 
-                {/* Primary User Order History List */}
-                {user.orderHistory && user.orderHistory.length > 0 ? (
+                {/* Order Filter Tabs */}
+                {displayOrders && displayOrders.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div className="inline-flex p-1 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilter('all')}
+                        className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                          orderFilter === 'all'
+                            ? 'bg-white text-[#1d1d1f] shadow-xs font-semibold'
+                            : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        All Orders ({displayOrders.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilter('completed')}
+                        className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                          orderFilter === 'completed'
+                            ? 'bg-white text-[#1d1d1f] shadow-xs font-semibold'
+                            : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Completed Consignments ({displayOrders.filter(o => o.status === 'Delivered').length})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderFilter('active')}
+                        className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                          orderFilter === 'active'
+                            ? 'bg-white text-[#1d1d1f] shadow-xs font-semibold'
+                            : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Active in Progress ({displayOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length})</span>
+                      </button>
+                    </div>
+
+                    <span className="text-[11px] text-[#86868b] flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#c5a059]" />
+                      Tax invoices available for all completed consignments
+                    </span>
+                  </div>
+                )}
+
+                {/* Primary User Order History List with Real-time Progress Bar */}
+                {displayOrders && displayOrders.length > 0 ? (
                   <div className="space-y-6">
-                    {user.orderHistory.map((order) => renderOrderCard(order))}
+                    {displayOrders
+                      .filter(order => {
+                        if (orderFilter === 'completed') return order.status === 'Delivered';
+                        if (orderFilter === 'active') return order.status !== 'Delivered' && order.status !== 'Cancelled';
+                        return true;
+                      })
+                      .map((order) => renderOrderCard(order))}
+                    {orderFilter === 'completed' && displayOrders.filter(o => o.status === 'Delivered').length === 0 && (
+                      <div className="p-8 text-center bg-[#fbfbfd] rounded-2xl border border-dashed border-[#e5e5ea] space-y-2">
+                        <CheckCircle2 className="w-8 h-8 text-[#86868b] mx-auto" />
+                        <h4 className="text-sm font-semibold text-[#1d1d1f]">No Completed Orders Yet</h4>
+                        <p className="text-xs text-[#6e6e73]">
+                          Once a consignment is delivered, its official BIS hallmarked tax invoice will appear here. You can also simulate stage completion using the status buttons on active orders above.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : !trackedOrder ? (
                   <div className="text-center py-16 bg-transparent rounded-2xl border border-[#e5e5ea] space-y-3">
@@ -2330,6 +2170,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Expanded Order Detail Modal Dialog */}
+      <OrderDetailModal
+        order={modalOrder}
+        isOpen={!!modalOrder}
+        onClose={() => setModalOrder(null)}
+        user={user}
+        currencySymbol={currencySymbol}
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { CartItem, WishlistItem, UserProfile, Address, Order, Product } from '../types';
-import { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy, getDocs, deleteDoc } from 'firebase/firestore';
-import { firestore } from '../lib/firebase';
+import { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, where } from 'firebase/firestore';
+import { firestore, handleFirestoreError, OperationType } from '../lib/firebase';
 
 /**
  * Ensures product payload is strictly compact (< 5KB), removing heavy descriptions,
@@ -776,9 +776,169 @@ export function subscribeToAllOrders(callback: (orders: Order[]) => void): () =>
       callback(ordersList);
     }, (error) => {
       console.warn('Firestore orders subscription notice:', error);
+      try {
+        handleFirestoreError(error, OperationType.LIST, 'orders');
+      } catch (e) {
+        // Log formatted error info
+      }
     });
   } catch (err) {
     console.warn('Firestore orders onSnapshot failed to initialize:', err);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time subscription to a single order by ID or orderNumber from Firestore
+ */
+export function subscribeToSingleOrder(
+  orderIdentifier: string,
+  callback: (order: Order | null) => void,
+  onError?: (err: unknown) => void
+): () => void {
+  if (!orderIdentifier) {
+    callback(null);
+    return () => {};
+  }
+  const cleanId = orderIdentifier.trim();
+  try {
+    const orderDocRef = doc(firestore, 'orders', cleanId);
+    return onSnapshot(
+      orderDocRef,
+      (docSnap) => {
+        if (!docSnap.exists()) {
+          callback(null);
+          return;
+        }
+        const d = docSnap.data();
+        const parsedOrder: Order = {
+          id: d.id || docSnap.id,
+          orderNumber: d.orderNumber || d.id || docSnap.id,
+          date: d.date || new Date().toISOString().split('T')[0],
+          status: d.status || 'Confirmed',
+          items: Array.isArray(d.items) ? d.items : [],
+          subtotal: Number(d.subtotal) || 0,
+          shippingFee: Number(d.shippingFee) || 0,
+          discount: Number(d.discount) || 0,
+          tax: Number(d.tax) || 0,
+          total: Number(d.total) || 0,
+          shippingAddress: d.shippingAddress || {
+            fullName: 'Valued Patron',
+            addressLine1: 'Atelier Destination',
+            city: 'Mumbai',
+            state: 'MH',
+            postalCode: '400001',
+            country: 'India',
+            phone: ''
+          },
+          trackingNumber: d.trackingNumber || `TRACK-NXT-${docSnap.id.slice(-6).toUpperCase()}`,
+          paymentMethod: d.paymentMethod || 'Razorpay Online',
+          estimatedDelivery: d.estimatedDelivery || '3–5 Business Days',
+          userId: d.userId,
+          customerEmail: d.customerEmail,
+          createdAt: d.createdAt,
+          statusUpdates: d.statusUpdates || []
+        };
+        callback(parsedOrder);
+      },
+      (error) => {
+        console.warn(`Firestore single order listener notice (${cleanId}):`, error);
+        if (onError) {
+          onError(error);
+        } else {
+          try {
+            handleFirestoreError(error, OperationType.GET, `orders/${cleanId}`);
+          } catch (e) {
+            // caught
+          }
+        }
+      }
+    );
+  } catch (err) {
+    console.warn(`Failed to attach Firestore single order listener for ${cleanId}:`, err);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time subscription to a patron's specific orders in Firestore
+ */
+export function subscribeToUserOrders(
+  userId: string | undefined,
+  userEmail: string | undefined,
+  callback: (orders: Order[]) => void
+): () => void {
+  try {
+    const ordersCol = collection(firestore, 'orders');
+    return onSnapshot(
+      ordersCol,
+      (snapshot) => {
+        const matchingOrders: Order[] = [];
+        const normalizedEmail = userEmail?.toLowerCase().trim();
+        const cleanUserId = userId?.trim();
+
+        snapshot.forEach((docSnap) => {
+          const d = docSnap.data();
+          if (!d) return;
+
+          const orderUserId = d.userId;
+          const orderEmail = d.customerEmail?.toLowerCase().trim();
+
+          const isMatch =
+            (cleanUserId && cleanUserId !== 'guest' && orderUserId === cleanUserId) ||
+            (normalizedEmail && orderEmail === normalizedEmail);
+
+          if (isMatch || !cleanUserId) {
+            matchingOrders.push({
+              id: d.id || docSnap.id,
+              orderNumber: d.orderNumber || d.id || docSnap.id,
+              date: d.date || new Date().toISOString().split('T')[0],
+              status: d.status || 'Confirmed',
+              items: Array.isArray(d.items) ? d.items : [],
+              subtotal: Number(d.subtotal) || 0,
+              shippingFee: Number(d.shippingFee) || 0,
+              discount: Number(d.discount) || 0,
+              tax: Number(d.tax) || 0,
+              total: Number(d.total) || 0,
+              shippingAddress: d.shippingAddress || {
+                fullName: 'Valued Patron',
+                addressLine1: 'Atelier Destination',
+                city: 'Mumbai',
+                state: 'MH',
+                postalCode: '400001',
+                country: 'India',
+                phone: ''
+              },
+              trackingNumber: d.trackingNumber || `TRACK-NXT-${docSnap.id.slice(-6).toUpperCase()}`,
+              paymentMethod: d.paymentMethod || 'Razorpay Online',
+              estimatedDelivery: d.estimatedDelivery || '3–5 Business Days',
+              userId: d.userId,
+              customerEmail: d.customerEmail,
+              createdAt: d.createdAt,
+              statusUpdates: d.statusUpdates || []
+            });
+          }
+        });
+
+        matchingOrders.sort((a, b) => {
+          const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+          const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+          return timeB - timeA;
+        });
+
+        callback(matchingOrders);
+      },
+      (error) => {
+        console.warn('Firestore user orders subscription notice:', error);
+        try {
+          handleFirestoreError(error, OperationType.LIST, 'orders');
+        } catch (e) {
+          // caught
+        }
+      }
+    );
+  } catch (err) {
+    console.warn('Firestore subscribeToUserOrders failed to initialize:', err);
     return () => {};
   }
 }

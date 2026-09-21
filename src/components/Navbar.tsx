@@ -236,7 +236,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-[#282c3f] group-hover:text-[#ff3e6c] stroke-[1.8]" />
                 <span className="text-[10px] 2xl:text-[11px] font-bold mt-0.5 sm:mt-1 text-[#282c3f] group-hover:text-[#ff3e6c] leading-none whitespace-nowrap">
-                  Profile
+                  {user.isLoggedIn ? (user.name ? user.name.split(' ')[0] : 'Profile') : 'Login'}
                 </span>
               </button>
 
@@ -247,21 +247,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                     
                     {/* Welcome Box */}
                     <div className="px-4 pb-3 border-b border-[#f5f5f6]">
-                      <p className="text-xs font-bold text-[#282c3f]">
-                        Welcome, {user.name ? user.name.split(' ')[0] : 'NaxtTo'}
-                      </p>
-                      <p className="text-[11px] text-[#696e79] mt-0.5">
-                        {user.email || 'anik@naxtto.shop'}
-                      </p>
-                      <button
-                        onClick={() => {
-                          setProfileDropdownOpen(false);
-                          onOpenAccount();
-                        }}
-                        className="mt-2.5 w-full py-1.5 bg-white border border-[#eaeaec] hover:border-[#ff3e6c] hover:text-[#ff3e6c] text-xs font-bold uppercase tracking-wider rounded transition-colors"
-                      >
-                        MANAGE ACCOUNT
-                      </button>
+                      {user.isLoggedIn ? (
+                        <>
+                          <p className="text-xs font-bold text-[#282c3f]">
+                            Welcome, {user.name ? user.name.split(' ')[0] : 'Patron'}
+                          </p>
+                          <p className="text-[11px] text-[#696e79] mt-0.5">
+                            {user.email || 'Patron Account'}
+                          </p>
+                          <button
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              onOpenAccount();
+                            }}
+                            className="mt-2.5 w-full py-1.5 bg-white border border-[#eaeaec] hover:border-[#ff3e6c] hover:text-[#ff3e6c] text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer"
+                          >
+                            MANAGE ACCOUNT
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs font-bold text-[#282c3f]">
+                            Welcome Patron
+                          </p>
+                          <p className="text-[11px] text-[#696e79] mt-0.5">
+                            To access orders, wishlist &amp; bag
+                          </p>
+                          <button
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              onOpenAccount();
+                            }}
+                            className="mt-2.5 w-full py-2 bg-[#ff3f6c] hover:bg-[#e0355d] text-white text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer shadow-sm text-center"
+                          >
+                            LOGIN / SIGNUP
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     {/* Links */}
