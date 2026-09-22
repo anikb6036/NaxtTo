@@ -47,7 +47,7 @@ import loginBannerImg from '../assets/images/login_banner_promo_1789452195509.jp
 import { apiClient } from '../services/api';
 import { OrderStatusProgressBar } from './OrderStatusProgressBar';
 import { OrderDetailModal } from './OrderDetailModal';
-import { subscribeToUserOrders, subscribeToSingleOrder, updateOrderStatusInFirestore } from '../utils/userStorage';
+import { subscribeToUserOrders, subscribeToSingleOrder, updateOrderStatusInFirestore, saveOrderToFirestore } from '../utils/userStorage';
 
 interface AccountPageProps {
   user: UserProfile;
@@ -224,21 +224,23 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [expandedTimelineOrderId, setExpandedTimelineOrderId] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'active'>('all');
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
+  const [isCreatingSampleOrder, setIsCreatingSampleOrder] = useState(false);
 
   // Real-time Firestore orders state
   const [realtimeOrders, setRealtimeOrders] = useState<Order[]>([]);
 
   // 1. Real-time Firestore subscription for this patron's orders
   useEffect(() => {
+    const knownIds = (user.orderHistory || []).map(o => o.id).filter(Boolean);
     const unsub = subscribeToUserOrders(user.id, user.email, (liveOrders) => {
-      if (liveOrders && liveOrders.length > 0) {
+      if (liveOrders) {
         setRealtimeOrders(liveOrders);
       }
-    });
+    }, knownIds);
     return () => {
       unsub();
     };
-  }, [user.id, user.email]);
+  }, [user.id, user.email, (user.orderHistory || []).map(o => o.id).join(',')]);
 
   // 2. Real-time Firestore subscription for trackedOrder (searched consignment)
   useEffect(() => {
@@ -312,7 +314,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     }
   };
 
-  const handleTrackOrderSearch = (e?: React.FormEvent) => {
+  const handleTrackOrderSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSearchError(null);
     const query = orderSearchQuery.trim().toLowerCase();
@@ -329,9 +331,128 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     if (match) {
       setTrackedOrder(match);
       setSearchError(null);
-    } else {
+      return;
+    }
+
+    // Direct Firestore query lookup fallback
+    try {
+      const { doc, getDoc, collection, getDocs } = await import('firebase/firestore');
+      const { firestore } = await import('../lib/firebase');
+
+      // 1. Check direct doc ID
+      const directRef = doc(firestore, 'orders', orderSearchQuery.trim());
+      const directSnap = await getDoc(directRef);
+      if (directSnap.exists()) {
+        const d = directSnap.data() as any;
+        const foundOrder: Order = { ...d, id: d.id || directSnap.id };
+        setTrackedOrder(foundOrder);
+        setSearchError(null);
+        return;
+      }
+
+      // 2. Query collection for orderNumber or trackingNumber
+      const ordersCol = collection(firestore, 'orders');
+      const qSnap = await getDocs(ordersCol);
+      let found: Order | null = null;
+      qSnap.forEach(snap => {
+        const d = snap.data() as any;
+        if (
+          d.id?.toLowerCase() === query ||
+          d.orderNumber?.toLowerCase() === query ||
+          d.trackingNumber?.toLowerCase() === query
+        ) {
+          found = { ...d, id: d.id || snap.id };
+        }
+      });
+
+      if (found) {
+        setTrackedOrder(found);
+        setSearchError(null);
+      } else {
+        setTrackedOrder(null);
+        setSearchError(`No order found matching "${orderSearchQuery.trim()}". Please verify the Order ID or Tracking Number.`);
+      }
+    } catch {
       setTrackedOrder(null);
       setSearchError(`No order found matching "${orderSearchQuery.trim()}". Please verify the Order ID or Tracking Number.`);
+    }
+  };
+
+  // Helper to create a live sample bespoke order in Firestore for testing real-time progress bar
+  const handleCreateSampleOrder = async () => {
+    setIsCreatingSampleOrder(true);
+    try {
+      const sampleNum = `NXT-${Date.now().toString().slice(-6)}`;
+      const sampleId = `ord_${Date.now()}`;
+      const sampleOrder: Order = {
+        id: sampleId,
+        orderNumber: sampleNum,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Confirmed',
+        items: [
+          {
+            product: {
+              id: 'p-solitaire-bespoke',
+              name: 'Royal Solitaire Brilliant Diamond Ring (18K Rose Gold)',
+              subtitle: 'Artisanal Solitaire Collection',
+              price: 185000,
+              category: 'rings',
+              categoryName: 'Rings',
+              metal: '18k-rose-gold',
+              metalName: '18K Rose Gold',
+              style: 'solitaire',
+              styleName: 'Solitaire',
+              images: ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80'],
+              rating: 4.9,
+              reviewsCount: 38,
+              inStock: true,
+              stockCount: 5,
+              description: 'Exquisite 1.50 carat VVS1 solitaire diamond set in artisanal 18K solid rose gold with certified BIS hallmarks.'
+            } as unknown as Product,
+            quantity: 1,
+            selectedSize: '6',
+            selectedFinish: '18k-rose-gold'
+          }
+        ],
+        subtotal: 185000,
+        shippingFee: 0,
+        discount: 0,
+        tax: 5550,
+        total: 190550,
+        shippingAddress: {
+          fullName: user.name || 'Valued Patron',
+          addressLine1: 'Atelier Royal Residence, Altamount Road',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          postalCode: '400026',
+          country: 'India',
+          phone: user.phone || '+91 98200 12345'
+        },
+        trackingNumber: `TRACK-NXT-${sampleNum}`,
+        paymentMethod: 'Prepaid Atelier Vault Card',
+        estimatedDelivery: '3–5 Business Days',
+        userId: user.id || 'guest',
+        customerEmail: user.email || 'patron@naxtto.com',
+        createdAt: new Date().toISOString(),
+        statusUpdates: [
+          {
+            status: 'Confirmed',
+            timestamp: new Date().toISOString(),
+            note: 'Order confirmed and registered in ledger.'
+          }
+        ]
+      };
+
+      await saveOrderToFirestore(sampleOrder, user.id, user.email);
+      setRealtimeOrders(prev => [sampleOrder, ...prev.filter(o => o.id !== sampleId)]);
+      onUpdateUser({
+        ...user,
+        orderHistory: [sampleOrder, ...(user.orderHistory || []).filter(o => o.id !== sampleId)]
+      });
+    } catch (err) {
+      console.error('Failed to create sample order:', err);
+    } finally {
+      setIsCreatingSampleOrder(false);
     }
   };
 
@@ -1581,8 +1702,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                 </div>
 
-                {/* Active In-Flight Commission Progress Bar (If active order exists) */}
-                {displayOrders.some(o => o.status !== 'Delivered' && o.status !== 'Cancelled') && (
+                {/* Real-time Order Tracking Progress Bar on Profile Overview */}
+                {displayOrders.some(o => o.status !== 'Delivered' && o.status !== 'Cancelled') ? (
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1590,7 +1711,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         <h3 className="text-sm font-semibold text-[#1d1d1f]">
                           Active Bespoke Commission in Progress
                         </h3>
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                           Live Tracking
                         </span>
                       </div>
@@ -1606,6 +1728,58 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       displayOrders.find(o => o.status !== 'Delivered' && o.status !== 'Cancelled')!,
                       true
                     )}
+                  </div>
+                ) : displayOrders.length > 0 ? (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <PackageCheck className="w-4 h-4 text-emerald-600" />
+                        <h3 className="text-sm font-semibold text-[#1d1d1f]">
+                          Most Recent Atelier Consignment
+                        </h3>
+                        <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Delivered & Verified
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('orders')}
+                        className="text-xs text-[#0071e3] hover:underline font-medium cursor-pointer"
+                      >
+                        View Order History ({displayOrders.length}) →
+                      </button>
+                    </div>
+                    {renderOrderCard(displayOrders[0], false)}
+                  </div>
+                ) : (
+                  <div className="p-5 bg-gradient-to-r from-amber-50/60 via-white to-rose-50/60 rounded-2xl border border-amber-200/70 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 shadow-xs">
+                          <Sparkles className="w-4.5 h-4.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#1d1d1f]">Real-Time Order Tracking Feature</h4>
+                          <p className="text-xs text-[#6e6e73]">Interactive 4-stage tracking (Confirmed → Processing → Shipped → Delivered) with live Firestore synchronization.</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isCreatingSampleOrder}
+                        onClick={handleCreateSampleOrder}
+                        className="px-4 py-2 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-2 shadow-xs"
+                      >
+                        {isCreatingSampleOrder ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <PackageCheck className="w-3.5 h-3.5 text-amber-300" />
+                            <span>Initialize Live Sample Order</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1765,14 +1939,31 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <ShoppingBag className="w-8 h-8 text-[#86868b] mx-auto" />
                     <h3 className="text-base font-semibold text-[#1d1d1f]">No Orders Recorded Yet</h3>
                     <p className="text-xs text-[#6e6e73] max-w-sm mx-auto">
-                      Explore our handcrafted creations in solid 18k gold to place your first bespoke commission.
+                      Explore our handcrafted creations in solid 18k gold to place your first bespoke commission, or initialize a live demo order in Firestore to test real-time tracking.
                     </p>
-                    <button
-                      onClick={onBackToShop}
-                      className="mt-2 px-5 py-2.5 bg-[#1d1d1f] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all cursor-pointer"
-                    >
-                      Explore Creations
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                      <button
+                        onClick={onBackToShop}
+                        className="px-5 py-2.5 bg-[#1d1d1f] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all cursor-pointer"
+                      >
+                        Explore Creations
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isCreatingSampleOrder}
+                        onClick={handleCreateSampleOrder}
+                        className="px-4 py-2.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold rounded-xl hover:bg-amber-100 transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        {isCreatingSampleOrder ? (
+                          <div className="w-3.5 h-3.5 border-2 border-amber-900 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <PackageCheck className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Initialize Live Demo Order in Firestore</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 ) : null}
               </div>

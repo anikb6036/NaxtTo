@@ -25,7 +25,7 @@
         "date": { "type": "string" },
         "status": { 
           "type": "string",
-          "enum": ["Confirmed", "Accepted", "Crafting", "Dispatched", "Out for Delivery", "Delivered", "Cancelled"]
+          "enum": ["Confirmed", "Processing", "Shipped", "Accepted", "Crafting", "Dispatched", "Out for Delivery", "Delivered", "Cancelled"]
         },
         "items": { "type": "array" },
         "subtotal": { "type": "number" },

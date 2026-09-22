@@ -166,7 +166,7 @@ export interface Order {
   discount: number;
   tax: number;
   total: number;
-  status: 'Confirmed' | 'Accepted' | 'Crafting' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  status: 'Confirmed' | 'Processing' | 'Shipped' | 'Accepted' | 'Crafting' | 'Dispatched' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   shippingAddress: Address;
   paymentMethod: string;
   trackingNumber: string;
@@ -179,6 +179,25 @@ export interface Order {
     timestamp: string;
     note?: string;
   }[];
+  emailNotifications?: EmailNotification[];
+}
+
+export interface EmailNotification {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  type: 'order_shipped' | 'order_confirmed' | 'order_delivered';
+  recipientEmail: string;
+  recipientName: string;
+  sentAt: string;
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  carrier: string;
+  trackingNumber: string;
+  trackingUrl?: string;
+  status: 'sent' | 'delivered' | 'pending';
+  simulatedProvider?: string;
 }
 
 export interface UserProfile {

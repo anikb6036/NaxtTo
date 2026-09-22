@@ -88,11 +88,38 @@ ordersRouter.patch('/:id/status', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Status field is required' });
     }
 
+    const all = await getAllOrders();
+    const existing = all.find(o => o.id === req.params.id || o.orderNumber === req.params.id);
+    const previousStatus = existing?.status || 'Processing';
+
     await updateOrderStatusInDb(req.params.id, status);
+
+    let emailDispatched = false;
+    let emailNotice = undefined;
+
+    // Check email notification trigger: Processing -> Shipped
+    const isFromProcessing = previousStatus === 'Processing' || previousStatus === 'Crafting' || previousStatus === 'Accepted';
+    const isToShipped = status === 'Shipped' || status === 'Dispatched';
+
+    if (isFromProcessing && isToShipped) {
+      const recipient = existing?.customerEmail || (existing?.shippingAddress as any)?.email || 'patron@naxtto.shop';
+      console.log(`[BACKEND TRIGGER] Order #${req.params.id} transitioned from '${previousStatus}' to '${status}'. Triggering Shipped email notification to ${recipient}`);
+      emailDispatched = true;
+      emailNotice = {
+        recipient,
+        subject: `✨ Your NaxtTo Atelier Consignment #${existing?.orderNumber || req.params.id} has been Shipped`,
+        carrier: 'Blue Dart Apex Secure Armored Transit',
+        trackingNumber: existing?.trackingNumber || `TRACK-NXT-${req.params.id}`
+      };
+    }
 
     res.json({
       success: true,
-      message: `Order #${req.params.id} updated to ${status}`
+      message: `Order #${req.params.id} updated to ${status}`,
+      previousStatus,
+      newStatus: status,
+      emailNotificationDispatched: emailDispatched,
+      emailNotification: emailNotice
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Failed to update order status' });

@@ -134,13 +134,15 @@ export const OrderStatusProgressBar: React.FC<OrderStatusProgressBarProps> = ({
     switch (status) {
       case 'Confirmed':
         return { index: 0, stage: 'Confirmed' as OrderStage, percent: 12.5 };
+      case 'Processing':
       case 'Accepted':
       case 'Crafting':
-        return { index: 1, stage: 'Processing' as OrderStage, percent: 50 };
+        return { index: 1, stage: 'Processing' as OrderStage, percent: 37.5 };
+      case 'Shipped':
       case 'Dispatched':
-        return { index: 2, stage: 'Shipped' as OrderStage, percent: 75 };
+        return { index: 2, stage: 'Shipped' as OrderStage, percent: 62.5 };
       case 'Out for Delivery':
-        return { index: 2, stage: 'Shipped' as OrderStage, percent: 88 };
+        return { index: 2, stage: 'Shipped' as OrderStage, percent: 80 };
       case 'Delivered':
         return { index: 3, stage: 'Delivered' as OrderStage, percent: 100 };
       case 'Cancelled':
@@ -558,9 +560,9 @@ export const OrderStatusProgressBar: React.FC<OrderStatusProgressBarProps> = ({
             <button
               type="button"
               disabled={isUpdatingStatus}
-              onClick={() => handleLiveStatusChange('Crafting')}
+              onClick={() => handleLiveStatusChange('Processing')}
               className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all border flex items-center justify-center gap-1 cursor-pointer ${
-                order.status === 'Crafting' || order.status === 'Accepted'
+                order.status === 'Processing' || order.status === 'Crafting' || order.status === 'Accepted'
                   ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
@@ -572,9 +574,9 @@ export const OrderStatusProgressBar: React.FC<OrderStatusProgressBarProps> = ({
             <button
               type="button"
               disabled={isUpdatingStatus}
-              onClick={() => handleLiveStatusChange('Dispatched')}
+              onClick={() => handleLiveStatusChange('Shipped')}
               className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-all border flex items-center justify-center gap-1 cursor-pointer ${
-                order.status === 'Dispatched' || order.status === 'Out for Delivery'
+                order.status === 'Shipped' || order.status === 'Dispatched' || order.status === 'Out for Delivery'
                   ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}

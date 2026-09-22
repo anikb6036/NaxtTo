@@ -677,8 +677,10 @@ export async function updateOrderStatusInFirestore(
 
     const defaultNotes: Record<string, string> = {
       Confirmed: 'Order confirmed and registered in ledger.',
+      Processing: 'Master goldsmiths handcrafting, setting stones, and applying certified hallmarks.',
       Accepted: 'Order accepted by Atelier master artisans.',
       Crafting: 'Jewellery is being handcrafted, set, and hallmarked in the atelier.',
+      Shipped: 'Vault-sealed in tamper-evident packaging and dispatched via insured courier.',
       Dispatched: 'Package inspected, sealed in tamper-evident vault box, and handed to courier.',
       'Out for Delivery': 'Courier out for final secure delivery to patron destination.',
       Delivered: 'Package successfully delivered and signed for by patron.',
@@ -866,7 +868,8 @@ export function subscribeToSingleOrder(
 export function subscribeToUserOrders(
   userId: string | undefined,
   userEmail: string | undefined,
-  callback: (orders: Order[]) => void
+  callback: (orders: Order[]) => void,
+  knownOrderIds?: string[]
 ): () => void {
   try {
     const ordersCol = collection(firestore, 'orders');
@@ -883,12 +886,18 @@ export function subscribeToUserOrders(
 
           const orderUserId = d.userId;
           const orderEmail = d.customerEmail?.toLowerCase().trim();
+          const shippingEmail = d.shippingAddress?.email?.toLowerCase().trim();
+          const docId = docSnap.id;
+          const orderId = d.id || docId;
+
+          const isKnownId = Array.isArray(knownOrderIds) && (knownOrderIds.includes(docId) || knownOrderIds.includes(orderId));
 
           const isMatch =
+            isKnownId ||
             (cleanUserId && cleanUserId !== 'guest' && orderUserId === cleanUserId) ||
-            (normalizedEmail && orderEmail === normalizedEmail);
+            (normalizedEmail && (orderEmail === normalizedEmail || shippingEmail === normalizedEmail));
 
-          if (isMatch || !cleanUserId) {
+          if (isMatch || (!cleanUserId && !normalizedEmail)) {
             matchingOrders.push({
               id: d.id || docSnap.id,
               orderNumber: d.orderNumber || d.id || docSnap.id,

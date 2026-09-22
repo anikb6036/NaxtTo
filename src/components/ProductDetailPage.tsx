@@ -27,7 +27,9 @@ import {
   ChevronDown,
   Info,
   TrendingDown,
-  ArrowRight
+  ArrowRight,
+  Star,
+  Eye
 } from 'lucide-react';
 import { Product, MetalType, ProductReview, ProductCategory, UserProfile } from '../types';
 import { StarRating, OrangeStar } from './StarRating';
@@ -41,6 +43,7 @@ interface ProductDetailPageProps {
   onAddToCart: (product: Product, selectedSize?: string, selectedFinish?: MetalType, quantity?: number) => boolean | void;
   onBuyNow: (product: Product, selectedSize?: string, selectedFinish?: MetalType) => void;
   isWishlisted: boolean;
+  isProductWishlisted?: (productId: string) => boolean;
   onToggleWishlist: (product: Product) => void;
   currencySymbol: string;
   onAddReview: (productId: string, review: Omit<ProductReview, 'id' | 'date' | 'helpfulCount'>) => void;
@@ -58,6 +61,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   onAddToCart,
   onBuyNow,
   isWishlisted,
+  isProductWishlisted,
   onToggleWishlist,
   currencySymbol,
   onAddReview,
@@ -320,10 +324,76 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     }, 600);
   };
 
-  // Related products
-  const relatedProducts = allProducts
-    .filter(p => p.id !== product.id && (p.category === product.category || p.metal === product.metal))
-    .slice(0, 4);
+  // Recommendation state & logic for "You Might Also Like" section
+  const [recommendationFilter, setRecommendationFilter] = useState<'all' | 'category' | 'complementary'>('all');
+  const [hoveredRelatedId, setHoveredRelatedId] = useState<string | null>(null);
+  const [addedRelatedId, setAddedRelatedId] = useState<string | null>(null);
+
+  // Friendly display label for product categories
+  const getCategoryLabel = (cat: ProductCategory): string => {
+    switch (cat) {
+      case 'shakha':
+        return 'Conch Shell Shakha';
+      case 'pola':
+        return 'Coral Pola';
+      case 'gold-badhano':
+        return '22K Gold Badhano';
+      case 'loha-badhano':
+        return 'Sacred Loha Badhano';
+      case 'bridal-combos':
+        return 'Bridal Combos';
+      default:
+        return typeof cat === 'string' ? cat.replace(/-/g, ' ') : 'Fine Jewellery';
+    }
+  };
+
+  // 1. Primary: Products strictly from the current product's category (excluding current item)
+  const sameCategoryProducts = allProducts.filter(
+    p => p.id !== product.id && p.category === product.category
+  );
+
+  // 2. Secondary: Complementary pieces matching metal purity or traditional Bengali bridal pairings
+  const complementaryProducts = allProducts.filter(
+    p => p.id !== product.id && p.category !== product.category && (
+      p.metal === product.metal ||
+      (product.category === 'shakha' && p.category === 'pola') ||
+      (product.category === 'pola' && p.category === 'shakha') ||
+      (product.category === 'bridal-combos' && (p.category === 'shakha' || p.category === 'pola' || p.category === 'gold-badhano')) ||
+      (product.category === 'gold-badhano' && (p.category === 'shakha' || p.category === 'pola')) ||
+      p.isBestSeller
+    )
+  );
+
+  // 3. Combined suggestions: same category items prioritized first
+  const allSuggestedProducts = [...sameCategoryProducts, ...complementaryProducts];
+
+  // 4. Current active suggestions based on selected filter tab
+  const displayedRelatedProducts = recommendationFilter === 'category'
+    ? sameCategoryProducts
+    : recommendationFilter === 'complementary'
+    ? complementaryProducts
+    : (sameCategoryProducts.length > 0 ? allSuggestedProducts : allProducts.filter(p => p.id !== product.id)).slice(0, 8);
+
+  // Reset filter when selected product changes
+  useEffect(() => {
+    setRecommendationFilter('all');
+  }, [product.id]);
+
+  // Handler for adding a suggested product to bag with immediate feedback
+  const handleQuickAddRelated = (e: React.MouseEvent, item: Product) => {
+    e.stopPropagation();
+    const result = onAddToCart(item, item.availableSizes?.[0] || 'Standard', item.metal);
+    if (result !== false) {
+      setAddedRelatedId(item.id);
+      setTimeout(() => setAddedRelatedId(null), 1500);
+    }
+  };
+
+  // Handler for toggling wishlist for a suggested product
+  const handleToggleRelatedWishlist = (e: React.MouseEvent, item: Product) => {
+    e.stopPropagation();
+    onToggleWishlist(item);
+  };
 
   return (
     <div id="product-detail-page" className="w-full bg-white text-[#1d1d1f] min-h-screen font-sans">
@@ -1163,63 +1233,220 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </div>
         </div>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16 pt-10 border-t border-[#e5e5ea] space-y-6">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="text-xs font-semibold text-[#86868b]">
-                  <span>You May Also Like</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-semibold text-[#1d1d1f] mt-1">
-                  Similar Pieces
-                </h2>
+        {/* ========================================================= */}
+        {/* You Might Also Like Section (Category-Driven Suggestions) */}
+        {/* ========================================================= */}
+        <section id="you-might-also-like-section" className="mt-16 pt-10 border-t border-[#e5e5ea] space-y-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#fdf2f4] text-[#ff3e6c] border border-[#fbcfe8]/60">
+                  {getCategoryLabel(product.category)}
+                </span>
+                <span className="text-xs text-[#86868b] font-medium hidden sm:inline">
+                  • Curated for You
+                </span>
               </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight mt-1.5">
+                You Might Also Like
+              </h2>
+              <p className="text-xs sm:text-sm text-[#696e79] mt-0.5 max-w-2xl">
+                Explore more handcrafted pieces from our <span className="font-semibold text-[#282c3f]">{getCategoryLabel(product.category)}</span> atelier and complementary heritage designs.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              {relatedProducts.map(item => (
-                <div
-                  key={item.id}
-                  onClick={() => onSelectProduct(item)}
-                  className="group bg-white rounded-2xl border border-[#e5e5ea] overflow-hidden p-3 hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="aspect-square rounded-xl overflow-hidden bg-[#f5f5f7] relative">
-                    <img
-                      src={item.images[0]}
-                      alt={item.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 bg-white/90 backdrop-blur-xs rounded-full">
-                      {item.karatPurity}
+            {/* Quick Link to View Full Category */}
+            <button
+              type="button"
+              onClick={() => onSelectCategory(product.category)}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#ff3e6c] hover:text-[#d02551] transition-colors self-start sm:self-end group cursor-pointer pb-1"
+            >
+              <span>Explore all in {getCategoryLabel(product.category)}</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+
+          {/* Filter Pills / Tabs */}
+          {(sameCategoryProducts.length > 0 && complementaryProducts.length > 0) && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setRecommendationFilter('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  recommendationFilter === 'all'
+                    ? 'bg-[#1d1d1f] text-white shadow-xs'
+                    : 'bg-[#f5f5f7] text-[#535766] hover:bg-[#eaeaec] hover:text-[#282c3f]'
+                }`}
+              >
+                All Recommendations ({allSuggestedProducts.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRecommendationFilter('category')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  recommendationFilter === 'category'
+                    ? 'bg-[#ff3e6c] text-white shadow-xs'
+                    : 'bg-[#f5f5f7] text-[#535766] hover:bg-[#eaeaec] hover:text-[#282c3f]'
+                }`}
+              >
+                In {getCategoryLabel(product.category)} ({sameCategoryProducts.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRecommendationFilter('complementary')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  recommendationFilter === 'complementary'
+                    ? 'bg-[#1d1d1f] text-white shadow-xs'
+                    : 'bg-[#f5f5f7] text-[#535766] hover:bg-[#eaeaec] hover:text-[#282c3f]'
+                }`}
+              >
+                Complementary Pieces ({complementaryProducts.length})
+              </button>
+            </div>
+          )}
+
+          {/* Product Grid */}
+          {displayedRelatedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+              {displayedRelatedProducts.map(item => {
+                const itemOriginal = item.originalPrice || Math.round(item.price * 1.5);
+                const itemDiscount = Math.max(10, Math.round(((itemOriginal - item.price) / itemOriginal) * 100));
+                const isItemWishlisted = isProductWishlisted 
+                  ? isProductWishlisted(item.id) 
+                  : (isWishlisted && item.id === product.id);
+                const isItemHovered = hoveredRelatedId === item.id;
+                const displayImg = isItemHovered && item.images.length > 1 ? item.images[1] : item.images[0];
+                const isAdded = addedRelatedId === item.id;
+
+                return (
+                  <div
+                    key={item.id}
+                    id={`suggested-product-${item.id}`}
+                    onClick={() => {
+                      onSelectProduct(item);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    onMouseEnter={() => setHoveredRelatedId(item.id)}
+                    onMouseLeave={() => setHoveredRelatedId(null)}
+                    className="group bg-white rounded-xl border border-[#eaeaec] hover:border-[#d5d9d9] hover:shadow-md transition-all duration-300 p-2.5 sm:p-3 cursor-pointer flex flex-col justify-between relative overflow-hidden select-none"
+                  >
+                    {/* Image Container */}
+                    <div className="aspect-[4/5] sm:aspect-square rounded-lg overflow-hidden bg-[#fafafa] relative w-full">
+                      <img
+                        src={displayImg}
+                        alt={item.name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+
+                      {/* Top Badges */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                        {item.category === product.category && (
+                          <span className="px-2 py-0.5 bg-[#1d1d1f]/85 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-wider rounded shadow-xs">
+                            Same Category
+                          </span>
+                        )}
+                        <span className="px-2 py-0.5 bg-white/90 backdrop-blur-xs text-[#282c3f] text-[9px] font-bold rounded shadow-xs">
+                          {item.karatPurity || '22K Gold'}
+                        </span>
+                      </div>
+
+                      {/* Wishlist Button */}
+                      <button
+                        type="button"
+                        id={`wishlist-suggested-${item.id}`}
+                        onClick={(e) => handleToggleRelatedWishlist(e, item)}
+                        className={`absolute top-2 right-2 p-1.5 sm:p-2 rounded-full transition-all duration-200 z-10 shadow-xs cursor-pointer ${
+                          isItemWishlisted
+                            ? 'bg-[#ff3e6c] text-white'
+                            : 'bg-white/90 text-[#696e79] hover:text-[#ff3e6c] hover:bg-white'
+                        }`}
+                        title={isItemWishlisted ? 'In Wishlist' : 'Add to Wishlist'}
+                        aria-label="Toggle Wishlist"
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${isItemWishlisted ? 'fill-white' : ''}`} />
+                      </button>
+
+                      {/* Rating Pill */}
+                      <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-xs px-1.5 sm:px-2 py-0.5 rounded shadow-xs flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-[#282c3f] z-10">
+                        <span>{item.rating.toFixed(1)}</span>
+                        <Star className="w-3 h-3 text-[#14958f] fill-[#14958f]" />
+                        <span className="text-[#94969f] font-normal text-[9px] sm:text-[10px] border-l border-gray-300 pl-1 ml-0.5">
+                          {item.reviewsCount}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content / Details */}
+                    <div className="mt-2.5 sm:mt-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-[11px] text-[#86868b] font-medium">
+                          <span className="truncate">{getCategoryLabel(item.category)}</span>
+                          <span className="text-emerald-700 font-semibold">{itemDiscount}% OFF</span>
+                        </div>
+
+                        <h3 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] line-clamp-1 mt-0.5 group-hover:text-[#ff3e6c] transition-colors">
+                          {item.name}
+                        </h3>
+
+                        {/* Price Row */}
+                        <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                          <span className="text-xs sm:text-sm font-bold text-[#1d1d1f]">
+                            {currencySymbol}{item.price.toLocaleString()}
+                          </span>
+                          <span className="text-[10px] sm:text-xs text-[#86868b] line-through font-normal">
+                            {currencySymbol}{itemOriginal.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Add to Bag Button */}
+                      <button
+                        type="button"
+                        id={`add-bag-suggested-${item.id}`}
+                        onClick={(e) => handleQuickAddRelated(e, item)}
+                        className={`mt-2.5 w-full py-2 px-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-98 cursor-pointer ${
+                          isAdded
+                            ? 'bg-[#03a685] text-white'
+                            : 'bg-[#f5f5f7] hover:bg-[#ff3e6c] text-[#282c3f] hover:text-white border border-[#eaeaec] hover:border-[#ff3e6c]'
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            <span>ADDED</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>ADD TO BAG</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  <div className="mt-3 space-y-1 flex-1">
-                    <p className="text-xs text-[#86868b] font-medium">{item.styleName}</p>
-                    <h3 className="text-sm font-semibold text-[#1d1d1f] line-clamp-1 group-hover:text-[#0071e3] transition-colors">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm font-semibold text-[#1d1d1f] pt-1">
-                      {currencySymbol}{item.price}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToCart(item);
-                    }}
-                    className="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FFAEC0] to-[#FFEBF0] hover:from-[#FF9EAF] hover:to-[#FFDDE6] text-[#1A1816] border border-[#FFAEC0]/40 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.99]"
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5 text-[#1A1816]" />
-                    <span>Add to Bag</span>
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-8 rounded-xl bg-[#fbfbfd] border border-[#e5e5ea] text-center space-y-3">
+              <p className="text-sm text-[#86868b]">
+                No other pieces currently found in the {getCategoryLabel(product.category)} category.
+              </p>
+              <button
+                type="button"
+                onClick={() => onSelectCategory('all')}
+                className="px-4 py-2 rounded-lg bg-[#1d1d1f] text-white text-xs font-semibold hover:bg-black transition-colors cursor-pointer"
+              >
+                Browse Complete Atelier Collection
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
       {/* ========================================================= */}

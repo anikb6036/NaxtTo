@@ -1486,6 +1486,7 @@ export default function App() {
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           isWishlisted={isWishlisted(selectedProduct.id)}
+          isProductWishlisted={isWishlisted}
           onToggleWishlist={handleToggleWishlist}
           currencySymbol={currencySymbol}
           onAddReview={handleAddReview}
