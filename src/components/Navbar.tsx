@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ShoppingBag, 
   Heart, 
@@ -16,7 +16,33 @@ import {
   ArrowRight,
   ChevronRight
 } from 'lucide-react';
-import { ProductCategory, UserProfile } from '../types';
+import { Product, ProductCategory, UserProfile } from '../types';
+import { INITIAL_PRODUCTS } from '../data/mockData';
+import { SearchSuggestionsDropdown, CategorySuggestion } from './SearchSuggestionsDropdown';
+
+const HERITAGE_CATEGORIES: { id: ProductCategory; name: string; description: string; aliases: string[] }[] = [
+  { id: 'shakha', name: 'Shankha (Pure Conch Shell)', description: 'Hand-carved authentic Bengali conch bangles', aliases: ['shakha', 'shankha', 'sakha', 'conch', 'white', 'shell', 'bangles'] },
+  { id: 'pola', name: 'Pola (Crimson Coral)', description: 'Vibrant red coral & acrylic bridal bangles', aliases: ['pola', 'coral', 'red', 'acrylic', 'bridal bangles'] },
+  { id: 'gold-badhano', name: '22K Gold Badhano', description: 'Heritage gold encased Shankha & Pola', aliases: ['gold', 'badhano', 'bandhano', '22k', 'gold plated', 'gold crafted', 'encased'] },
+  { id: 'loha-badhano', name: 'Loha Badhano (Iron & Gold)', description: 'Traditional iron bangles with pure gold wire wrap', aliases: ['loha', 'iron', 'loha badhano', 'protective bangle'] },
+  { id: 'bridal-combos', name: 'Bridal Combos & Sets', description: 'Complete traditional wedding Shankha-Pola sets', aliases: ['bridal', 'combo', 'wedding', 'set', 'marriage', 'biye', 'pair'] },
+  { id: 'rings', name: 'Rings & Bands', description: 'Handcrafted gold & diamond rings', aliases: ['ring', 'finger ring', 'band', 'solitaire'] },
+  { id: 'necklaces', name: 'Necklaces & Chains', description: 'Fine jewellery choker & chain designs', aliases: ['necklace', 'chain', 'choker', 'haar', 'pendant'] },
+  { id: 'earrings', name: 'Earrings & Jhumkas', description: 'Traditional and contemporary earrings', aliases: ['earring', 'jhumka', 'stud', 'tops', 'kaan'] },
+  { id: 'bracelets', name: 'Bracelets & Kadas', description: 'Gold & gemstone cuffs and bracelets', aliases: ['bracelet', 'kada', 'bangle', 'cuff'] },
+  { id: 'fine-collections', name: 'Fine Collections', description: 'Curated royal heritage masterpieces', aliases: ['fine', 'collection', 'masterpiece', 'royal'] },
+  { id: 'bespoke', name: 'Bespoke Atelier', description: 'Custom-crafted made-to-order heirlooms', aliases: ['bespoke', 'custom', 'customized', 'personalized'] }
+];
+
+const POPULAR_SEARCHES = [
+  'Mayur Mukhi Shankha',
+  '22K Gold Badhano',
+  'Floral Crimson Pola',
+  'Loha Badhano Band',
+  'Complete Bridal Set',
+  'Diamond Solitaire Ring',
+  'Filigree Choker'
+];
 
 interface NavbarProps {
   activeCategory: ProductCategory;
@@ -38,6 +64,9 @@ interface NavbarProps {
   onSearchChange: (query: string) => void;
   cartTotal?: number;
   onSelectGender?: (gender: 'men' | 'women') => void;
+  products?: Product[];
+  onSelectProduct?: (product: Product) => void;
+  currencySymbol?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -57,17 +86,208 @@ export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   onSearchChange,
   onSelectGender,
+  currentCurrency,
+  products = INITIAL_PRODUCTS,
+  onSelectProduct,
+  currencySymbol = '₹'
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const [desktopSuggestionsOpen, setDesktopSuggestionsOpen] = useState(false);
+  const [mobileSuggestionsOpen, setMobileSuggestionsOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
 
-  // Close profile dropdown on outside click
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const desktopSearchContainerRef = useRef<HTMLDivElement>(null);
+  const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Recent searches persistence
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_recent_searches');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed.slice(0, 6);
+      }
+    } catch {
+      // ignore
+    }
+    return ['Mayur Mukhi Shankha', '22K Gold Badhano', 'Bridal Combos'];
+  });
+
+  const saveRecentSearch = (term: string) => {
+    const clean = term.trim();
+    if (!clean || clean.length < 2) return;
+    setRecentSearches(prev => {
+      const updated = [clean, ...prev.filter(s => s.toLowerCase() !== clean.toLowerCase())].slice(0, 6);
+      try {
+        localStorage.setItem('naxtto_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const handleRemoveRecentSearch = (term: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentSearches(prev => {
+      const updated = prev.filter(s => s !== term);
+      try {
+        localStorage.setItem('naxtto_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const handleClearAllRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('naxtto_recent_searches');
+    } catch {}
+  };
+
+  // Safe catalogue of products
+  const availableProducts = useMemo(() => {
+    return Array.isArray(products) && products.length > 0 ? products : INITIAL_PRODUCTS;
+  }, [products]);
+
+  // Real-time matched categories
+  const trimmed = searchQuery.trim().toLowerCase();
+  const matchedCategories = useMemo<CategorySuggestion[]>(() => {
+    if (!trimmed) return [];
+    return HERITAGE_CATEGORIES.filter(cat => {
+      return (
+        cat.name.toLowerCase().includes(trimmed) ||
+        cat.id.toLowerCase().includes(trimmed) ||
+        cat.description.toLowerCase().includes(trimmed) ||
+        cat.aliases.some(alias => alias.toLowerCase().includes(trimmed) || trimmed.includes(alias.toLowerCase()))
+      );
+    }).map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      description: cat.description,
+      itemCount: availableProducts.filter(p => p.category === cat.id).length
+    })).slice(0, 3);
+  }, [trimmed, availableProducts]);
+
+  // Real-time matched products
+  const matchedProducts = useMemo<Product[]>(() => {
+    if (!trimmed) return [];
+    const matches = availableProducts.filter(p => {
+      return (
+        p.name.toLowerCase().includes(trimmed) ||
+        (p.subtitle && p.subtitle.toLowerCase().includes(trimmed)) ||
+        (p.metalName && p.metalName.toLowerCase().includes(trimmed)) ||
+        (p.styleName && p.styleName.toLowerCase().includes(trimmed)) ||
+        p.category.toLowerCase().includes(trimmed) ||
+        (p.description && p.description.toLowerCase().includes(trimmed))
+      );
+    });
+
+    matches.sort((a, b) => {
+      const aNameStarts = a.name.toLowerCase().startsWith(trimmed);
+      const bNameStarts = b.name.toLowerCase().startsWith(trimmed);
+      if (aNameStarts && !bNameStarts) return -1;
+      if (!aNameStarts && bNameStarts) return 1;
+
+      const aNameIncludes = a.name.toLowerCase().includes(trimmed);
+      const bNameIncludes = b.name.toLowerCase().includes(trimmed);
+      if (aNameIncludes && !bNameIncludes) return -1;
+      if (!aNameIncludes && bNameIncludes) return 1;
+
+      return 0;
+    });
+
+    return matches;
+  }, [trimmed, availableProducts]);
+
+  const displayedProducts = useMemo(() => {
+    return matchedProducts.slice(0, 5);
+  }, [matchedProducts]);
+
+  // Action handlers
+  const handleSelectCategory = (categoryId: ProductCategory) => {
+    const matched = HERITAGE_CATEGORIES.find(c => c.id === categoryId);
+    if (matched) saveRecentSearch(matched.name.split(' (')[0]);
+    onSelectCategory(categoryId);
+    onNavigateToShop();
+    setDesktopSuggestionsOpen(false);
+    setMobileSuggestionsOpen(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleSelectProduct = (product: Product) => {
+    saveRecentSearch(product.name);
+    setDesktopSuggestionsOpen(false);
+    setMobileSuggestionsOpen(false);
+    setSelectedIndex(-1);
+    if (onSelectProduct) {
+      onSelectProduct(product);
+    } else {
+      onSearchChange(product.name);
+      onNavigateToShop();
+    }
+  };
+
+  const handleSearchSubmit = (term: string) => {
+    const clean = term.trim();
+    if (clean) saveRecentSearch(clean);
+    onSearchChange(clean);
+    onNavigateToShop();
+    setDesktopSuggestionsOpen(false);
+    setMobileSuggestionsOpen(false);
+    setSelectedIndex(-1);
+  };
+
+  // Keyboard navigation
+  const totalSelectableItems = matchedCategories.length + displayedProducts.length + (trimmed ? 1 : 0);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!desktopSuggestionsOpen && !mobileSuggestionsOpen) {
+        setDesktopSuggestionsOpen(true);
+        setSelectedIndex(0);
+        return;
+      }
+      setSelectedIndex(prev => (prev + 1 < totalSelectableItems ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 >= 0 ? prev - 1 : totalSelectableItems - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < matchedCategories.length) {
+        const cat = matchedCategories[selectedIndex];
+        handleSelectCategory(cat.id);
+      } else if (
+        selectedIndex >= matchedCategories.length &&
+        selectedIndex < matchedCategories.length + displayedProducts.length
+      ) {
+        const prod = displayedProducts[selectedIndex - matchedCategories.length];
+        handleSelectProduct(prod);
+      } else {
+        handleSearchSubmit(searchQuery);
+      }
+    } else if (e.key === 'Escape') {
+      setDesktopSuggestionsOpen(false);
+      setMobileSuggestionsOpen(false);
+      setSelectedIndex(-1);
+    }
+  };
+
+  // Close profile dropdown and suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (profileRef.current && !profileRef.current.contains(target)) {
         setProfileDropdownOpen(false);
+      }
+      if (desktopSearchContainerRef.current && !desktopSearchContainerRef.current.contains(target)) {
+        setDesktopSuggestionsOpen(false);
+      }
+      if (mobileSearchContainerRef.current && !mobileSearchContainerRef.current.contains(target)) {
+        setMobileSuggestionsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -190,23 +410,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* CENTER: DESKTOP ROUNDED SEARCH BAR (Flexible width, perfectly responsive without squeezing buttons) */}
-          <div className="hidden sm:flex flex-1 min-w-[140px] xl:min-w-[180px] max-w-sm xl:max-w-md 2xl:max-w-xl mx-2 xl:mx-4">
+          <div ref={desktopSearchContainerRef} className="hidden sm:flex flex-1 min-w-[140px] xl:min-w-[180px] max-w-sm xl:max-w-md 2xl:max-w-xl mx-2 xl:mx-4 relative">
             <div className="w-full relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#d4d5d9] rounded-sm transition-all px-3 sm:px-3.5 2xl:px-4 py-2 sm:py-2.5">
               <Search className="w-4 h-4 text-[#696e79] shrink-0 mr-2 xl:mr-2.5" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') onNavigateToShop();
+                onChange={(e) => {
+                  onSearchChange(e.target.value);
+                  setDesktopSuggestionsOpen(true);
+                  setSelectedIndex(-1);
                 }}
+                onFocus={() => {
+                  setDesktopSuggestionsOpen(true);
+                }}
+                onKeyDown={handleKeyDown}
                 placeholder="Search Shankha, Pola, Gold Badhano, Loha..."
                 className="w-full text-xs sm:text-[13px] text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
               />
               {searchQuery && (
                 <button
-                  onClick={() => onSearchChange('')}
+                  onClick={() => {
+                    onSearchChange('');
+                    setSelectedIndex(-1);
+                    searchInputRef.current?.focus();
+                  }}
                   className="text-[#696e79] hover:text-[#282c3f] p-0.5"
                   title="Clear search"
                 >
@@ -214,6 +443,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
             </div>
+
+            <SearchSuggestionsDropdown
+              isOpen={desktopSuggestionsOpen}
+              query={searchQuery}
+              matchedCategories={matchedCategories}
+              matchedProducts={displayedProducts}
+              totalProductMatches={matchedProducts.length}
+              recentSearches={recentSearches}
+              popularSearches={POPULAR_SEARCHES}
+              selectedIndex={selectedIndex}
+              currencySymbol={currencySymbol || (currentCurrency === 'INR' ? '₹' : currentCurrency)}
+              onSelectCategory={handleSelectCategory}
+              onSelectProduct={handleSelectProduct}
+              onSearchSubmit={handleSearchSubmit}
+              onSelectRecentSearch={(term) => {
+                onSearchChange(term);
+                handleSearchSubmit(term);
+              }}
+              onRemoveRecentSearch={handleRemoveRecentSearch}
+              onClearAllRecentSearches={handleClearAllRecentSearches}
+              onClose={() => setDesktopSuggestionsOpen(false)}
+            />
           </div>
 
           {/* RIGHT: ICON + TEXT BUTTONS (Profile, Wishlist, Bag - Fully protected from clipping) */}
@@ -383,22 +634,32 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* MOBILE FULL-WIDTH SEARCH BAR (Cleanly placed below top bar so icons never overflow) */}
-      <div className="sm:hidden px-3 pb-2 pt-0.5 border-t border-gray-100">
+      <div ref={mobileSearchContainerRef} className="sm:hidden px-3 pb-2 pt-0.5 border-t border-gray-100 relative">
         <div className="relative flex items-center bg-[#f5f5f6] hover:bg-[#eaeaec] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#ff3e6c] rounded-md transition-all px-3 py-1.5">
           <Search className="w-3.5 h-3.5 text-[#696e79] shrink-0 mr-2" />
           <input
+            ref={mobileSearchInputRef}
             type="text"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') onNavigateToShop();
+            onChange={(e) => {
+              onSearchChange(e.target.value);
+              setMobileSuggestionsOpen(true);
+              setSelectedIndex(-1);
             }}
+            onFocus={() => {
+              setMobileSuggestionsOpen(true);
+            }}
+            onKeyDown={handleKeyDown}
             placeholder="Search for jewellery, rings, gold..."
             className="w-full text-xs text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
           />
           {searchQuery && (
             <button
-              onClick={() => onSearchChange('')}
+              onClick={() => {
+                onSearchChange('');
+                setSelectedIndex(-1);
+                mobileSearchInputRef.current?.focus();
+              }}
               className="text-[#696e79] hover:text-[#282c3f] p-0.5"
               title="Clear search"
             >
@@ -406,6 +667,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
         </div>
+
+        <SearchSuggestionsDropdown
+          isOpen={mobileSuggestionsOpen}
+          query={searchQuery}
+          matchedCategories={matchedCategories}
+          matchedProducts={displayedProducts}
+          totalProductMatches={matchedProducts.length}
+          recentSearches={recentSearches}
+          popularSearches={POPULAR_SEARCHES}
+          selectedIndex={selectedIndex}
+          currencySymbol={currencySymbol || (currentCurrency === 'INR' ? '₹' : currentCurrency)}
+          onSelectCategory={handleSelectCategory}
+          onSelectProduct={handleSelectProduct}
+          onSearchSubmit={handleSearchSubmit}
+          onSelectRecentSearch={(term) => {
+            onSearchChange(term);
+            handleSearchSubmit(term);
+          }}
+          onRemoveRecentSearch={handleRemoveRecentSearch}
+          onClearAllRecentSearches={handleClearAllRecentSearches}
+          onClose={() => setMobileSuggestionsOpen(false)}
+        />
       </div>
 
       {/* LEFT-SIDE SLIDING NAVIGATION DRAWER */}

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { subscribeNewsletterInDb, getNewsletterSubscribersFromDb } from '../../src/db/helpers';
+import { sendEmailWithResend, buildNewsletterWelcomeEmailHtml } from '../services/resend';
 
 export const newsletterRouter = Router();
 
@@ -13,6 +14,19 @@ newsletterRouter.post('/subscribe', async (req: Request, res: Response) => {
 
     const cleanEmail = email.trim().toLowerCase();
     await subscribeNewsletterInDb(cleanEmail);
+
+    // Send luxury welcome email via Resend
+    try {
+      const welcomeHtml = buildNewsletterWelcomeEmailHtml(cleanEmail);
+      sendEmailWithResend({
+        to: cleanEmail,
+        subject: '⚜️ Welcome to NaxtTo Atelier Privé – Fine Jewellery Digest',
+        html: welcomeHtml,
+        text: `Welcome to NaxtTo Atelier Privé. Your subscription is active. Receive exclusive previews on handcrafted heritage jewellery.`
+      }).catch(err => console.warn('Newsletter welcome dispatch notice:', err));
+    } catch (mailErr) {
+      console.warn('Newsletter welcome email error:', mailErr);
+    }
 
     res.json({
       success: true,
@@ -36,4 +50,3 @@ newsletterRouter.get('/subscribers', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch subscribers' });
   }
 });
-

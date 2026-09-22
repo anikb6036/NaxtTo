@@ -1332,6 +1332,13 @@ export default function App() {
             currentCurrency={currency}
             onChangeCurrency={setCurrency}
             user={user}
+            products={products}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setCurrentView('product-detail');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            currencySymbol={currencySymbol}
             searchQuery={filterOptions.searchQuery}
             onSearchChange={(query) => {
               setFilterOptions(prev => ({ ...prev, searchQuery: query }));

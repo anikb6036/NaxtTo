@@ -431,6 +431,83 @@ export const apiClient = {
       console.warn('API resetHeroBanners fallback:', err);
       return null;
     }
+  },
+
+  // Resend.com Mail Service Integration
+  async getResendStatus(): Promise<{
+    success: boolean;
+    service: string;
+    configured: boolean;
+    provider: 'resend' | 'resend-simulated';
+    fromEmail: string;
+    documentation: string;
+    message: string;
+  } | null> {
+    try {
+      const res = await fetch('/api/notifications/resend-status');
+      if (!res.ok) throw new Error('Failed to query Resend status');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getResendStatus fallback:', err);
+      return null;
+    }
+  },
+
+  async sendTestEmail(to: string, customMessage?: string): Promise<any> {
+    try {
+      const res = await fetch('/api/notifications/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, customMessage })
+      });
+      return await res.json();
+    } catch (err: any) {
+      console.warn('API sendTestEmail error:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  async sendOrderShippedNotification(payload: any): Promise<any> {
+    try {
+      const res = await fetch('/api/notifications/order-shipped', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err: any) {
+      console.warn('API sendOrderShippedNotification error:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  async sendOrderConfirmedNotification(payload: any): Promise<any> {
+    try {
+      const res = await fetch('/api/notifications/order-confirmed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err: any) {
+      console.warn('API sendOrderConfirmedNotification error:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  async getEmailLogs(orderId?: string): Promise<any[]> {
+    try {
+      const url = orderId 
+        ? `/api/notifications/logs?orderId=${encodeURIComponent(orderId)}` 
+        : '/api/notifications/logs';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch email logs');
+      const data = await res.json();
+      return data.data || [];
+    } catch (err) {
+      console.warn('API getEmailLogs error:', err);
+      return [];
+    }
   }
 };
 

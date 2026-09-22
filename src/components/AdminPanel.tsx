@@ -58,6 +58,7 @@ import { SecurityAuditView } from './admin/SecurityAuditView';
 import { WowDealsEditorView } from './admin/WowDealsEditorView';
 import { TopRatedEditorView } from './admin/TopRatedEditorView';
 import { HeroBannerEditorView } from './admin/HeroBannerEditorView';
+import { ResendMailServiceView } from './admin/ResendMailServiceView';
 import { apiClient } from '../services/api';
 
 interface AdminPanelProps {
@@ -468,6 +469,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   orders={orders}
                   onUpdateOrderStatus={onUpdateOrderStatus}
                   currencySymbol={currencySymbol}
+                />
+              )}
+
+              {adminTab === 'email_service' && (
+                <ResendMailServiceView
+                  orders={orders}
+                  adminEmail="baidyaanik18@gmail.com"
                 />
               )}
 

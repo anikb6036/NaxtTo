@@ -198,6 +198,8 @@ export interface EmailNotification {
   trackingUrl?: string;
   status: 'sent' | 'delivered' | 'pending';
   simulatedProvider?: string;
+  provider?: 'resend' | 'resend-simulated' | string;
+  resendId?: string;
 }
 
 export interface UserProfile {

@@ -236,8 +236,7 @@ export async function triggerShippedEmailNotification(
 
     // 2. Resolve recipient email & name
     const recipientEmail = order.customerEmail || 
-      order.shippingAddress?.email || 
-      (order.userId && order.userId !== 'guest' ? undefined : undefined) ||
+      (order.shippingAddress as any)?.email || 
       'patron@naxtto.shop';
 
     const recipientName = order.shippingAddress?.fullName || 'Valued Patron';
@@ -264,12 +263,13 @@ export async function triggerShippedEmailNotification(
       trackingNumber,
       trackingUrl,
       status: 'delivered',
-      simulatedProvider: 'Firebase Cloud Functions & Atelier Mailer'
+      provider: 'resend',
+      simulatedProvider: 'Resend Mail Service'
     };
 
-    // 4. Send to backend endpoint for server-side dispatch logging & SMTP/mock handling
+    // 4. Send to backend endpoint for Resend email dispatch & logging
     try {
-      await fetch('/api/notifications/order-shipped', {
+      const res = await fetch('/api/notifications/order-shipped', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -283,9 +283,31 @@ export async function triggerShippedEmailNotification(
           trackingNumber,
           previousStatus,
           currentStatus: order.status,
+          items: (order.items || []).map(i => ({
+            name: i.product?.name || 'Artisanal Jewellery Piece',
+            quantity: i.quantity || 1,
+            price: i.product?.price,
+            size: i.selectedSize
+          })),
+          total: order.total,
+          currencySymbol: '₹',
+          shippingAddress: order.shippingAddress,
           sentAt
         })
       });
+
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData?.data?.provider) {
+          notification.provider = resData.data.provider;
+          notification.simulatedProvider = resData.data.provider === 'resend' 
+            ? 'Resend.com Live Mail Service' 
+            : 'Resend (Simulated Mode)';
+        }
+        if (resData?.data?.messageId) {
+          notification.resendId = resData.data.messageId;
+        }
+      }
     } catch (apiErr) {
       console.warn('Backend email API notice (falling back to client mock delivery):', apiErr);
     }

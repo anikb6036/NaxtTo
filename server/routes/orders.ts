@@ -1,6 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { getAllOrders, createOrderInDb, updateOrderStatusInDb } from '../../src/db/helpers';
 import { Order } from '../../src/types';
+import { 
+  sendEmailWithResend, 
+  buildOrderConfirmationEmailHtml, 
+  buildShippedEmailHtml 
+} from '../services/resend';
 
 export const ordersRouter = Router();
 
@@ -36,16 +41,18 @@ ordersRouter.post('/', async (req: Request, res: Response) => {
       shippingAddress, 
       trackingNumber,
       paymentMethod,
-      estimatedDelivery
+      estimatedDelivery,
+      customerEmail
     } = req.body;
 
     const orderItems = items || [];
     const finalTotal = total ?? totalAmount ?? 0;
     const orderId = id || `NXT-${Date.now().toString().slice(-6)}`;
+    const resolvedOrderNumber = orderNumber || orderId;
 
     const newOrder: Order = {
       id: orderId,
-      orderNumber: orderNumber || orderId,
+      orderNumber: resolvedOrderNumber,
       date: date || new Date().toISOString().split('T')[0],
       status: status || 'Confirmed',
       items: orderItems,
@@ -54,6 +61,7 @@ ordersRouter.post('/', async (req: Request, res: Response) => {
       discount: discount ?? 0,
       tax: tax ?? 0,
       total: finalTotal,
+      customerEmail: customerEmail || (shippingAddress as any)?.email,
       shippingAddress: shippingAddress || {
         fullName: 'Patron of the Atelier',
         addressLine1: 'Via Montenapoleone 8',
@@ -70,6 +78,36 @@ ordersRouter.post('/', async (req: Request, res: Response) => {
 
     const saved = await createOrderInDb(newOrder);
 
+    // Send Order Confirmation Receipt via Resend.com
+    const recipientEmail = customerEmail || (newOrder.shippingAddress as any)?.email;
+    if (recipientEmail && recipientEmail.includes('@')) {
+      try {
+        const confirmHtml = buildOrderConfirmationEmailHtml({
+          orderNumber: resolvedOrderNumber,
+          recipientName: newOrder.shippingAddress?.fullName || 'Valued Patron',
+          total: finalTotal,
+          items: (orderItems || []).map((i: any) => ({
+            name: i.product?.name || 'Artisanal Jewellery Piece',
+            quantity: i.quantity || 1,
+            price: i.product?.price,
+            size: i.selectedSize
+          })),
+          paymentMethod: newOrder.paymentMethod,
+          estimatedDelivery: newOrder.estimatedDelivery,
+          shippingAddress: newOrder.shippingAddress
+        });
+
+        sendEmailWithResend({
+          to: recipientEmail,
+          subject: `💎 Order Confirmation: Consignment #${resolvedOrderNumber} – NaxtTo Fine Jewellery`,
+          html: confirmHtml,
+          text: `Thank you for your order #${resolvedOrderNumber}. Total: ₹${finalTotal.toLocaleString('en-IN')}. We are preparing your jewellery piece.`
+        }).catch(err => console.warn('Resend order confirmation dispatch warning:', err));
+      } catch (mailErr) {
+        console.warn('Error constructing order confirmation email:', mailErr);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Order created successfully and registered in atelier ledger',
@@ -83,7 +121,7 @@ ordersRouter.post('/', async (req: Request, res: Response) => {
 // PATCH /api/orders/:id/status - update status
 ordersRouter.patch('/:id/status', async (req: Request, res: Response) => {
   try {
-    const { status } = req.body;
+    const { status, carrier, trackingNumber, customerEmail } = req.body;
     if (!status) {
       return res.status(400).json({ success: false, message: 'Status field is required' });
     }
@@ -102,15 +140,52 @@ ordersRouter.patch('/:id/status', async (req: Request, res: Response) => {
     const isToShipped = status === 'Shipped' || status === 'Dispatched';
 
     if (isFromProcessing && isToShipped) {
-      const recipient = existing?.customerEmail || (existing?.shippingAddress as any)?.email || 'patron@naxtto.shop';
-      console.log(`[BACKEND TRIGGER] Order #${req.params.id} transitioned from '${previousStatus}' to '${status}'. Triggering Shipped email notification to ${recipient}`);
-      emailDispatched = true;
-      emailNotice = {
-        recipient,
-        subject: `✨ Your NaxtTo Atelier Consignment #${existing?.orderNumber || req.params.id} has been Shipped`,
-        carrier: 'Blue Dart Apex Secure Armored Transit',
-        trackingNumber: existing?.trackingNumber || `TRACK-NXT-${req.params.id}`
-      };
+      const recipient = customerEmail || existing?.customerEmail || (existing?.shippingAddress as any)?.email || 'patron@naxtto.shop';
+      const orderNum = existing?.orderNumber || req.params.id;
+      const resolvedCarrier = carrier || 'Blue Dart Apex Secure Armored Transit';
+      const resolvedTracking = trackingNumber || existing?.trackingNumber || `TRACK-NXT-${req.params.id}`;
+      const trackingUrl = `https://naxtto.shop/account?tab=orders&tracking=${encodeURIComponent(resolvedTracking)}`;
+
+      console.log(`[BACKEND RESEND TRIGGER] Order #${req.params.id} transitioned from '${previousStatus}' to '${status}'. Triggering Shipped email via Resend to ${recipient}`);
+
+      try {
+        const shippedHtml = buildShippedEmailHtml({
+          orderNumber: orderNum,
+          recipientName: existing?.shippingAddress?.fullName || 'Valued Patron',
+          carrier: resolvedCarrier,
+          trackingNumber: resolvedTracking,
+          trackingUrl,
+          items: (existing?.items || []).map((i: any) => ({
+            name: i.product?.name || 'Artisanal Jewellery Piece',
+            quantity: i.quantity || 1,
+            price: i.product?.price,
+            size: i.selectedSize
+          })),
+          total: existing?.total,
+          currencySymbol: '₹',
+          shippingAddress: existing?.shippingAddress
+        });
+
+        const resendRes = await sendEmailWithResend({
+          to: recipient,
+          subject: `✨ Your NaxtTo Atelier Consignment #${orderNum} has been Shipped`,
+          html: shippedHtml,
+          text: `Your NaxtTo consignment #${orderNum} has been shipped via ${resolvedCarrier}. Tracking: ${resolvedTracking}. Track at ${trackingUrl}`
+        });
+
+        emailDispatched = resendRes.success;
+        emailNotice = {
+          recipient,
+          subject: `✨ Your NaxtTo Atelier Consignment #${orderNum} has been Shipped`,
+          carrier: resolvedCarrier,
+          trackingNumber: resolvedTracking,
+          provider: resendRes.provider,
+          messageId: resendRes.messageId,
+          error: resendRes.error
+        };
+      } catch (err: any) {
+        console.warn('Resend consignment dispatch warning:', err);
+      }
     }
 
     res.json({
