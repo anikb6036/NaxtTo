@@ -23,12 +23,12 @@ import {
 import { Navbar } from './components/Navbar';
 import { MyntraCouponStrip } from './components/MyntraCouponStrip';
 import { MyntraHeroBanner } from './components/MyntraHeroBanner';
-import { MyntraWowDeals, DEFAULT_WOW_DEALS } from './components/MyntraWowDeals';
+import { DEFAULT_WOW_DEALS } from './components/MyntraWowDeals';
 import { MyntraSideRibbon } from './components/MyntraSideRibbon';
 import { MyntraNotificationFab } from './components/MyntraNotificationFab';
 import { CategoryNavStrip } from './components/CategoryNavStrip';
 import { DealsCarousel } from './components/DealsCarousel';
-import { TopRatedSection, DEFAULT_TOP_RATED_ITEMS } from './components/TopRatedSection';
+import { DEFAULT_TOP_RATED_ITEMS } from './components/TopRatedSection';
 import { FlashSaleBanner } from './components/FlashSaleBanner';
 import { QuickServicesStrip } from './components/QuickServicesStrip';
 import { HeroSection, DEFAULT_HERO_SLIDES } from './components/HeroSection';
@@ -1542,41 +1542,6 @@ export default function App() {
               setFilterOptions(prev => ({ ...prev, category: cat }));
               scrollToCatalog();
             }}
-          />
-
-          {/* Myntra WOW DEALS (Matches Screenshot: Big Brands, Even Bigger Savings) */}
-          <MyntraWowDeals
-            deals={wowDeals}
-            headline={wowDealsHeader.headline}
-            subheadline={wowDealsHeader.subheadline}
-            emoji={wowDealsHeader.emoji}
-            onSelectCategory={(cat) => {
-              setSelectedProduct(null);
-              setCurrentView('shop');
-              setFilterOptions(prev => ({ ...prev, category: cat }));
-              scrollToCatalog();
-            }}
-            onExploreCatalog={scrollToCatalog}
-          />
-
-          {/* Curated Top Rated Section */}
-          <TopRatedSection
-            products={products}
-            items={topRatedItems}
-            headline={topRatedHeader.headline}
-            subheadline={topRatedHeader.subheadline}
-            buttonText={topRatedHeader.buttonText}
-            onSelectProduct={(p) => {
-              setSelectedProduct(p);
-              setCurrentView('product-detail');
-              window.scrollTo(0, 0);
-            }}
-            onSelectCategory={(cat) => {
-              setFilterOptions({ ...filterOptions, category: cat });
-              scrollToCatalog();
-            }}
-            onExploreCatalog={scrollToCatalog}
-            currencySymbol={currencySymbol}
           />
 
           {/* Flash Sale Banner Strip with Live Countdown */}
