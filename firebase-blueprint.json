@@ -59,6 +59,16 @@
       },
       "required": ["id", "name", "price"]
     },
+    "DeletedProduct": {
+      "title": "DeletedProduct",
+      "description": "Tombstone log of pieces permanently purged from catalog across all devices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "deletedAt": { "type": "string" }
+      },
+      "required": ["id", "deletedAt"]
+    },
     "NewsletterSubscriber": {
       "title": "NewsletterSubscriber",
       "description": "Atelier newsletter subscriber",

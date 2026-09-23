@@ -71,15 +71,30 @@ import {
   subscribeToAllOrders,
   saveProductToFirestore,
   deleteProductFromFirestore,
-  subscribeToAllProducts
+  subscribeToAllProducts,
+  getDeletedProductIds,
+  recordProductDeletion,
+  subscribeToDeletedProducts
 } from './utils/userStorage';
 import { parseRouteFromLocation, syncBrowserUrl, AppView } from './utils/routes';
 
 export default function App() {
-  // 1. Core State & Local Persistence (Empty by default)
+  // 1. Core State & Local Persistence (Filtered by deleted product tombstones)
   const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('naxtto_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    try {
+      const deletedIds = getDeletedProductIds();
+      const deletedSet = new Set(deletedIds);
+      const saved = localStorage.getItem('naxtto_products');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p: Product) => !deletedSet.has(p.id));
+        }
+      }
+      return INITIAL_PRODUCTS.filter(p => !deletedSet.has(p.id));
+    } catch {
+      return INITIAL_PRODUCTS;
+    }
   });
 
   const [user, setUser] = useState<UserProfile>(() => {
@@ -397,11 +412,14 @@ export default function App() {
   useEffect(() => {
     // 1. Fetch initial products from backend (Supabase / Postgres)
     apiClient.getProducts().then((serverProds) => {
-      if (Array.isArray(serverProds) && serverProds.length > 0) {
+      if (Array.isArray(serverProds)) {
+        const deletedSet = new Set(getDeletedProductIds());
+        const validServerProds = serverProds.filter(p => !deletedSet.has(p.id));
         setProducts(prev => {
+          const currentDeleted = new Set(getDeletedProductIds());
           const map = new Map<string, Product>();
-          prev.forEach(p => map.set(p.id, p));
-          serverProds.forEach(p => map.set(p.id, p));
+          prev.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
+          validServerProds.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
           const merged = Array.from(map.values());
           try {
             localStorage.setItem('naxtto_products', JSON.stringify(merged));
@@ -413,11 +431,14 @@ export default function App() {
 
     // 2. Real-time Firestore cloud products listener
     const unsubProds = subscribeToAllProducts((remoteProds) => {
-      if (remoteProds && remoteProds.length > 0) {
+      if (remoteProds) {
+        const deletedSet = new Set(getDeletedProductIds());
+        const validRemoteProds = remoteProds.filter(p => !deletedSet.has(p.id));
         setProducts(prev => {
+          const currentDeleted = new Set(getDeletedProductIds());
           const map = new Map<string, Product>();
-          prev.forEach(p => map.set(p.id, p));
-          remoteProds.forEach(p => map.set(p.id, p));
+          prev.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
+          validRemoteProds.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
           const merged = Array.from(map.values());
           try {
             localStorage.setItem('naxtto_products', JSON.stringify(merged));
@@ -427,8 +448,33 @@ export default function App() {
       }
     });
 
+    // 3. Real-time Firestore deletion tombstone listener (cross-client sync)
+    const unsubDeleted = subscribeToDeletedProducts((deletedIds) => {
+      if (deletedIds && deletedIds.length > 0) {
+        const deletedSet = new Set(deletedIds);
+        setProducts(prev => prev.filter(p => !deletedSet.has(p.id)));
+        setCartItems(prev => prev.filter(item => !deletedSet.has(item.product?.id)));
+        setWishlistItems(prev => prev.filter(item => !deletedSet.has(item.product?.id)));
+        setSelectedProduct(prev => (prev && deletedSet.has(prev.id) ? null : prev));
+      }
+    });
+
+    // 4. In-window local deletion custom event listener
+    const handleLocalProductDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent<{ productId: string }>;
+      const pId = customEvent.detail?.productId;
+      if (!pId) return;
+      setProducts(prev => prev.filter(p => p.id !== pId));
+      setCartItems(prev => prev.filter(item => item.product?.id !== pId));
+      setWishlistItems(prev => prev.filter(item => item.product?.id !== pId));
+      setSelectedProduct(prev => (prev?.id === pId ? null : prev));
+    };
+    window.addEventListener('naxtto_product_deleted', handleLocalProductDeleted);
+
     return () => {
       unsubProds();
+      unsubDeleted();
+      window.removeEventListener('naxtto_product_deleted', handleLocalProductDeleted);
     };
   }, []);
 
@@ -1239,19 +1285,60 @@ export default function App() {
   };
 
   const handleDeleteProduct = (productId: string) => {
+    // 1. Record deletion tombstone in local storage and scrub all saved carts/wishlists
+    recordProductDeletion(productId);
+
+    // 2. Remove product from products state
     setProducts(prev => {
       const updated = prev.filter(p => p.id !== productId);
       try { localStorage.setItem('naxtto_products', JSON.stringify(updated)); } catch {}
       return updated;
     });
+
+    // 3. Remove product from current Cart / Shopping Bag
+    setCartItems(prev => {
+      const updated = prev.filter(item => item.product?.id !== productId);
+      const key = getUserStorageKey(user);
+      if (user?.isLoggedIn && key) {
+        saveUserCart(key, updated);
+        syncUserDataToFirestore(key, updated, wishlistItemsRef.current, user.savedAddresses, user);
+      }
+      return updated;
+    });
+
+    // 4. Remove product from current Wishlist
+    setWishlistItems(prev => {
+      const updated = prev.filter(item => item.product?.id !== productId);
+      const key = getUserStorageKey(user);
+      if (user?.isLoggedIn && key) {
+        saveUserWishlist(key, updated);
+        syncUserDataToFirestore(key, cartItemsRef.current, updated, user.savedAddresses, user);
+      }
+      return updated;
+    });
+
+    // 5. Close Product Detail Page if viewing this piece
     if (selectedProduct && selectedProduct.id === productId) {
       setSelectedProduct(null);
       setCurrentView('shop');
     }
-    // Multi-tier persistence: Firestore + Supabase + Postgres
+
+    // 6. Clean up WOW Deals / Top Rated showcases if they reference this product
+    setWowDeals(prev => {
+      const updated = prev.filter(deal => deal.id !== productId && (deal as any).productId !== productId);
+      try { localStorage.setItem('naxtto_wow_deals', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    setTopRatedItems(prev => {
+      const updated = prev.filter(item => item.id !== productId && (item as any).productId !== productId);
+      try { localStorage.setItem('naxtto_top_rated_items', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    // 7. Multi-tier persistence: Firestore cloud tombstone + Supabase + Postgres + backend memory
     deleteProductFromFirestore(productId);
     apiClient.deleteProduct(productId);
-    showToast('Piece removed from Atelier collection.');
+    showToast('Piece permanently removed from catalog, shopping bag, and wishlist.');
   };
 
   const handleUpdateOrderStatus = (orderId: string, newStatus: Order['status']) => {

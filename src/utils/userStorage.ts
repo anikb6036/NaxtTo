@@ -1023,14 +1023,103 @@ export async function saveProductToFirestore(product: Product): Promise<void> {
   }
 }
 
+const DELETED_PRODUCTS_KEY = 'naxtto_deleted_product_ids';
+
 /**
- * Remove a product piece from Firestore permanent cloud storage.
+ * Retrieve the set of permanently deleted product IDs from local storage.
+ */
+export function getDeletedProductIds(): string[] {
+  try {
+    const raw = localStorage.getItem(DELETED_PRODUCTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Permanently purge a product everywhere across local storage, shopping bags, wishlists, and cloud records.
+ */
+export function recordProductDeletion(productId: string): void {
+  if (!productId) return;
+  try {
+    // 1. Add to tombstone array in localStorage
+    const current = getDeletedProductIds();
+    if (!current.includes(productId)) {
+      current.push(productId);
+      safeSetItem(DELETED_PRODUCTS_KEY, JSON.stringify(current));
+    }
+
+    // 2. Remove from naxtto_products in localStorage
+    const savedProds = localStorage.getItem('naxtto_products');
+    if (savedProds) {
+      try {
+        const parsed: Product[] = JSON.parse(savedProds);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter(p => p.id !== productId);
+          safeSetItem('naxtto_products', JSON.stringify(filtered));
+        }
+      } catch {}
+    }
+
+    // 3. Remove from all user carts in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('naxtto_user_cart_') || key === 'naxtto_cart' || key === 'naxtto_cart_v2')) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const items: CartItem[] = JSON.parse(raw);
+            if (Array.isArray(items)) {
+              const filtered = items.filter(item => item.product?.id !== productId);
+              safeSetItem(key, JSON.stringify(filtered));
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // 4. Remove from all user wishlists in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('naxtto_user_wishlist_') || key === 'naxtto_wishlist' || key === 'naxtto_wishlist_v2')) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const items: WishlistItem[] = JSON.parse(raw);
+            if (Array.isArray(items)) {
+              const filtered = items.filter(item => item.product?.id !== productId);
+              safeSetItem(key, JSON.stringify(filtered));
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // 5. Dispatch cross-component deletion event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('naxtto_product_deleted', { detail: { productId } }));
+    }
+  } catch (err) {
+    console.warn('Error recording product deletion locally:', err);
+  }
+}
+
+/**
+ * Remove a product piece from Firestore permanent cloud storage and record tombstone.
  */
 export async function deleteProductFromFirestore(productId: string): Promise<void> {
   if (!productId) return;
   try {
     const prodDocRef = doc(firestore, 'products', productId);
     await deleteDoc(prodDocRef);
+
+    // Also record tombstone so real-time listeners across clients know this item was permanently purged
+    const tombstoneRef = doc(firestore, 'deleted_products', productId);
+    await setDoc(tombstoneRef, {
+      id: productId,
+      deletedAt: new Date().toISOString()
+    });
   } catch (err) {
     console.warn('Failed to delete product from Firestore:', err);
   }
@@ -1043,12 +1132,14 @@ export function subscribeToAllProducts(callback: (products: Product[]) => void):
   try {
     const prodsCol = collection(firestore, 'products');
     return onSnapshot(prodsCol, (snapshot) => {
+      const deletedSet = new Set(getDeletedProductIds());
       const prodsList: Product[] = [];
       snapshot.forEach((docSnap) => {
         const d = docSnap.data();
-        if (d && d.name && d.price) {
+        const pId = d.id || docSnap.id;
+        if (d && d.name && d.price && !deletedSet.has(pId)) {
           prodsList.push({
-            id: d.id || docSnap.id,
+            id: pId,
             name: d.name,
             subtitle: d.subtitle || undefined,
             price: Number(d.price) || 0,
@@ -1086,6 +1177,31 @@ export function subscribeToAllProducts(callback: (products: Product[]) => void):
     });
   } catch (err) {
     console.warn('Firestore products subscription init failed:', err);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time subscription to cloud-level deleted product tombstones.
+ */
+export function subscribeToDeletedProducts(callback: (deletedIds: string[]) => void): () => void {
+  try {
+    const colRef = collection(firestore, 'deleted_products');
+    return onSnapshot(colRef, (snapshot) => {
+      const ids: string[] = [];
+      snapshot.forEach(docSnap => {
+        ids.push(docSnap.id);
+      });
+      if (ids.length > 0) {
+        const current = getDeletedProductIds();
+        const combined = Array.from(new Set([...current, ...ids]));
+        safeSetItem(DELETED_PRODUCTS_KEY, JSON.stringify(combined));
+        callback(combined);
+      }
+    }, (error) => {
+      console.warn('Deleted products snapshot notice:', error);
+    });
+  } catch {
     return () => {};
   }
 }

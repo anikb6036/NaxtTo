@@ -134,8 +134,10 @@ export const MasterCatalogView: React.FC<MasterCatalogViewProps> = ({
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
+                    id={`delete-product-${p.id}`}
                     onClick={() => onDeleteProduct(p.id)}
-                    title="Delete Piece"
+                    title="Delete Piece Everywhere"
+                    aria-label={`Delete ${p.name} everywhere`}
                     className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

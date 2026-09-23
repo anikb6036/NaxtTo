@@ -543,9 +543,11 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
                           
                           <button
                             type="button"
+                            id={`delete-listing-btn-${prod.id}`}
                             onClick={() => onDeleteProduct(prod.id)}
-                            className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition-colors"
-                            title="Remove Piece"
+                            className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
+                            title="Delete Piece Everywhere"
+                            aria-label={`Delete ${prod.name} everywhere`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

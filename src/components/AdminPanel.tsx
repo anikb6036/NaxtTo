@@ -20,7 +20,8 @@ import {
   Crown,
   Store,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import { 
   Product, 
@@ -150,11 +151,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [labelOrder, setLabelOrder] = useState<Order | null>(null);
 
+  // Piece pending permanent catalog-wide deletion
+  const [productPendingDelete, setProductPendingDelete] = useState<Product | null>(null);
+
   // Toast notifications
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleRequestDeleteProduct = (productId: string) => {
+    const prod = products.find(p => p.id === productId);
+    if (prod) {
+      setProductPendingDelete(prod);
+    } else {
+      onDeleteProduct(productId);
+      showToast('Piece removed from catalog.');
+    }
+  };
+
+  const handleConfirmDeleteProduct = () => {
+    if (productPendingDelete) {
+      onDeleteProduct(productPendingDelete.id);
+      showToast(`"${productPendingDelete.name}" permanently deleted from catalog everywhere.`);
+      setProductPendingDelete(null);
+    }
   };
 
   // State for Users and Sellers accounts
@@ -423,7 +445,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   products={products}
                   onAddProduct={onAddProduct}
                   onUpdateProduct={onUpdateProduct}
-                  onDeleteProduct={onDeleteProduct}
+                  onDeleteProduct={handleRequestDeleteProduct}
                   currencySymbol={currencySymbol}
                 />
               )}
@@ -580,12 +602,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 products={products}
                 onAddNewListing={handleAddNewListing}
                 onEditProduct={handleStartEdit}
-                onDeleteProduct={(id) => {
-                  if (confirm('Are you sure you want to remove this listing?')) {
-                    onDeleteProduct(id);
-                    showToast('Listing removed successfully');
-                  }
-                }}
+                onDeleteProduct={handleRequestDeleteProduct}
                 currencySymbol={currencySymbol}
               />
             ) : activeNavTab === 'orders' ? (
@@ -800,6 +817,78 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           onClose={() => setLabelOrder(null)}
           currencySymbol={currencySymbol}
         />
+      )}
+
+      {/* Permanent Delete Everywhere Confirmation Modal */}
+      {productPendingDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-rose-100 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Delete Piece Everywhere?</h3>
+                <p className="text-xs text-gray-500">Permanent removal from catalog, bag, and wishlist</p>
+              </div>
+            </div>
+
+            {/* Product Snapshot Card */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+              <img
+                src={productPendingDelete.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80'}
+                alt={productPendingDelete.name}
+                className="w-14 h-14 rounded-lg object-cover bg-white border border-gray-200 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold text-gray-900 truncate">{productPendingDelete.name}</h4>
+                <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                  ID: {productPendingDelete.id} • {productPendingDelete.category}
+                </p>
+                <p className="text-xs font-semibold text-rose-600 mt-1">
+                  {currencySymbol}{productPendingDelete.price.toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+
+            {/* Deletion Scope Checklist */}
+            <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-100/70 text-[11px] text-gray-700 space-y-1.5">
+              <p className="font-semibold text-rose-900">Confirming this deletion will immediately:</p>
+              <div className="flex items-center gap-2 text-rose-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span>Remove listing from Storefront, Categories, and Master Catalog</span>
+              </div>
+              <div className="flex items-center gap-2 text-rose-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span>Purge this item from all active Shopping Bags &amp; Wishlists</span>
+              </div>
+              <div className="flex items-center gap-2 text-rose-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span>Permanently wipe piece from database and Firestore cloud sync</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setProductPendingDelete(null)}
+                className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="confirm-delete-everywhere-btn"
+                onClick={handleConfirmDeleteProduct}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Everywhere</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

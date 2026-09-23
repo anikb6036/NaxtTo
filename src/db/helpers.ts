@@ -18,6 +18,7 @@ import {
 let inMemoryProducts: Product[] = [...INITIAL_PRODUCTS];
 const inMemoryOrders: Order[] = [];
 const inMemorySubscribers: { id: string; email: string; subscribedAt: Date }[] = [];
+const deletedProductIds = new Set<string>();
 
 export async function seedProductsIfEmpty(): Promise<void> {
   if (!db) return;
@@ -25,6 +26,7 @@ export async function seedProductsIfEmpty(): Promise<void> {
     const existing = await db.select().from(products).limit(1);
     if (existing.length === 0) {
       for (const prod of INITIAL_PRODUCTS) {
+        if (deletedProductIds.has(prod.id)) continue;
         await db.insert(products).values({
           id: prod.id,
           name: prod.name,
@@ -66,8 +68,9 @@ export async function getAllProducts(): Promise<Product[]> {
     if (isSupabaseConfigured()) {
       const sbProducts = await fetchProductsFromSupabase();
       if (sbProducts && sbProducts.length > 0) {
-        inMemoryProducts = sbProducts;
-        return sbProducts;
+        const filtered = sbProducts.filter(p => !deletedProductIds.has(p.id));
+        inMemoryProducts = filtered;
+        return filtered;
       }
     }
 
@@ -103,27 +106,30 @@ export async function getAllProducts(): Promise<Product[]> {
           availableSizes: (r.availableSizes as string[]) || [],
           availableFinishes: (r.availableFinishes as any[]) || [],
           reviews: (r.reviews as any[]) || []
-        }));
+        })).filter(p => !deletedProductIds.has(p.id));
         inMemoryProducts = parsed;
         return parsed;
       }
     }
 
     // 3. Fallback to in-memory store
-    return inMemoryProducts.length > 0 ? inMemoryProducts : INITIAL_PRODUCTS;
+    const list = inMemoryProducts.length > 0 ? inMemoryProducts : INITIAL_PRODUCTS;
+    return list.filter(p => !deletedProductIds.has(p.id));
   } catch (error) {
     console.error('Failed to get products from database:', error);
-    return inMemoryProducts.length > 0 ? inMemoryProducts : INITIAL_PRODUCTS;
+    const list = inMemoryProducts.length > 0 ? inMemoryProducts : INITIAL_PRODUCTS;
+    return list.filter(p => !deletedProductIds.has(p.id));
   }
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  if (deletedProductIds.has(id)) return null;
   try {
     const all = await getAllProducts();
     return all.find(p => p.id === id) || null;
   } catch (error) {
     console.error('Failed to get product by ID:', error);
-    return INITIAL_PRODUCTS.find(p => p.id === id) || null;
+    return INITIAL_PRODUCTS.find(p => p.id === id && !deletedProductIds.has(p.id)) || null;
   }
 }
 
@@ -227,6 +233,7 @@ export async function updateProductInDb(id: string, updates: Partial<Product>): 
 }
 
 export async function deleteProductFromDb(id: string): Promise<boolean> {
+  deletedProductIds.add(id);
   inMemoryProducts = inMemoryProducts.filter(p => p.id !== id);
 
   if (isSupabaseConfigured()) {

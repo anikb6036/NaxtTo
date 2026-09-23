@@ -36,6 +36,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Deleted products tombstone log for catalog-wide deletion sync
+    match /deleted_products/{productId} {
+      allow read, write: if true;
+    }
+
     // Newsletter subscribers
     match /newsletterSubscribers/{subId} {
       allow read, write: if true;
