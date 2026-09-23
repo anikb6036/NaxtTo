@@ -182,7 +182,11 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
       currencySymbol,
       paymentMethod,
       estimatedDelivery,
-      shippingAddress
+      shippingAddress,
+      html: customHtml,
+      subject: customSubject,
+      text: customText,
+      apiKey: customApiKey
     } = req.body;
 
     if (!orderId || !recipientEmail) {
@@ -193,9 +197,9 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
     }
 
     const orderNum = orderNumber || orderId;
-    const subject = `💎 Order Confirmation: Consignment #${orderNum} – NaxtTo Fine Jewellery`;
+    const subject = customSubject || `💎 Order Confirmation: Consignment #${orderNum} – NaxtTo Fine Jewellery`;
 
-    const html = buildOrderConfirmationEmailHtml({
+    const html = customHtml || buildOrderConfirmationEmailHtml({
       orderNumber: orderNum,
       recipientName: recipientName || 'Valued Patron',
       total: total || 0,
@@ -206,11 +210,14 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
       shippingAddress
     });
 
+    const apiKey = (req.headers['x-resend-api-key'] as string) || customApiKey;
+
     const resendResult = await sendEmailWithResend({
       to: recipientEmail,
       subject,
       html,
-      text: `NaxtTo Fine Jewellery Atelier - Order Confirmation #${orderNum}. Total: ${total}. Thank you for your patronage.`
+      text: customText || `NaxtTo Fine Jewellery Atelier - Order Confirmation #${orderNum}. Total: ${total}. Thank you for your patronage.`,
+      apiKey
     });
 
     const logEntry: SentEmailLog = {

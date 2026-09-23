@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ArrowRight, Sparkles, Tag, ChevronRight, History, X, AlertCircle } from 'lucide-react';
+import { Search, ArrowRight, Tag, ChevronRight, History, X, AlertCircle } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 
 export interface CategorySuggestion {
@@ -134,7 +134,6 @@ export const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps>
           {/* Popular / Trending Searches */}
           <div>
             <div className="flex items-center gap-1.5 pb-2 mb-1.5 border-b border-gray-100">
-              <Sparkles className="w-3.5 h-3.5 text-[#ff3e6c]" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#696e79]">
                 Trending Collections &amp; Styles
               </span>
@@ -263,7 +262,6 @@ export const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps>
         <div className="py-2 max-h-[340px] overflow-y-auto">
           <div className="px-3.5 py-1 text-[10.5px] font-extrabold uppercase tracking-wider text-[#696e79] flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-[#ff3e6c]" />
               Matching Jewellery Products
             </span>
             <span className="text-[10px] text-gray-400 font-normal">Direct link to product</span>

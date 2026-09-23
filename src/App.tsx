@@ -51,6 +51,7 @@ import { StaffAuthModal } from './components/StaffAuthModal';
 import { LoginPromptModal } from './components/LoginPromptModal';
 import { Check, Heart, ShoppingBag, ArrowUp } from 'lucide-react';
 import { apiClient } from './services/api';
+import { sendOrderConfirmationEmail } from './services/emailService';
 import {
   getUserStorageKey,
   loadUserCart,
@@ -1021,6 +1022,13 @@ export default function App() {
   // 9. Promo Actions
   const handleApplyPromo = (code: string): boolean => {
     const clean = code.toUpperCase().trim();
+    if (clean.startsWith('NAXTTO-REWARD-') || clean.startsWith('REWARDS-') || clean.startsWith('NAXTTO-REWARDS-')) {
+      const match = clean.match(/\d+/);
+      const amount = match ? parseInt(match[0], 10) : 500;
+      setAppliedPromo({ code: clean, discountPercent: 0, discountAmount: amount });
+      showToast(`₹${amount.toLocaleString('en-IN')} NaxtTo Rewards Voucher Applied`);
+      return true;
+    }
     if (clean === 'NAXTTO10') {
       setAppliedPromo({ code: 'NAXTTO10', discountPercent: 10, discountAmount: 0 });
       showToast('10% Atelier Welcome Discount Applied');
@@ -1133,6 +1141,17 @@ export default function App() {
 
       // Persist directly to Firestore permanent database so all devices and admin see it immediately
       saveOrderToFirestore(newOrder, key || undefined, user.email || undefined);
+
+      // Dispatch transactional 'Order Confirmed' email to customer via Resend using EmailTemplate
+      sendOrderConfirmationEmail(newOrder).then(result => {
+        if (result.success) {
+          console.log(`[EMAIL CONFIRMATION] Successfully sent Order Confirmed email for #${newOrder.orderNumber || newOrder.id} to ${newOrder.customerEmail || 'customer'}`);
+        } else {
+          console.warn('[EMAIL CONFIRMATION] Notice on Order Confirmed email dispatch:', result.message);
+        }
+      }).catch(err => {
+        console.warn('Failed to send Order Confirmed transactional email:', err);
+      });
 
       apiClient.createOrder(newOrder).then(() => {
         refreshOrders();

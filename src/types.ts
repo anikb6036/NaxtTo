@@ -219,6 +219,7 @@ export interface UserProfile {
     ringSize?: string;
     newsletterSubscribed: boolean;
   };
+  rewardPoints?: number;
 }
 
 export interface AdminUserAccount {

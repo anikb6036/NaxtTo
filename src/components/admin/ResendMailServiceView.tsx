@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Order } from '../../types';
 import { apiClient } from '../../services/api';
+import { EmailTemplate, EmailTemplateType } from '../EmailTemplate';
 
 interface ResendMailServiceViewProps {
   orders: Order[];
@@ -69,6 +70,9 @@ export const ResendMailServiceView: React.FC<ResendMailServiceViewProps> = ({
   const [selectedOrderForDispatch, setSelectedOrderForDispatch] = useState<string>(orders[0]?.id || '');
   const [isDispatchingOrderMail, setIsDispatchingOrderMail] = useState<boolean>(false);
   const [orderMailSuccessNotice, setOrderMailSuccessNotice] = useState<string | null>(null);
+
+  // Email template preview state
+  const [previewTemplateType, setPreviewTemplateType] = useState<EmailTemplateType>('order_shipped');
 
   // Email preview modal state
   const [previewHtml, setPreviewHtml] = useState<{ subject: string; recipient: string; id: string } | null>(null);
@@ -521,6 +525,63 @@ export const ResendMailServiceView: React.FC<ResendMailServiceViewProps> = ({
             <span>Automated Triggers: Processing &rarr; Shipped state changes</span>
             <span className="text-emerald-700 font-semibold">Active & Armed</span>
           </div>
+        </div>
+      </div>
+
+      {/* Interactive Responsive Email Template Showcase */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-emerald-600" />
+              <span>Responsive NaxtTo Email Template Component</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Clean, responsive HTML structure tailored for NaxtTo fine jewellery branding, with live Desktop/Mobile viewports and HTML exporter.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={previewTemplateType}
+              onChange={(e) => setPreviewTemplateType(e.target.value as EmailTemplateType)}
+              className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none"
+            >
+              <option value="order_shipped">Template: Consignment Shipped (AWB Tracking)</option>
+              <option value="order_confirmation">Template: Order Confirmation (Invoice)</option>
+              <option value="newsletter_welcome">Template: Atelier Privé Welcome</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 bg-slate-100/70">
+          <EmailTemplate
+            templateType={previewTemplateType}
+            recipientName={orders[0]?.shippingAddress?.fullName || 'Anik Baidya'}
+            orderNumber={orders[0]?.orderNumber || 'NXT-908234'}
+            trackingNumber={orders[0]?.trackingNumber || 'TRACK-NXT-771122'}
+            carrier="Blue Dart Apex Secure Armored Transit"
+            items={(orders[0]?.items || []).length > 0 ? (orders[0]?.items || []).map(i => ({
+              name: i.product?.name || '22K Gold Badhano Shankha-Pola',
+              quantity: i.quantity || 1,
+              price: i.product?.price || 48500,
+              size: i.selectedSize || '2.4'
+            })) : [
+              { name: '22K Gold Badhano Shankha-Pola (Pair)', quantity: 1, price: 48500, size: '2.4' },
+              { name: 'Royal Peacock Mukhi Pola Bangle', quantity: 1, price: 34200, size: '2.4' }
+            ]}
+            total={orders[0]?.total || 82700}
+            shippingAddress={orders[0]?.shippingAddress || {
+              fullName: 'Anik Baidya',
+              addressLine1: 'Park Street, Haute Joaillerie Row',
+              city: 'Kolkata',
+              state: 'West Bengal',
+              postalCode: '700016',
+              country: 'India',
+              phone: '+91 98765 43210'
+            }}
+            showControls={true}
+          />
         </div>
       </div>
 

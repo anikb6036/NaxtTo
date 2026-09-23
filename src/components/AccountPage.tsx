@@ -39,7 +39,11 @@ import {
   Search,
   RefreshCw,
   X,
-  HelpCircle
+  HelpCircle,
+  Award,
+  Crown,
+  Coins,
+  Gift
 } from 'lucide-react';
 import { UserProfile, Order, Address, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
@@ -48,6 +52,7 @@ import { apiClient } from '../services/api';
 import { OrderStatusProgressBar } from './OrderStatusProgressBar';
 import { OrderDetailModal } from './OrderDetailModal';
 import { subscribeToUserOrders, subscribeToSingleOrder, updateOrderStatusInFirestore, saveOrderToFirestore } from '../utils/userStorage';
+import { NaxtToRewardsModule } from './NaxtToRewardsModule';
 
 interface AccountPageProps {
   user: UserProfile;
@@ -73,7 +78,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onSignOut,
   onLoginSuccess
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses' | 'preferences' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'rewards' | 'addresses' | 'preferences' | 'security'>('profile');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userName, setUserName] = useState(user.name);
   const [userEmail, setUserEmail] = useState(user.email);
@@ -290,6 +295,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     });
     return list;
   }, [user.orderHistory, allOrders, realtimeOrders, user.id, user.email]);
+
+  // NaxtTo Rewards: points and tier computation
+  const accumulatedRewardPoints = React.useMemo(() => {
+    if (typeof user.rewardPoints === 'number') {
+      return user.rewardPoints;
+    }
+    const orderPoints = displayOrders.reduce((sum, order) => {
+      if (order.status !== 'Cancelled') {
+        return sum + Math.round((order.total || 0) * 0.05);
+      }
+      return sum;
+    }, 0);
+    return 750 + (orderPoints > 0 ? orderPoints : 1450);
+  }, [user.rewardPoints, displayOrders]);
+
+  const currentRewardsTier = React.useMemo(() => {
+    if (accumulatedRewardPoints >= 10001) return 'VIP Privé';
+    if (accumulatedRewardPoints >= 2501) return 'Atelier Connoisseur';
+    return 'NaxtTo Circle';
+  }, [accumulatedRewardPoints]);
 
   // Handler for live status transitions
   const handleOrderStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
@@ -1510,6 +1535,28 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               </button>
 
               <button
+                id="account-sidebar-rewards-btn"
+                onClick={() => setActiveTab('rewards')}
+                className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
+                  activeTab === 'rewards' 
+                    ? 'bg-[#E56A85] hover:bg-[#D45974] text-white font-semibold shadow-xs' 
+                    : 'text-[#1d1d1f] hover:bg-[#f5f5f7]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Award className="w-4 h-4" />
+                  <span>NaxtTo Rewards</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  activeTab === 'rewards' 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                }`}>
+                  {accumulatedRewardPoints.toLocaleString('en-IN')} pts
+                </span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('addresses')}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-medium transition-all ${
                   activeTab === 'addresses' 
@@ -1602,6 +1649,59 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">
                       Overview of your verified client tier and bespoke services
                     </p>
+                  </div>
+                </div>
+
+                {/* NaxtTo Rewards Treasury Card */}
+                <div className="relative rounded-2xl overflow-hidden border border-amber-300/80 bg-gradient-to-br from-[#1c1917] via-[#292524] to-[#1c1917] text-white p-6 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          <Crown className="w-3 h-3 text-amber-300" />
+                          <span>Tier: {currentRewardsTier}</span>
+                        </span>
+                        <span className="text-xs text-amber-200/80">
+                          Member since {user.memberSince || '2024'}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-1">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-wider text-stone-400 font-medium">Accumulated Points</div>
+                          <div className="text-2xl sm:text-3xl font-extrabold text-amber-300">
+                            {accumulatedRewardPoints.toLocaleString('en-IN')} <span className="text-xs font-semibold text-stone-300">pts</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[11px] uppercase tracking-wider text-stone-400 font-medium">Available Balance</div>
+                          <div className="text-2xl sm:text-3xl font-extrabold text-white">
+                            {currencySymbol}{accumulatedRewardPoints.toLocaleString('en-IN')}
+                          </div>
+                        </div>
+
+                        <div className="col-span-2 sm:col-span-1">
+                          <div className="text-[11px] uppercase tracking-wider text-stone-400 font-medium">Privilege Status</div>
+                          <div className="text-sm font-bold text-amber-200 mt-1 flex items-center gap-1">
+                            <ShieldCheck className="w-4 h-4 text-amber-400" />
+                            <span>Lifetime Warranty</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('rewards')}
+                        className="px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-stone-950 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98"
+                      >
+                        <Award className="w-3.5 h-3.5" />
+                        <span>NaxtTo Rewards Program</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1969,7 +2069,22 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               </div>
             )}
 
-            {/* TAB 3: Saved Addresses */}
+            {/* TAB: NaxtTo Rewards Program Module */}
+            {activeTab === 'rewards' && (
+              <NaxtToRewardsModule
+                user={{
+                  ...user,
+                  rewardPoints: accumulatedRewardPoints,
+                  memberTier: (currentRewardsTier as any) || user.memberTier
+                }}
+                orders={displayOrders}
+                currencySymbol={currencySymbol}
+                onNavigateToShop={onBackToShop}
+                onUpdateUser={onUpdateUser}
+              />
+            )}
+
+            {/* TAB: Saved Addresses */}
             {activeTab === 'addresses' && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="flex items-center justify-between pb-4 border-b border-[#e5e5ea]">

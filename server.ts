@@ -21,9 +21,27 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`NaxtTo Atelier Server running on http://localhost:${PORT}`);
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`ready in 100 ms`);
+  });
+
+  server.on("error", (err: any) => {
+    console.error("Dev server listen error:", err);
+    process.exit(1);
+  });
+
+  process.on("SIGTERM", () => {
+    server.close(() => process.exit(0));
+  });
+
+  process.on("SIGINT", () => {
+    server.close(() => process.exit(0));
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});

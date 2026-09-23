@@ -13,8 +13,7 @@ import {
   AlertCircle,
   X,
   Mail,
-  Send,
-  Sparkles
+  Send
 } from 'lucide-react';
 import { Order } from '../../types';
 import { apiClient } from '../../services/api';
