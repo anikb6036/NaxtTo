@@ -19,6 +19,8 @@ import {
 import { Product, ProductCategory, UserProfile } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockData';
 import { SearchSuggestionsDropdown, CategorySuggestion } from './SearchSuggestionsDropdown';
+import { VoiceSearchButton } from './VoiceSearchButton';
+import { parseVoiceSearch, VoiceParseResult } from '../utils/voiceSearchParser';
 
 const HERITAGE_CATEGORIES: { id: ProductCategory; name: string; description: string; aliases: string[] }[] = [
   { id: 'shakha', name: 'Shankha (Pure Conch Shell)', description: 'Hand-carved authentic Bengali conch bangles', aliases: ['shakha', 'shankha', 'sakha', 'conch', 'white', 'shell', 'bangles'] },
@@ -67,6 +69,7 @@ interface NavbarProps {
   products?: Product[];
   onSelectProduct?: (product: Product) => void;
   currencySymbol?: string;
+  onApplyVoiceFilter?: (result: VoiceParseResult) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -89,7 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentCurrency,
   products = INITIAL_PRODUCTS,
   onSelectProduct,
-  currencySymbol = '₹'
+  currencySymbol = '₹',
+  onApplyVoiceFilter
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -238,6 +242,30 @@ export const Navbar: React.FC<NavbarProps> = ({
     setDesktopSuggestionsOpen(false);
     setMobileSuggestionsOpen(false);
     setSelectedIndex(-1);
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    const clean = text.trim();
+    if (clean) {
+      saveRecentSearch(clean);
+      
+      // Execute Keyword-to-Category and Filter Mapping logic
+      const parsed = parseVoiceSearch(clean);
+
+      if (onApplyVoiceFilter) {
+        onApplyVoiceFilter(parsed);
+      } else {
+        if (parsed.category) {
+          onSelectCategory(parsed.category);
+        }
+        onSearchChange(parsed.cleanedQuery || clean);
+        onNavigateToShop();
+      }
+
+      setDesktopSuggestionsOpen(false);
+      setMobileSuggestionsOpen(false);
+      setSelectedIndex(-1);
+    }
   };
 
   // Keyboard navigation
@@ -429,19 +457,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 placeholder="Search Shankha, Pola, Gold Badhano, Loha..."
                 className="w-full text-xs sm:text-[13px] text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    onSearchChange('');
-                    setSelectedIndex(-1);
-                    searchInputRef.current?.focus();
-                  }}
-                  className="text-[#696e79] hover:text-[#282c3f] p-0.5"
-                  title="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+              <div className="flex items-center gap-1 shrink-0 ml-1.5">
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      onSearchChange('');
+                      setSelectedIndex(-1);
+                      searchInputRef.current?.focus();
+                    }}
+                    className="text-[#696e79] hover:text-[#282c3f] p-0.5"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <VoiceSearchButton
+                  onTranscript={handleVoiceTranscript}
+                  size="md"
+                />
+              </div>
             </div>
 
             <SearchSuggestionsDropdown
@@ -653,19 +687,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             placeholder="Search for jewellery, rings, gold..."
             className="w-full text-xs text-[#282c3f] placeholder:text-[#696e79] focus:outline-none bg-transparent"
           />
-          {searchQuery && (
-            <button
-              onClick={() => {
-                onSearchChange('');
-                setSelectedIndex(-1);
-                mobileSearchInputRef.current?.focus();
-              }}
-              className="text-[#696e79] hover:text-[#282c3f] p-0.5"
-              title="Clear search"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <div className="flex items-center gap-1 shrink-0 ml-1.5">
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  onSearchChange('');
+                  setSelectedIndex(-1);
+                  mobileSearchInputRef.current?.focus();
+                }}
+                className="text-[#696e79] hover:text-[#282c3f] p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <VoiceSearchButton
+              onTranscript={handleVoiceTranscript}
+              size="sm"
+            />
+          </div>
         </div>
 
         <SearchSuggestionsDropdown

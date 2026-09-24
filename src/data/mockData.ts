@@ -635,6 +635,157 @@ export const INITIAL_PRODUCTS: Product[] = [
       { name: '22K Solid Gold Bridal Suite', type: '22k-yellow-gold', colorHex: '#D4AF37' }
     ],
     reviews: []
+  },
+  {
+    id: 'sp-015',
+    name: 'Shyama 22K Gold Filigree Ring (Angti)',
+    subtitle: 'Intricate Bengali Jali Filigree Craft with 916 BIS Hallmark',
+    price: 18500,
+    originalPrice: 21999,
+    category: 'rings',
+    metal: '22k-yellow-gold',
+    metalName: '22K Solid Gold (916 BIS Hallmarked)',
+    style: 'filigree-badhano',
+    styleName: 'Bengali Jali Tarakasi',
+    images: [
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'An iconic Bengali statement ring (Angti) forged in certified 22K hallmarked gold. Showcases radiant floral filigree (Tarakasi) lace-work meticulously hand-woven by Bowbazar goldsmiths, radiating regal charm for weddings and festive occasions.',
+    story: 'Bengali filigree has been celebrated across royal courts since the 17th century. Each gold wire is drawn thin as a thread, crimped, and soldered onto a gold petal frame.',
+    features: [
+      '100% Solid 22K Gold with Government-certified BIS Hallmark',
+      'Intricate dome filigree floral lattice terminal',
+      'Comfort-fit adjustable band fitting ring sizes 10 to 18',
+      'Tamper-proof security blister pack with certification card'
+    ],
+    dimensions: 'Top diameter: 22mm | Band width: 3.5mm',
+    karatPurity: '22K (916 Solid Gold - 3.85g)',
+    weightGrams: '3.85g Net Gold',
+    origin: 'Bowbazar Goldsmith Guild, Kolkata',
+    inStock: true,
+    stockCount: 16,
+    isBestSeller: true,
+    isNewArrival: true,
+    rating: 4.95,
+    reviewsCount: 42,
+    availableSizes: ['12', '14', '16', '18'],
+    availableFinishes: [
+      { name: '22K Solid Yellow Gold', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-016',
+    name: 'Royal Mayur Mukhi 22K Gold Ring',
+    subtitle: 'Twin Peacock Terminal Design in 22K Solid Gold',
+    price: 24500,
+    originalPrice: 28000,
+    category: 'rings',
+    metal: '22k-yellow-gold',
+    metalName: '22K Solid Gold (916 BIS Hallmarked)',
+    style: 'mukhi-design',
+    styleName: 'Mayur Mukhi Royal',
+    images: [
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'A timeless heirloom ring adorned with dual sculpted peacock (Mayur) heads facing a central faceted synthetic ruby cabochon. Hand-engraved plumage lines bring auspicious splendour and royal grace.',
+    story: 'Inspired by the royal courts of Murshidabad, the peacock motif represents eternal beauty, pride, and marital bliss in Bengali folklore.',
+    features: [
+      'Sculpted 3D Mayur Mukhi terminals with hand-chiseled feathers',
+      '916 BIS Hallmarked 22K Gold purity guarantee',
+      'High-polish mirror gold finish with micro-textured accents'
+    ],
+    dimensions: 'Crown width: 18mm | Band thickness: 2.8mm',
+    karatPurity: '22K (916 Solid Gold - 5.10g)',
+    weightGrams: '5.10g Net Gold',
+    origin: 'Bowbazar Craft Guild, Kolkata',
+    inStock: true,
+    stockCount: 12,
+    isBestSeller: true,
+    rating: 4.9,
+    reviewsCount: 29,
+    availableSizes: ['12', '14', '16', '18'],
+    availableFinishes: [
+      { name: '22K Solid Yellow Gold', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-017',
+    name: 'Subarna Chandan Haar 22K Gold Choker',
+    subtitle: 'Solid 22K Gold Traditional Bengali Collar Choker',
+    price: 85000,
+    originalPrice: 96000,
+    category: 'necklaces',
+    metal: '22k-yellow-gold',
+    metalName: '22K Solid Gold (916 BIS Hallmarked)',
+    style: 'bridal-heritage',
+    styleName: 'Zamindari Bridal Choker',
+    images: [
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'An aristocrat bridal collar choker crafted in certified 22K hallmarked yellow gold. Alternating sandalwood leaf (Chandan Pata) motifs with delicate gold bead droplets.',
+    story: 'Chandan Haar is an indispensable element of the traditional Saat Paake Ghora bridal attire, representing divine blessings and family legacy.',
+    features: [
+      'Pure 22K Solid Gold with BIS Hallmark stamping',
+      'Adjustable pure silk zari dori cord fitting any neck circumference',
+      'Weight: 17.50g Net Hallmarked Gold'
+    ],
+    dimensions: 'Width: 32mm | Length: 180mm plus adjustable dori',
+    karatPurity: '22K (916 Solid Gold - 17.50g)',
+    weightGrams: '17.50g Net Gold',
+    origin: 'Bowbazar Craft Guild, Kolkata',
+    inStock: true,
+    stockCount: 5,
+    isBestSeller: true,
+    rating: 5.0,
+    reviewsCount: 19,
+    availableSizes: ['Free Size (Adjustable Dori)'],
+    availableFinishes: [
+      { name: '22K Solid Yellow Gold', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
+  },
+  {
+    id: 'sp-018',
+    name: 'Jhumka Mahal 22K Gold Kaner Dul',
+    subtitle: 'Three-Tier Royal Bengali Gold Jhumka with Gold Hanging Droplets',
+    price: 38000,
+    originalPrice: 44000,
+    category: 'earrings',
+    metal: '22k-yellow-gold',
+    metalName: '22K Solid Gold (916 BIS Hallmarked)',
+    style: 'traditional-bengali',
+    styleName: 'Royal Jhumka Heritage',
+    images: [
+      'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85'
+    ],
+    description: 'Majestic three-tier bell jhumkas in solid 22K gold. Features a floral sunburst stud top, filigree dome bells, and dancing gold pearl droplets that chime with every movement.',
+    story: 'Classic Bengali wedding earrings made to pair harmoniously with shakha and pola during wedding rituals.',
+    features: [
+      'Full 22K BIS Hallmarked Solid Gold (8.20g Net)',
+      'Comfort screw back closures for secure all-day wear',
+      'Featherweight balanced hollow interior prevents earlobe strain'
+    ],
+    dimensions: 'Length: 48mm | Bell Diameter: 18mm',
+    karatPurity: '22K (916 Solid Gold - 8.20g)',
+    weightGrams: '8.20g Net Gold',
+    origin: 'Bowbazar Craft Guild, Kolkata',
+    inStock: true,
+    stockCount: 8,
+    isBestSeller: true,
+    rating: 4.9,
+    reviewsCount: 34,
+    availableSizes: ['Standard Pair'],
+    availableFinishes: [
+      { name: '22K Solid Yellow Gold', type: '22k-yellow-gold', colorHex: '#D4AF37' }
+    ],
+    reviews: []
   }
 ];
 

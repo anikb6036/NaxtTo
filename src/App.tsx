@@ -83,6 +83,7 @@ import {
   DUMMY_ORDER_IDENTIFIERS
 } from './utils/userStorage';
 import { parseRouteFromLocation, syncBrowserUrl, AppView } from './utils/routes';
+import { VoiceParseResult } from './utils/voiceSearchParser';
 
 export default function App() {
   // 1. Core State & Local Persistence (Filtered by deleted product tombstones)
@@ -872,7 +873,50 @@ export default function App() {
   // Toast notifier helper
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Voice Command Filter Application: maps spoken keywords to category & attributes
+  const handleApplyVoiceFilter = (parsed: VoiceParseResult) => {
+    setSelectedProduct(null);
+    setCurrentView('shop');
+
+    setFilterOptions(prev => {
+      // 1. Determine next category
+      const nextCategory = parsed.category || prev.category;
+
+      // 2. Determine next metals
+      const nextMetals = parsed.metals.length > 0 
+        ? parsed.metals 
+        : (parsed.category && parsed.category !== prev.category ? [] : prev.metals);
+
+      // 3. Determine next styles
+      const nextStyles = parsed.styles.length > 0 
+        ? parsed.styles 
+        : (parsed.category && parsed.category !== prev.category ? [] : prev.styles);
+
+      // 4. Determine next price range
+      const nextPriceRange: [number, number] = parsed.maxPrice 
+        ? [0, parsed.maxPrice] 
+        : prev.priceRange;
+
+      // 5. Determine next search query
+      const nextSearchQuery = parsed.category || parsed.metals.length > 0 || parsed.styles.length > 0
+        ? parsed.cleanedQuery
+        : (parsed.cleanedQuery || parsed.rawTranscript);
+
+      return {
+        ...prev,
+        category: nextCategory,
+        metals: nextMetals,
+        styles: nextStyles,
+        priceRange: nextPriceRange,
+        searchQuery: nextSearchQuery
+      };
+    });
+
+    showToast(`🎙️ ${parsed.feedbackText}`);
+    scrollToCatalog();
   };
 
   // User Sign-Out Handler: saves items to user account, then completely clears in-memory bag & wishlist
@@ -930,12 +974,25 @@ export default function App() {
       }
       // Search query
       if (filterOptions.searchQuery) {
-        const q = filterOptions.searchQuery.toLowerCase();
-        const matchesName = product.name.toLowerCase().includes(q);
-        const matchesSub = product.subtitle.toLowerCase().includes(q);
-        const matchesMetal = product.metalName.toLowerCase().includes(q);
-        const matchesStyle = product.styleName.toLowerCase().includes(q);
-        if (!matchesName && !matchesSub && !matchesMetal && !matchesStyle) {
+        const q = filterOptions.searchQuery.toLowerCase().trim();
+        const searchable = `${product.name} ${product.subtitle} ${product.metalName} ${product.styleName} ${product.category} ${product.description || ''}`.toLowerCase();
+        
+        // Exact substring match
+        if (searchable.includes(q)) {
+          return true;
+        }
+
+        // Multi-word token match with plural/singular tolerance
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const matchesAllTokens = tokens.length > 0 && tokens.every(token => {
+          if (searchable.includes(token)) return true;
+          // Plural / singular tolerance (e.g. "rings" -> "ring", "bangles" -> "bangle")
+          if (token.endsWith('s') && token.length > 3 && searchable.includes(token.slice(0, -1))) return true;
+          if (searchable.includes(token + 's')) return true;
+          return false;
+        });
+
+        if (!matchesAllTokens) {
           return false;
         }
       }
@@ -1517,6 +1574,7 @@ export default function App() {
             onSearchChange={(query) => {
               setFilterOptions(prev => ({ ...prev, searchQuery: query }));
             }}
+            onApplyVoiceFilter={handleApplyVoiceFilter}
             cartTotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
             onSelectGender={(gender) => {
               setSelectedProduct(null);

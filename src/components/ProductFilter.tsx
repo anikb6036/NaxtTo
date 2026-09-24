@@ -28,12 +28,15 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const categories: { id: ProductCategory; label: string }[] = [
-    { id: 'all', label: 'All Sakha Pola' },
+    { id: 'all', label: 'All Collections' },
     { id: 'shakha', label: 'Shankha (Pure Conch)' },
     { id: 'pola', label: 'Pola (Coral Red)' },
     { id: 'gold-badhano', label: 'Gold Badhano (22K Gold)' },
     { id: 'loha-badhano', label: 'Loha Badhano (Iron & Gold)' },
-    { id: 'bridal-combos', label: 'Bridal Combos & Sets' }
+    { id: 'bridal-combos', label: 'Bridal Combos & Sets' },
+    { id: 'rings', label: 'Rings & Bands (Angti)' },
+    { id: 'necklaces', label: 'Necklaces & Chokers' },
+    { id: 'earrings', label: 'Earrings & Jhumkas' }
   ];
 
   const metals: { id: MetalType; label: string; swatch: string }[] = [

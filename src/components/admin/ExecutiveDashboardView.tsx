@@ -39,7 +39,7 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
   currencySymbol
 }) => {
   // Aggregate calculations
-  const totalGMV = orders.reduce((sum, o) => sum + (o.total || 0), 0) + 785000;
+  const totalGMV = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const vipPatronsCount = users.filter(u => u.status === 'vip' || u.memberTier.includes('VIP')).length;
   const totalSellerRevenue = sellers.reduce((sum, s) => sum + (s.totalRevenue || 0), 0);
   const pendingOrdersCount = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
@@ -105,8 +105,14 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
             {currencySymbol}{totalGMV.toLocaleString('en-IN')}
           </p>
           <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>+18.4% month-over-month</span>
+            {orders.length > 0 ? (
+              <>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+                <span>Synchronized platform ledger</span>
+              </>
+            ) : (
+              <span className="text-slate-400 font-normal">Live platform ledger</span>
+            )}
           </div>
         </div>
 
@@ -278,34 +284,41 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           </div>
 
           <div className="space-y-2.5">
-            {users.slice(0, 4).map((u) => (
-              <div 
-                key={u.id}
-                onClick={() => onNavigateTab('users')}
-                className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-between cursor-pointer transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center">
-                    {u.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-slate-900">{u.name}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-100 text-sky-800">
-                        {u.memberTier}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-500 font-mono">{u.email}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold font-mono text-xs text-slate-900">
-                    {currencySymbol}{u.totalSpent.toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-[10px] text-slate-400 block">{u.ordersCount} orders</span>
-                </div>
+            {users.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                <Users className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                No patron accounts registered yet.
               </div>
-            ))}
+            ) : (
+              users.slice(0, 4).map((u) => (
+                <div 
+                  key={u.id}
+                  onClick={() => onNavigateTab('users')}
+                  className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center">
+                      {u.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900">{u.name}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-100 text-sky-800">
+                          {u.memberTier}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono">{u.email}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold font-mono text-xs text-slate-900">
+                      {currencySymbol}{u.totalSpent.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">{u.ordersCount} orders</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -330,29 +343,36 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           </div>
 
           <div className="space-y-2.5">
-            {sellers.slice(0, 4).map((s) => (
-              <div 
-                key={s.id}
-                onClick={() => onNavigateTab('sellers')}
-                className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-between cursor-pointer transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-center">
-                    <Store className="w-4 h-4 text-amber-800" />
-                  </div>
-                  <div>
-                    <span className="font-bold text-xs text-slate-900 block">{s.storeName}</span>
-                    <span className="text-[10px] text-slate-500">{s.ownerName} • {s.city}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold font-mono text-xs text-slate-900">
-                    {currencySymbol}{s.totalRevenue.toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-[10px] text-amber-800 font-semibold block">{s.commissionRate}% take-rate</span>
-                </div>
+            {sellers.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                <Store className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                No artisan guilds onboarded yet.
               </div>
-            ))}
+            ) : (
+              sellers.slice(0, 4).map((s) => (
+                <div 
+                  key={s.id}
+                  onClick={() => onNavigateTab('sellers')}
+                  className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs flex items-center justify-center">
+                      <Store className="w-4 h-4 text-amber-800" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block">{s.storeName}</span>
+                      <span className="text-[10px] text-slate-500">{s.ownerName} • {s.city}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold font-mono text-xs text-slate-900">
+                      {currencySymbol}{s.totalRevenue.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] text-amber-800 font-semibold block">{s.commissionRate}% take-rate</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
