@@ -136,6 +136,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="text-xs sm:text-[13px] text-[#535766] truncate mt-0.5 font-normal">
             {product.name}
           </h3>
+
+          {/* Sizes badge row */}
+          {((product.availableSizes && product.availableSizes.length > 0) || (product.sizeVariations && product.sizeVariations.length > 0)) && (
+            <div className="mt-1 flex items-center gap-1 text-[10px] text-[#717478] truncate">
+              <span className="font-semibold text-[#282c3f]">Sizes:</span>
+              <span className="truncate text-[#535766]">
+                {(product.availableSizes || product.sizeVariations?.map(v => v.size) || []).join(', ')}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Price Row (Selling Price, Strikethrough MRP, Discount in Coral) */}

@@ -181,28 +181,12 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
           <div className="relative">
             <button
               type="button"
-              onClick={() => setShowAddMenu(!showAddMenu)}
-              className="bg-[#2874f0] hover:bg-[#1a64dc] text-white font-semibold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xs transition-all"
+              onClick={onAddNewListing}
+              className="bg-[#5022c3] hover:bg-[#431bb0] text-white font-semibold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
-              <span>+ Add Listing</span>
-              <ChevronDown className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Single Catalog</span>
             </button>
-
-            {showAddMenu && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-[#e5e5ea] rounded-xl shadow-xl z-50 py-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    onAddNewListing();
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-[#f5f5f7] flex items-center gap-2 text-[#212121]"
-                >
-                  <Plus className="w-4 h-4 text-[#2874f0]" />
-                  <span>Add Single Listing</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

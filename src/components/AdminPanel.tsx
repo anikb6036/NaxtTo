@@ -576,33 +576,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         />
 
         {/* 3. Main Dynamic Content Container */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-3.5rem)] bg-[#f5f6fa]">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* View A: Add / Edit Product Form */}
-            {isFormOpen ? (
-              <ProductFormView
-                editingProduct={editingProduct}
-                onSave={handleSaveProduct}
-                onCancel={() => {
-                  setIsFormOpen(false);
-                  setEditingProduct(null);
-                }}
-                currencySymbol={currencySymbol}
-              />
-            ) : activeNavTab === 'home' ? (
-              <SellerHomeDashboard
-                products={products}
-                orders={orders}
-                onNavigateTab={(tab) => {
-                  setActiveNavTab(tab);
-                  setIsFormOpen(false);
-                }}
-                onAddNewListing={handleAddNewListing}
-                currencySymbol={currencySymbol}
-                sellerName={staffInfo?.name || 'NaxtTo'}
-                onClearAllOrders={onClearAllOrders}
-              />
-            ) : activeNavTab === 'listings' ? (
+        {isFormOpen ? (
+          <main className="flex-1 overflow-y-auto max-h-[calc(100vh-3.5rem)] bg-[#f8f9fa]">
+            <ProductFormView
+              editingProduct={editingProduct}
+              onSave={handleSaveProduct}
+              onCancel={() => {
+                setIsFormOpen(false);
+                setEditingProduct(null);
+              }}
+              currencySymbol={currencySymbol}
+            />
+          </main>
+        ) : (
+          <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-3.5rem)] bg-[#f5f6fa]">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {activeNavTab === 'home' ? (
+                <SellerHomeDashboard
+                  products={products}
+                  orders={orders}
+                  onNavigateTab={(tab) => {
+                    setActiveNavTab(tab);
+                    setIsFormOpen(false);
+                  }}
+                  onAddNewListing={handleAddNewListing}
+                  currencySymbol={currencySymbol}
+                  sellerName={staffInfo?.name || 'NaxtTo'}
+                  onClearAllOrders={onClearAllOrders}
+                />
+              ) : activeNavTab === 'listings' ? (
               <ListingsTable
                 products={products}
                 onAddNewListing={handleAddNewListing}
@@ -743,6 +745,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             )}
           </div>
         </main>
+        )}
       </div>
 
       {/* Selected Order Detailed Modal */}

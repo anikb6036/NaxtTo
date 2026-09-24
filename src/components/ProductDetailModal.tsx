@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   X, 
   Heart, 
@@ -48,9 +48,44 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [selectedFinish, setSelectedFinish] = useState<MetalType>(
     product.availableFinishes?.[0]?.type || product.metal
   );
-  const [selectedSize, setSelectedSize] = useState<string>(
-    product.availableSizes?.[0] || 'Standard'
-  );
+  // Compute effective sizes available for this catalog
+  const effectiveSizes = useMemo(() => {
+    if (product.availableSizes && product.availableSizes.length > 0) {
+      return product.availableSizes;
+    }
+    if (product.sizeVariations && product.sizeVariations.length > 0) {
+      return product.sizeVariations.map(v => v.size);
+    }
+    if (product.size && product.size.includes(',')) {
+      return product.size.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (product.size) {
+      return [product.size];
+    }
+    return [];
+  }, [product.availableSizes, product.sizeVariations, product.size]);
+
+  const [selectedSize, setSelectedSize] = useState<string>(() => {
+    if (product.availableSizes && product.availableSizes.length > 0) {
+      return product.availableSizes[0];
+    }
+    if (product.sizeVariations && product.sizeVariations.length > 0) {
+      return product.sizeVariations[0].size;
+    }
+    if (product.size && product.size.includes(',')) {
+      return product.size.split(',')[0].trim();
+    }
+    return product.size || 'Standard';
+  });
+
+  // Current variation for the selected size
+  const activeVariation = useMemo(() => {
+    return product.sizeVariations?.find(v => v.size === selectedSize);
+  }, [product.sizeVariations, selectedSize]);
+
+  const activePrice = activeVariation?.price ?? product.price;
+  const activeOriginalPrice = activeVariation?.mrp ?? product.originalPrice;
+  const activeStock = activeVariation?.stockCount ?? product.stockCount;
   const [quantity, setQuantity] = useState(1);
   const [activeAccordion, setActiveAccordion] = useState<'craft' | 'specs' | 'ethical' | 'shipping' | null>('craft');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
@@ -92,7 +127,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleAddToCart = () => {
-    const result = onAddToCart(product, selectedSize, selectedFinish, quantity);
+    const effectiveProduct = activeVariation ? {
+      ...product,
+      price: activeVariation.price,
+      originalPrice: activeVariation.mrp || product.originalPrice
+    } : product;
+    const result = onAddToCart(effectiveProduct, selectedSize, selectedFinish, quantity);
     if (result !== false) {
       setAddedAnimation(true);
       setTimeout(() => setAddedAnimation(false), 2000);
@@ -208,11 +248,16 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               {/* Price */}
               <div className="mt-4 flex items-baseline gap-3">
                 <span className="font-serif text-2xl sm:text-3xl font-medium text-[#1A1816]">
-                  {currencySymbol}{product.price}
+                  {currencySymbol}{activePrice.toLocaleString()}
                 </span>
-                {product.originalPrice && (
+                {activeOriginalPrice && (
                   <span className="text-sm text-[#A89F91] line-through">
-                    {currencySymbol}{product.originalPrice}
+                    {currencySymbol}{activeOriginalPrice.toLocaleString()}
+                  </span>
+                )}
+                {activeOriginalPrice && activeOriginalPrice > activePrice && (
+                  <span className="text-xs font-bold text-[#F50087]">
+                    ({Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)}% OFF)
                   </span>
                 )}
                 <span className="text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-medium">
@@ -260,37 +305,60 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               )}
 
               {/* Size Selector */}
-              {product.availableSizes && product.availableSizes.length > 0 && (
+              {effectiveSizes && effectiveSizes.length > 0 && (
                 <div className="mt-5">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold tracking-wider uppercase text-[#4A443D]">
-                      Dimensions / Sizing
+                    <label className="text-xs font-semibold tracking-wider uppercase text-[#4A443D] flex items-center gap-1.5">
+                      <span>Dimensions / Sizing</span>
+                      {selectedSize && (
+                        <span className="text-[#8C5D3B] font-bold">({selectedSize})</span>
+                      )}
                     </label>
                     <button
                       id="open-size-guide-btn"
                       onClick={() => setShowSizeGuide(true)}
-                      className="text-xs text-[#8C5D3B] hover:text-[#1A1816] flex items-center gap-1 font-medium underline underline-offset-2 transition-colors"
+                      className="text-xs text-[#8C5D3B] hover:text-[#1A1816] flex items-center gap-1 font-medium underline underline-offset-2 transition-colors cursor-pointer"
                     >
                       <Ruler className="w-3 h-3" />
                       <span>Size Guide & Printable Scale</span>
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {product.availableSizes.map(size => (
-                      <button
-                        key={size}
-                        id={`modal-size-${size}`}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-3.5 py-2 text-xs font-medium rounded-sm border transition-all ${
-                          selectedSize === size
-                            ? 'bg-[#1A1816] text-[#FAF9F5] border-[#1A1816] shadow-sm'
-                            : 'bg-[#FAF9F5] text-[#4A443D] border-[#D8CEBF] hover:bg-[#F2ECE3]'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {effectiveSizes.map(size => {
+                      const variation = product.sizeVariations?.find(v => v.size === size);
+                      const isSelected = selectedSize === size;
+                      return (
+                        <button
+                          key={size}
+                          id={`modal-size-${size}`}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-3.5 py-2 text-xs font-medium rounded-sm border transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#1A1816] text-[#FAF9F5] border-[#1A1816] shadow-sm font-bold'
+                              : 'bg-[#FAF9F5] text-[#4A443D] border-[#D8CEBF] hover:bg-[#F2ECE3]'
+                          }`}
+                        >
+                          <span>{size}</span>
+                          {variation && variation.price !== product.price && (
+                            <span className={`text-[10px] ${isSelected ? 'text-[#e5dfd3]' : 'text-gray-500'}`}>
+                              ({currencySymbol}{variation.price})
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {activeStock > 0 ? (
+                    <div className="text-[11px] text-emerald-700 mt-2 font-medium flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                      <span>In Stock in Size {selectedSize} ({activeStock} units available)</span>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-amber-700 mt-2 font-medium flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span>Crafted on Bespoke Order (7 days artisan lead time)</span>
+                    </div>
+                  )}
                 </div>
               )}
 

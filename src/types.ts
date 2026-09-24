@@ -51,6 +51,14 @@ export interface ProductReview {
   helpfulCount: number;
 }
 
+export interface ProductSizeVariation {
+  size: string;
+  price: number;
+  returnPrice?: number;
+  mrp?: number;
+  stockCount?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -82,11 +90,40 @@ export interface Product {
   reviewsCount: number;
   reviews: ProductReview[];
   availableSizes?: string[];
+  sizeVariations?: ProductSizeVariation[];
   availableFinishes?: {
     name: string;
     type: MetalType;
     colorHex: string;
   }[];
+  // Single Catalog Fields (Supplier Portal)
+  netWeightGrams?: string | number;
+  productId?: string;
+  size?: string;
+  closure?: string;
+  color?: string;
+  genericName?: string;
+  netQuantity?: string | number;
+  occasion?: string;
+  plating?: string;
+  diameter?: string;
+  dimensionMm?: string;
+  sizing?: string;
+  stoneType?: string;
+  trend?: string;
+  productType?: string;
+  countryOfOrigin?: string;
+  manufacturerName?: string;
+  manufacturerAddress?: string;
+  manufacturerPincode?: string;
+  packerName?: string;
+  packerAddress?: string;
+  packerPincode?: string;
+  importerName?: string;
+  importerAddress?: string;
+  importerPincode?: string;
+  baseMetal?: string;
+  brand?: string;
 }
 
 export interface CartItem {

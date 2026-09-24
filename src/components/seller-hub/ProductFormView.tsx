@@ -1,31 +1,27 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  Check, 
   ArrowLeft, 
   Plus, 
   Trash2, 
-  Sparkles,
-  Search,
-  ChevronRight,
+  Check, 
+  X, 
+  PlayCircle, 
+  AlertCircle, 
+  CheckCircle2, 
+  Upload, 
+  Image as ImageIcon, 
+  Camera, 
+  Sparkles, 
+  Bookmark, 
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Info,
   HelpCircle,
-  PlayCircle,
-  AlertCircle,
-  Image as ImageIcon,
-  CheckCircle2,
-  X,
-  RefreshCw,
-  Sliders,
-  Tag,
-  ShieldCheck,
-  Eye,
-  UploadCloud,
-  Upload,
-  Camera,
-  FileImage,
-  Link,
-  Star
+  FileCheck,
+  RefreshCw
 } from 'lucide-react';
-import { Product, ProductCategory, MetalType } from '../../types';
+import { Product, ProductCategory, MetalType, JewelleryStyle, ProductSizeVariation } from '../../types';
 
 interface ProductFormViewProps {
   editingProduct: Product | null;
@@ -34,878 +30,158 @@ interface ProductFormViewProps {
   currencySymbol: string;
 }
 
-// Category Hierarchy Definition
-export interface CategoryNode {
-  id: string;
-  name: string;
-  mappedCategory?: ProductCategory;
-  categoryType?: 'necklaces' | 'rings' | 'earrings' | 'bracelets' | 'jewellery-set' | 'sarees' | 'ethnic-wear' | 'western-wear' | 'footwear' | 'accessories' | 'perfumes' | 'general';
-  children?: CategoryNode[];
-}
+// All standard catalog sizes available for selection (matching Meesho / Indian jewellery standard)
+const ALL_CATALOG_SIZES = [
+  '2.2',
+  '2.3',
+  '2.4',
+  '2.5',
+  '2.6',
+  '2.8',
+  '2.10',
+  'Free Size',
+  '2.12',
+  '2.14',
+  '3',
+  'Adjustable'
+];
 
-export const CATEGORY_TREE: CategoryNode[] = [
+// Quick pre-fill catalog templates (standard Meesho / Bengali Jewellery configurations)
+const PRESET_TEMPLATES = [
   {
-    id: 'women-fashion',
-    name: 'Women Fashion',
-    children: [
-      { 
-        id: 'ethnic-wear', 
-        name: 'Ethnic Wear', 
-        children: [
-          { id: 'sarees', name: 'Sarees', mappedCategory: 'fine-collections', categoryType: 'sarees' },
-          { id: 'kurtis', name: 'Kurtis', mappedCategory: 'fine-collections', categoryType: 'ethnic-wear' },
-          { id: 'lehengas', name: 'Lehengas & Cholis', mappedCategory: 'fine-collections', categoryType: 'ethnic-wear' },
-          { id: 'suits', name: 'Suits & Dress Material', mappedCategory: 'fine-collections', categoryType: 'ethnic-wear' },
-          { id: 'dupattas', name: 'Dupattas & Shawls', mappedCategory: 'fine-collections', categoryType: 'ethnic-wear' }
-        ]
-      },
-      { 
-        id: 'western-wear', 
-        name: 'Western Wear', 
-        children: [
-          { id: 'dresses', name: 'Dresses & Gowns', mappedCategory: 'fine-collections', categoryType: 'western-wear' },
-          { id: 'tops', name: 'Tops & Tunics', mappedCategory: 'fine-collections', categoryType: 'western-wear' },
-          { id: 'jeans', name: 'Jeans & Trousers', mappedCategory: 'fine-collections', categoryType: 'western-wear' },
-          { id: 'skirts', name: 'Skirts & Shorts', mappedCategory: 'fine-collections', categoryType: 'western-wear' },
-          { id: 'jumpsuits', name: 'Jumpsuits & Playsuits', mappedCategory: 'fine-collections', categoryType: 'western-wear' }
-        ]
-      },
-      {
-        id: 'accessories',
-        name: 'Accessories',
-        children: [
-          {
-            id: 'jewellery',
-            name: 'Jewellery',
-            children: [
-              { id: 'necklaces', name: 'Necklaces & Chains', mappedCategory: 'necklaces', categoryType: 'necklaces' },
-              { id: 'pendants', name: 'Pendants & Lockets', mappedCategory: 'necklaces', categoryType: 'necklaces' },
-              { id: 'rings', name: 'Rings', mappedCategory: 'rings', categoryType: 'rings' },
-              { id: 'bracelet-bangles', name: 'Bracelet & Bangles', mappedCategory: 'bracelets', categoryType: 'bracelets' },
-              { id: 'earrings', name: 'Earrings & Studs', mappedCategory: 'earrings', categoryType: 'earrings' },
-              { id: 'anklets', name: 'Anklets & Toe Rings', mappedCategory: 'fine-collections', categoryType: 'bracelets' },
-              { id: 'jewellery-set', name: 'Jewellery Set', mappedCategory: 'fine-collections', categoryType: 'jewellery-set' }
-            ]
-          },
-          {
-            id: 'belts',
-            name: 'Belts',
-            children: [
-              { id: 'leather-belts', name: 'Leather Belts', categoryType: 'accessories' },
-              { id: 'chain-belts', name: 'Chain & Metallic Belts', categoryType: 'accessories' },
-              { id: 'corset-belts', name: 'Corset & Wide Belts', categoryType: 'accessories' }
-            ]
-          },
-          {
-            id: 'fashion-accessories',
-            name: 'Fashion Accessories',
-            children: [
-              { id: 'brooches', name: 'Brooches & Lapel Pins', mappedCategory: 'fine-collections', categoryType: 'jewellery-set' },
-              { id: 'sunglasses', name: 'Designer Sunglasses', categoryType: 'accessories' },
-              { id: 'hairbands', name: 'Luxury Hairbands', categoryType: 'accessories' }
-            ]
-          },
-          {
-            id: 'caps-hats',
-            name: 'Caps & Hats',
-            children: [
-              { id: 'sun-hats', name: 'Sun Hats', categoryType: 'accessories' },
-              { id: 'beanies', name: 'Cashmere Beanies', categoryType: 'accessories' },
-              { id: 'berets', name: 'Wool Berets', categoryType: 'accessories' }
-            ]
-          },
-          {
-            id: 'hair-accessories',
-            name: 'Hair Accessories',
-            children: [
-              { id: 'hair-clips', name: 'Hair Clips & BarSubmit', categoryType: 'accessories' },
-              { id: 'hair-pins', name: 'Pearl & Gold Hair Pins', categoryType: 'accessories' },
-              { id: 'tiaras', name: 'Bridal Tiaras', mappedCategory: 'bespoke', categoryType: 'jewellery-set' }
-            ]
-          },
-          {
-            id: 'scarves-gloves',
-            name: 'Scarves, Stoles & Gloves',
-            children: [
-              { id: 'silk-scarves', name: 'Pure Silk Scarves', categoryType: 'accessories' },
-              { id: 'pashmina', name: 'Cashmere & Pashmina Stoles', categoryType: 'accessories' },
-              { id: 'gloves', name: 'Satin & Leather Gloves', categoryType: 'accessories' }
-            ]
-          }
-        ]
-      },
-      { 
-        id: 'footwear', 
-        name: 'Footwear', 
-        children: [
-          { id: 'heels', name: 'Stiletto & Block Heels', categoryType: 'footwear' },
-          { id: 'flats', name: 'Pointed Mules & Flats', categoryType: 'footwear' },
-          { id: 'sandals', name: 'Strappy Sandals', categoryType: 'footwear' }
-        ]
-      },
-      { 
-        id: 'inner-sleepwear', 
-        name: 'Inner & Sleepwear', 
-        children: [
-          { id: 'silk-robes', name: 'Silk Robes & Loungewear', categoryType: 'western-wear' },
-          { id: 'nightwear', name: 'Nightwear Sets', categoryType: 'western-wear' }
-        ]
-      },
-      { 
-        id: 'sports-activewear', 
-        name: 'Sports & Activewear', 
-        children: [
-          { id: 'leggings', name: 'Sculpting Leggings', categoryType: 'western-wear' },
-          { id: 'active-tops', name: 'Performance Tops', categoryType: 'western-wear' }
-        ]
-      },
-      { 
-        id: 'women-ethnic-wear', 
-        name: 'Women Ethnic Wear', 
-        children: [
-          { id: 'anarkalis', name: 'Designer Anarkalis', categoryType: 'ethnic-wear' },
-          { id: 'couture-gowns', name: 'Couture Evening Gowns', categoryType: 'western-wear' }
-        ]
-      }
+    name: 'Bengali Bridal Sakha Pola (Gold Badhano)',
+    genericName: 'Sakha Pola',
+    productName: 'Traditional Bengali Bridal Conch Shell & Red Pola Bangle Pair (Gold Badhano)',
+    netWeight: '28.5',
+    sizes: ['2.2', '2.4', '2.6'],
+    closure: 'Slip-On',
+    color: 'White & Red',
+    netQuantity: 'Set of 2',
+    occasion: 'Bridal / Wedding',
+    plating: 'Micron Gold Plated',
+    diameter: '64 mm',
+    dimensionMm: '6 mm',
+    sizing: 'Non-Adjustable',
+    stoneType: 'No Stone',
+    trend: 'Traditional Bengali Bridal',
+    type: 'Bengali Sakha Pola',
+    countryOfOrigin: 'India',
+    manufacturerName: 'NaxtTo Bengali Heritage Karigar Guild',
+    manufacturerAddress: '14/2 Shankar Ghosh Lane, Bowbazar, Kolkata, West Bengal',
+    manufacturerPincode: '700012',
+    baseMetal: 'Conch Shell (Shankha)',
+    brand: 'NAXTTO',
+    description: 'Authentic handcrafted Bengali bridal Sakha and Pola set. Crafted from natural pure conch shell and coral-red acrylic with 24K micron gold badhano wire filigree work. Blessed for traditional Bengali wedding rituals and daily matrimonial elegance. Hypoallergenic and BIS quality certified.',
+    price: 3850,
+    returnPrice: 3465,
+    mrp: 4800,
+    stockCount: 15,
+    images: [
+      '/src/assets/images/shankha_pola_set_1790249913718.jpg',
+      '/src/assets/images/sakha_pola_stack_1790249812700.jpg',
+      '/src/assets/images/bengali_bridal_bangles_1789477964190.jpg'
     ]
   },
   {
-    id: 'fine-jewellery',
-    name: 'Fine Jewellery',
-    children: [
-      {
-        id: 'gold-rings',
-        name: 'Continuous Rings',
-        children: [
-          { id: 'solitaire-rings', name: 'Solitaire Diamond Rings', mappedCategory: 'rings', categoryType: 'rings' },
-          { id: 'eternity-bands', name: 'Pavé Eternity Bands', mappedCategory: 'rings', categoryType: 'rings' },
-          { id: 'signet-rings', name: 'Gold Signet Rings', mappedCategory: 'rings', categoryType: 'rings' },
-          { id: 'sculptural-bands', name: 'Sculptural Organic Bands', mappedCategory: 'rings', categoryType: 'rings' }
-        ]
-      },
-      {
-        id: 'necklaces-pendants',
-        name: 'Necklaces & Pendants',
-        children: [
-          { id: 'chokers', name: 'Solid Gold Chokers', mappedCategory: 'necklaces', categoryType: 'necklaces' },
-          { id: 'tennis-necklaces', name: 'Diamond Tennis Collars', mappedCategory: 'necklaces', categoryType: 'necklaces' },
-          { id: 'medallions', name: 'Archival Medallions', mappedCategory: 'necklaces', categoryType: 'necklaces' }
-        ]
-      },
-      {
-        id: 'earrings-cuffs',
-        name: 'Earrings & Ear Cuffs',
-        children: [
-          { id: 'sculpted-hoops', name: 'Architectural Gold Hoops', mappedCategory: 'earrings', categoryType: 'earrings' },
-          { id: 'diamond-studs', name: 'Solitaire Diamond Studs', mappedCategory: 'earrings', categoryType: 'earrings' },
-          { id: 'drop-earrings', name: 'Cascading Pearl Drops', mappedCategory: 'earrings', categoryType: 'earrings' }
-        ]
-      },
-      {
-        id: 'bracelets-cuffs',
-        name: 'Bracelets & Cuffs',
-        children: [
-          { id: 'articulated-cuffs', name: 'Articulated Gold Cuffs', mappedCategory: 'bracelets', categoryType: 'bracelets' },
-          { id: 'tennis-bracelets', name: 'Diamond Tennis Bracelets', mappedCategory: 'bracelets', categoryType: 'bracelets' },
-          { id: 'chain-bracelets', name: 'Heavy Link Bracelets', mappedCategory: 'bracelets', categoryType: 'bracelets' }
-        ]
-      },
-      {
-        id: 'bespoke-vault',
-        name: 'Bespoke Commissions',
-        children: [
-          { id: 'custom-bridal', name: 'Bridal High Jewellery Sets', mappedCategory: 'bespoke', categoryType: 'jewellery-set' },
-          { id: 'heirloom-redesign', name: 'Heirloom Redesign Piece', mappedCategory: 'bespoke', categoryType: 'jewellery-set' }
-        ]
-      }
+    name: 'Pure Iron Loha Badhano (18K Gold Clad)',
+    genericName: 'Loha Badhano',
+    productName: 'Authentic Bengali Bridal Loha Badhano Bangle with 18K Solid Gold Wire Badhano',
+    netWeight: '22.0',
+    sizes: ['2.4', '2.6', '2.8'],
+    closure: 'Slip-On',
+    color: 'Gold',
+    netQuantity: '1',
+    occasion: 'Dailywear',
+    plating: '18K Gold Plated',
+    diameter: '60 mm',
+    dimensionMm: '4 mm',
+    sizing: 'Non-Adjustable',
+    stoneType: 'No Stone',
+    trend: 'Traditional Bengali Bridal',
+    type: 'Loha Badhano',
+    countryOfOrigin: 'India',
+    manufacturerName: 'NaxtTo Swarna Shilpi Guild',
+    manufacturerAddress: '38 Raja Rammohan Roy Sarani, Bowbazar, Kolkata, West Bengal',
+    manufacturerPincode: '700009',
+    baseMetal: 'Iron (Loha)',
+    brand: 'NAXTTO',
+    description: 'Sacred Bengali matrimonial Loha Badhano crafted with natural energized wrought iron encased in premium solid gold filigree wire. Auspicious daily wear piece ensuring marital longevity and prosperity.',
+    price: 4950,
+    returnPrice: 4455,
+    mrp: 6200,
+    stockCount: 10,
+    images: [
+      '/src/assets/images/loha_badhano_gold_1790249869592.jpg',
+      '/src/assets/images/bengali_bridal_wrist_1790249886691.jpg'
     ]
   },
   {
-    id: 'men-fashion',
-    name: 'Men Fashion',
-    children: [
-      { 
-        id: 'top-wear', 
-        name: 'Top Wear', 
-        children: [
-          { id: 'formal-shirts', name: 'Italian Linen Shirts', categoryType: 'western-wear' },
-          { id: 'jackets', name: 'Tailored Blazers & Jackets', categoryType: 'western-wear' }
-        ]
-      },
-      {
-        id: 'men-accessories',
-        name: 'Accessories',
-        children: [
-          { id: 'men-chains', name: 'Heavy Curb Chains', mappedCategory: 'necklaces', categoryType: 'necklaces' },
-          { id: 'men-kadas', name: 'Solid Gold & Platinum Kadas', mappedCategory: 'bracelets', categoryType: 'bracelets' },
-          { id: 'men-rings', name: 'Signet & Sovereign Rings', mappedCategory: 'rings', categoryType: 'rings' },
-          { id: 'cufflinks', name: 'Hallmarked Gold Cufflinks', mappedCategory: 'fine-collections', categoryType: 'accessories' }
-        ]
-      }
+    name: 'Mayur Mukhi Shankha Pair (Peacock Carved)',
+    genericName: 'Sakha Pola',
+    productName: 'Exquisite Mayur Mukhi Pure Conch Shell Bridal Shankha (Set of 2)',
+    netWeight: '32.0',
+    sizes: ['2.4', '2.6', '2.8'],
+    closure: 'Slip-On',
+    color: 'White',
+    netQuantity: 'Set of 2',
+    occasion: 'Festive',
+    plating: 'No Plating',
+    diameter: '68 mm',
+    dimensionMm: '8 mm',
+    sizing: 'Non-Adjustable',
+    stoneType: 'No Stone',
+    trend: 'Handcrafted Artisan',
+    type: 'Mukhi Shankha',
+    countryOfOrigin: 'India',
+    manufacturerName: 'Shankhari Artisan Cooperative',
+    manufacturerAddress: 'Shankhari Bazar Karigar Quarter, Kolkata, West Bengal',
+    manufacturerPincode: '700006',
+    baseMetal: 'Conch Shell (Shankha)',
+    brand: 'NAXTTO',
+    description: 'Master artisan hand-carved natural sea conch shell bangles depicting traditional Bengali Mayur (peacock) motifs. Sourced from natural sanctified sea shells, carved with precision jeweler chisels.',
+    price: 4200,
+    returnPrice: 3780,
+    mrp: 5500,
+    stockCount: 8,
+    images: [
+      '/src/assets/images/mayur_mukhi_shankha_1790249854136.jpg',
+      '/src/assets/images/artisan_shankhari_1790250280309.jpg'
     ]
   },
   {
-    id: 'home-living',
-    name: 'Home & Living',
-    children: [
-      { 
-        id: 'home-decor', 
-        name: 'Luxury Decor', 
-        children: [
-          { id: 'sculptures', name: 'Bronze & Marble Sculptures', categoryType: 'general' },
-          { id: 'vases', name: 'Mouth-Blown Crystal Vases', categoryType: 'general' },
-          { id: 'trinket-dishes', name: 'Gilded Jewellery Trays', categoryType: 'general' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'personal-care',
-    name: 'Personal Care & Wellness',
-    children: [
-      { 
-        id: 'perfumes', 
-        name: 'Haute Parfumerie', 
-        children: [
-          { id: 'eau-de-parfum', name: 'Niche Extrait de Parfum', categoryType: 'perfumes' },
-          { id: 'oud-attar', name: 'Archival Pure Oud Oil', categoryType: 'perfumes' }
-        ]
-      }
+    name: 'Daily Modern Pola (Crimson Coral Red)',
+    genericName: 'Bangles',
+    productName: 'Sleek Crimson Pola Bangle with Floral Gold Inlay Work',
+    netWeight: '18.5',
+    sizes: ['2.2', '2.4', '2.6', '2.8'],
+    closure: 'Slip-On',
+    color: 'Red',
+    netQuantity: 'Set of 2',
+    occasion: 'Dailywear',
+    plating: 'Micron Gold Plated',
+    diameter: '64 mm',
+    dimensionMm: '5 mm',
+    sizing: 'Non-Adjustable',
+    stoneType: 'No Stone',
+    trend: 'Contemporary',
+    type: 'Chunri Pola',
+    countryOfOrigin: 'India',
+    manufacturerName: 'NaxtTo Contemporary Karigar Studio',
+    manufacturerAddress: 'Sector 5, Salt Lake City, Kolkata, West Bengal',
+    manufacturerPincode: '700091',
+    baseMetal: 'Acrylic / Resin (Pola)',
+    brand: 'NAXTTO',
+    description: 'Vibrant crimson red pola bangles accented with micro floral motifs in gold leaf plating. Lightweight, smooth comfort finish designed for modern daily professional and festive wear.',
+    price: 2499,
+    returnPrice: 2249,
+    mrp: 3200,
+    stockCount: 20,
+    images: [
+      '/src/assets/images/daily_modern_pola_1790250330549.jpg',
+      '/src/assets/images/gold_badhano_pola_1790249832633.jpg'
     ]
   }
 ];
-
-// Contextual configuration for dynamic Step 2 fields & intelligent defaults
-export interface CategoryConfig {
-  sampleImage: string;
-  presetImages: { title: string; url: string }[];
-  defaultTitle: string;
-  defaultSubtitle: string;
-  defaultPrice: number;
-  defaultOriginalPrice: number;
-  defaultSizes: string;
-  defaultFeatures: string[];
-  fieldGroupTitle: string;
-  fieldGroupDesc: string;
-  sizeLabel: string;
-  sizePlaceholder: string;
-  weightLabel?: string;
-  customAttributes: {
-    key: string;
-    label: string;
-    type: 'select' | 'text';
-    options?: string[];
-    defaultValue: string;
-    placeholder?: string;
-  }[];
-}
-
-export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
-  'necklaces': {
-    sampleImage: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Diamond Pavé Collar', url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Solid Gold Herringbone', url: 'https://images.unsplash.com/photo-1611591475102-4a008c2a9a7a?auto=format&fit=crop&w=800&q=80' },
-      { title: 'South Sea Pearl Strand', url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Aura Pavé Diamond Collar Necklace',
-    defaultSubtitle: '18K Recycled Solid Gold with Precision Collet Settings',
-    defaultPrice: 1850,
-    defaultOriginalPrice: 2150,
-    defaultSizes: '40cm (Choker), 45cm (Princess Length), 50cm (Matinee), 60cm (Opera)',
-    sizeLabel: 'Available Chain Lengths',
-    sizePlaceholder: '40cm, 45cm, 50cm, 60cm, Adjustable',
-    weightLabel: 'Gross Gold Weight (approx. grams)',
-    defaultFeatures: [
-      'Engineered anti-tangle herringbone link alignment',
-      'Hallmarked 750/1000 18K Solid Gold lobster lock',
-      'Includes 5cm adjustable extender loop ring',
-      'Vault archival presentation box & velvet pouch included'
-    ],
-    fieldGroupTitle: 'Necklace & Chain Specifications',
-    fieldGroupDesc: 'Specify chain weave, lock mechanism, necklace length, and gemstone pavé collets.',
-    customAttributes: [
-      {
-        key: 'chainWeave',
-        label: 'Chain Weave / Link Style',
-        type: 'select',
-        options: ['Herringbone Flat Link', 'Classic Box Chain', 'Cuban Curb Link', 'Diamond Tennis Collet', 'Cable Link', 'Figaro Weave'],
-        defaultValue: 'Herringbone Flat Link'
-      },
-      {
-        key: 'claspType',
-        label: 'Clasp & Lock Mechanism',
-        type: 'select',
-        options: ['Heavy Duty Lobster Clasp', 'Spring Ring with Safety Catch', 'Concealed Box Clasp', 'Fold-Over Lock', 'Toggle T-Bar'],
-        defaultValue: 'Heavy Duty Lobster Clasp'
-      },
-      {
-        key: 'gemstoneType',
-        label: 'Primary Stone / Gem Accent',
-        type: 'select',
-        options: ['Natural VVS1 Diamond', 'Lab-Grown CVD Diamond', 'South Sea Cultured Pearl', 'Colombian Emerald', 'Ceylon Blue Sapphire', 'None (Solid Gold)'],
-        defaultValue: 'Natural VVS1 Diamond'
-      },
-      {
-        key: 'caratWeight',
-        label: 'Total Diamond Carat Weight (ctw)',
-        type: 'text',
-        defaultValue: '0.45 ctw',
-        placeholder: 'e.g. 0.45 ctw or N/A'
-      },
-      {
-        key: 'chainThickness',
-        label: 'Chain Gauge / Width',
-        type: 'text',
-        defaultValue: '2.5mm Gauge',
-        placeholder: 'e.g. 1.8mm, 2.5mm, 4.0mm'
-      }
-    ]
-  },
-  'rings': {
-    sampleImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Continuous Band', url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Solitaire Halo Ring', url: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Sculptural Organic Band', url: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Aethel Continuous Eternity Band',
-    defaultSubtitle: '18K Recycled Solid Gold Hand-Set Micro-Pavé Band',
-    defaultPrice: 1250,
-    defaultOriginalPrice: 1450,
-    defaultSizes: 'US 5, US 6, US 7, US 8, US 9, US 10',
-    sizeLabel: 'Available Ring Sizes (US / EU)',
-    sizePlaceholder: 'US 5, US 6, US 7, US 8, US 9',
-    weightLabel: 'Band Net Metal Weight',
-    defaultFeatures: [
-      'Comfort-fit ergonomic rounded interior profile',
-      'Hand-set micro-pavé optical mirror alignment',
-      'Solid 18K recycled alloy with 750 laser stamp',
-      'Complimentary ring sizer & lifetime complimentary re-sizing'
-    ],
-    fieldGroupTitle: 'Ring Architecture & Setting Details',
-    fieldGroupDesc: 'Define band profile, setting geometry, stone specifications, and comfort finish.',
-    customAttributes: [
-      {
-        key: 'ringProfile',
-        label: 'Band Profile & Width',
-        type: 'select',
-        options: ['2.0mm Comfort-Fit Court', '1.5mm Ultra-Slim Knife Edge', '3.5mm Beveled Statement', '5.0mm Cigar Flat Band', 'Sculptural Organic Ribbon'],
-        defaultValue: '2.0mm Comfort-Fit Court'
-      },
-      {
-        key: 'settingType',
-        label: 'Gemstone Setting Geometry',
-        type: 'select',
-        options: ['Micro-Pavé Full Eternity', '4-Prong Cathedral Solitaire', 'Bezel Full Rim Collet', 'Flush Gypsy Setting', 'Channel Set Side Stones'],
-        defaultValue: 'Micro-Pavé Full Eternity'
-      },
-      {
-        key: 'gemstoneCut',
-        label: 'Center Stone Cut / Shape',
-        type: 'select',
-        options: ['Round Brilliant Cut', 'Oval Cut', 'Emerald Step Cut', 'Cushion Cut', 'Marquise Cut', 'None (Pure Band)'],
-        defaultValue: 'Round Brilliant Cut'
-      },
-      {
-        key: 'stoneClarity',
-        label: 'Diamond Color & Clarity Grade',
-        type: 'text',
-        defaultValue: 'VVS1 / Colorless E-F',
-        placeholder: 'e.g. VVS1 Colorless E-F'
-      }
-    ]
-  },
-  'bracelets': {
-    sampleImage: 'https://images.unsplash.com/photo-1611591475102-4a008c2a9a7a?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Articulated Gold Bangle', url: 'https://images.unsplash.com/photo-1611591475102-4a008c2a9a7a?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Diamond Tennis Bracelet', url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Solid Gold Kada / Cuff', url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Articulated Solid 18K Gold Bangle & Cuff',
-    defaultSubtitle: 'Seamless Hidden-Hinge Precision Bangle with Safety Catch',
-    defaultPrice: 2200,
-    defaultOriginalPrice: 2500,
-    defaultSizes: 'Small (16cm), Medium (17.5cm), Large (19cm), Free Size (Adjustable)',
-    sizeLabel: 'Available Wrist Circumferences',
-    sizePlaceholder: 'Small (16cm), Medium (17.5cm), Large (19cm)',
-    weightLabel: 'Gross Metal Weight (grams)',
-    defaultFeatures: [
-      'Seamless micro-hinged closure with dual side safety clasps',
-      'Solid core construction for lifelong structural resistance',
-      'Hand-buffed mirror finish on 18K solid gold',
-      'Certified assay hallmark seal and authenticity card'
-    ],
-    fieldGroupTitle: 'Bangle & Bracelet Specifications',
-    fieldGroupDesc: 'Set wrist inner diameter, hinge mechanism, locking system, and metal finishing.',
-    customAttributes: [
-      {
-        key: 'bangleStyle',
-        label: 'Structure & Style',
-        type: 'select',
-        options: ['Hinged Solid Bangle', 'Open Spring Flex Cuff', 'Diamond Tennis Bracelet', 'Heavy Link Chain Bracelet', 'Traditional Kada'],
-        defaultValue: 'Hinged Solid Bangle'
-      },
-      {
-        key: 'closureMechanism',
-        label: 'Safety Closure Mechanism',
-        type: 'select',
-        options: ['Concealed Snap Lock with Dual Figures of Eight', 'Push-Button Release Clasp', 'Screw-Lock Mechanism', 'Slip-on Tension Fit'],
-        defaultValue: 'Concealed Snap Lock with Dual Figures of Eight'
-      },
-      {
-        key: 'innerDiameter',
-        label: 'Standard Inner Diameter',
-        type: 'text',
-        defaultValue: '57mm (2.4 anna / Medium)',
-        placeholder: 'e.g. 57mm (2.4 anna), 60mm (2.6 anna)'
-      },
-      {
-        key: 'finishTexture',
-        label: 'Surface Finish & Texture',
-        type: 'select',
-        options: ['High-Gloss Mirror Polish', 'Satin Brushed Matte', 'Hand-Chiseled Texture', 'Diamond Frosted'],
-        defaultValue: 'High-Gloss Mirror Polish'
-      }
-    ]
-  },
-  'earrings': {
-    sampleImage: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Sculpted Architectural Hoops', url: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Diamond Solitaire Studs', url: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Cascading Pearl Drops', url: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Sculptural Ribbon Drop Earrings',
-    defaultSubtitle: '18K Yellow Gold with South Sea Pearl Drop Collets',
-    defaultPrice: 980,
-    defaultOriginalPrice: 1150,
-    defaultSizes: 'Standard Pierced Post, Screw Back, Clip-On (Non-Pierced)',
-    sizeLabel: 'Backing / Fastener Types',
-    sizePlaceholder: 'Push Back Post, Screw Back, Clip-On',
-    weightLabel: 'Pair Net Weight (grams)',
-    defaultFeatures: [
-      'Lightweight hollow-core casting for comfortable all-day wear',
-      'Hypoallergenic 18K solid gold posts and secure silicone friction backings',
-      'Mirrored right and left anatomical orientation',
-      'Individually checked for diamond prong stability'
-    ],
-    fieldGroupTitle: 'Earring Engineering & Backing Details',
-    fieldGroupDesc: 'Specify post mechanism, drop length, backing fastener, and earlobe weight balance.',
-    customAttributes: [
-      {
-        key: 'earringType',
-        label: 'Earring Silhouette',
-        type: 'select',
-        options: ['Architectural Hoop', 'Solitaire Studs', 'Articulated Drop / Chandelier', 'Huggie Clicker', 'Ear Climber / Cuff'],
-        defaultValue: 'Architectural Hoop'
-      },
-      {
-        key: 'postBacking',
-        label: 'Fastener / Post Type',
-        type: 'select',
-        options: ['Friction Push Back Post', 'Threaded Precision Screw Back', 'French Wire Leverback', 'Omega Clip-On Mechanism', 'Seamless Clicker Hinge'],
-        defaultValue: 'Friction Push Back Post'
-      },
-      {
-        key: 'dropLength',
-        label: 'Drop Length (mm)',
-        type: 'text',
-        defaultValue: '32mm Drop',
-        placeholder: 'e.g. 12mm Stud, 32mm Drop, 55mm Chandelier'
-      }
-    ]
-  },
-  'jewellery-set': {
-    sampleImage: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Bridal High Jewellery Suite', url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Emerald & Diamond Ensemble', url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Imperial Bridal High Jewellery Suite',
-    defaultSubtitle: 'Handcrafted 18K Solid Gold Collar, Earrings & Maang Tikka Suite',
-    defaultPrice: 5800,
-    defaultOriginalPrice: 6500,
-    defaultSizes: 'Complete 3-Piece Suite (Free Size Necklace + Earrings + Ring)',
-    sizeLabel: 'Suite Inclusions',
-    sizePlaceholder: '3-Piece Suite, 5-Piece Suite',
-    weightLabel: 'Total Suite Gross Weight (approx. grams)',
-    defaultFeatures: [
-      'Master artisan setting with over 240 hours of handcrafting',
-      'IGI Certified natural diamonds and hallmarked 18K Gold',
-      'Coordinated design aesthetics across collar, studs, and ring',
-      'Archival cedarwood and leather presentation box'
-    ],
-    fieldGroupTitle: 'Suite Composition & Certification',
-    fieldGroupDesc: 'Set items included in the suite, total diamond weight, and assay certification.',
-    customAttributes: [
-      {
-        key: 'piecesIncluded',
-        label: 'Included Suite Components',
-        type: 'text',
-        defaultValue: 'Necklace Collar + Matching Earrings + Ring + Maang Tikka',
-        placeholder: 'e.g. Necklace + Earrings + Ring'
-      },
-      {
-        key: 'certificationBody',
-        label: 'Independent Certification Body',
-        type: 'select',
-        options: ['IGI Diamond Laboratory Report', 'GIA High Jewellery Certificate', 'BIS Hallmark Government Assay', 'In-House Master Atelier Certificate'],
-        defaultValue: 'IGI Diamond Laboratory Report'
-      },
-      {
-        key: 'totalSuiteWeight',
-        label: 'Total Suite Weight',
-        type: 'text',
-        defaultValue: '48.5 grams',
-        placeholder: 'e.g. 48.5 grams'
-      }
-    ]
-  },
-  'sarees': {
-    sampleImage: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Kanjivaram Pure Silk', url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Banarasi Zari Handloom', url: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Kanjivaram Handloom Pure Mulberry Silk Saree',
-    defaultSubtitle: 'Pure Gold & Silver Zari Woven Temple Border with Contrast Pallu',
-    defaultPrice: 850,
-    defaultOriginalPrice: 1050,
-    defaultSizes: 'Free Size (5.5m Saree + 0.8m Unstitched Blouse Piece)',
-    sizeLabel: 'Saree Fabric Dimensions',
-    sizePlaceholder: '5.5m + 0.8m Blouse Piece',
-    weightLabel: 'Net Fabric Weight (grams)',
-    defaultFeatures: [
-      'Silk Mark certified 100% pure mulberry silk yarn',
-      'Intricate Korvai handloom weaving technique with real zari threads',
-      'Includes coordinated 0.8 metre unstitched blouse piece with matching border',
-      'Shipped in a breathable pure cotton archival saree preservation bag'
-    ],
-    fieldGroupTitle: 'Handloom Saree & Fabric Specifications',
-    fieldGroupDesc: 'Specify silk weave type, zari content, blouse piece inclusion, and care instructions.',
-    customAttributes: [
-      {
-        key: 'fabricType',
-        label: 'Silk / Fabric Classification',
-        type: 'select',
-        options: ['Pure Kanjivaram Mulberry Silk', 'Banarasi Silk Georgette', 'Chanderi Zari Silk', 'Pure Organza Silk', 'Tussar Handspun Silk', 'Patan Patola Double Ikat'],
-        defaultValue: 'Pure Kanjivaram Mulberry Silk'
-      },
-      {
-        key: 'zariType',
-        label: 'Zari Metallic Thread Grade',
-        type: 'select',
-        options: ['Pure Silver & Gold Electroplated Zari', 'Tested High-Sheen Metallic Zari', 'Antique Copper Matte Zari', 'Resham Threadwork Only'],
-        defaultValue: 'Pure Silver & Gold Electroplated Zari'
-      },
-      {
-        key: 'blousePiece',
-        label: 'Blouse Fabric Inclusion',
-        type: 'select',
-        options: ['Included - 0.8m Unstitched Contrast Fabric', 'Included - 1.0m Heavy Embroidered Piece', 'Stitched Readymade Blouse Included', 'No Blouse Piece Included'],
-        defaultValue: 'Included - 0.8m Unstitched Contrast Fabric'
-      },
-      {
-        key: 'occasion',
-        label: 'Recommended Occasion',
-        type: 'select',
-        options: ['Bridal & Wedding Trousseau', 'Festive Ceremony', 'Cocktail & Evening Gala', 'Formal Reception'],
-        defaultValue: 'Bridal & Wedding Trousseau'
-      },
-      {
-        key: 'washCare',
-        label: 'Fabric Care & Preservation',
-        type: 'text',
-        defaultValue: 'Dry Clean Only. Wrap in Muslin Cloth.',
-        placeholder: 'e.g. Dry Clean Only'
-      }
-    ]
-  },
-  'ethnic-wear': {
-    sampleImage: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Designer Anarkali Suit', url: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Embroidered Kurti Set', url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Artisanal Chikankari Hand-Embroidered Kurti Set',
-    defaultSubtitle: 'Pure Mulmul Cotton with Mukaish Highlights and Organza Dupatta',
-    defaultPrice: 420,
-    defaultOriginalPrice: 520,
-    defaultSizes: 'XS (34), S (36), M (38), L (40), XL (42), XXL (44)',
-    sizeLabel: 'Available Garment Sizes',
-    sizePlaceholder: 'XS, S, M, L, XL, XXL',
-    weightLabel: 'Garment Set Weight',
-    defaultFeatures: [
-      'Authentic Lucknowi shadow chikankari hand stitches',
-      'Pre-washed pure mulmul cotton base for zero shrinkage',
-      'Includes handcrafted modal pants and pure organza dupatta',
-      'Dry clean or gentle cold hand wash recommended'
-    ],
-    fieldGroupTitle: 'Ethnic Ensemble & Tailoring Details',
-    fieldGroupDesc: 'Set silhouette, embroidery craft, inner lining, and sizing chart.',
-    customAttributes: [
-      {
-        key: 'fabricMaterial',
-        label: 'Fabric Material & Composition',
-        type: 'select',
-        options: ['100% Pure Mulmul Cotton', 'Raw Silk with Santoon Lining', 'Chanderi Silk Blend', 'Georgette with Mirror Work'],
-        defaultValue: '100% Pure Mulmul Cotton'
-      },
-      {
-        key: 'craftTechnique',
-        label: 'Embroidery & Handcraft Technique',
-        type: 'select',
-        options: ['Lucknowi Chikankari & Mukaish', 'Zardozi & Dabka Work', 'Gota Patti Mirror Craft', 'Kashmiri Aari Threadwork'],
-        defaultValue: 'Lucknowi Chikankari & Mukaish'
-      },
-      {
-        key: 'sleeveLength',
-        label: 'Sleeve Styling',
-        type: 'select',
-        options: ['Three-Quarter (3/4) Sleeves', 'Full Length Sleeves', 'Sleeveless with Attachments', 'Elbow Length'],
-        defaultValue: 'Three-Quarter (3/4) Sleeves'
-      }
-    ]
-  },
-  'western-wear': {
-    sampleImage: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Tailored Silk Dress', url: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Couture Evening Gown', url: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Tailored Silk Crepe Architectural Evening Dress',
-    defaultSubtitle: '100% Mulberry Silk Crepe with Concealed Back Zip and Side Drape',
-    defaultPrice: 650,
-    defaultOriginalPrice: 780,
-    defaultSizes: 'UK 6 / US 2, UK 8 / US 4, UK 10 / US 6, UK 12 / US 8, UK 14 / US 10',
-    sizeLabel: 'Standard Dress Sizes',
-    sizePlaceholder: 'UK 6 (XS), UK 8 (S), UK 10 (M), UK 12 (L)',
-    weightLabel: 'Garment Weight (grams)',
-    defaultFeatures: [
-      '100% pure heavy silk crepe de chine with smooth fluid drape',
-      'Precision French seams with bespoke inner bodice boning',
-      'Concealed Japanese YKK invisible back zipper',
-      'Fully lined in breathable lightweight silk habotai'
-    ],
-    fieldGroupTitle: 'Couture Garment & Silhouette Specifications',
-    fieldGroupDesc: 'Set silhouette cut, fabric composition, lining, neckline, and dress length.',
-    customAttributes: [
-      {
-        key: 'dressSilhouette',
-        label: 'Silhouette & Cut',
-        type: 'select',
-        options: ['Sculpted Column Dress', 'A-Line Flowing Flare', 'Bodycon Wrap Dress', 'Tailored Blazer Dress', 'Bias-Cut Slip Dress'],
-        defaultValue: 'Sculpted Column Dress'
-      },
-      {
-        key: 'neckline',
-        label: 'Neckline & Collar',
-        type: 'select',
-        options: ['Sweetheart Neckline', 'Deep V-Neck', 'High Cowl Neck', 'Square Architectural Neck', 'Off-The-Shoulder Bardot'],
-        defaultValue: 'Sweetheart Neckline'
-      },
-      {
-        key: 'dressLength',
-        label: 'Hem Length',
-        type: 'select',
-        options: ['Floor-Length Maxi', 'Calf-Length Midi', 'Above-Knee Mini', 'Asymmetrical High-Low'],
-        defaultValue: 'Floor-Length Maxi'
-      },
-      {
-        key: 'fabricComposition',
-        label: 'Fabric Composition',
-        type: 'text',
-        defaultValue: '100% Mulberry Silk Crepe (22 Momme)',
-        placeholder: 'e.g. 100% Mulberry Silk'
-      }
-    ]
-  },
-  'footwear': {
-    sampleImage: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Italian Leather Stilettos', url: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Pointed Mules & Flats', url: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Pointed-Toe Italian Calfskin Stiletto Pumps',
-    defaultSubtitle: 'Handcrafted Tuscan Leather with Ergonomic Arch Support',
-    defaultPrice: 540,
-    defaultOriginalPrice: 620,
-    defaultSizes: 'EU 36 (US 5.5), EU 37 (US 6.5), EU 38 (US 7.5), EU 39 (US 8.5), EU 40 (US 9.5)',
-    sizeLabel: 'Shoe Sizes (EU / US)',
-    sizePlaceholder: 'EU 36, EU 37, EU 38, EU 39, EU 40, EU 41',
-    weightLabel: 'Pair Weight (grams)',
-    defaultFeatures: [
-      'Full-grain Italian calfskin with vegetable dye treatment',
-      'Ergonomic memory-foam arch bed lined in breathable goatskin',
-      'Buffed Italian genuine leather sole with rubber grip insert',
-      'Includes branded dust bag and spare heel tap tips'
-    ],
-    fieldGroupTitle: 'Footwear & Heel Engineering Specifications',
-    fieldGroupDesc: 'Specify upper leather, heel height, sole construction, and arch cushioning.',
-    customAttributes: [
-      {
-        key: 'upperMaterial',
-        label: 'Upper Material & Finish',
-        type: 'select',
-        options: ['Full-Grain Italian Calfskin', 'Velvet Goat Suede', 'Duchess Silk Satin', 'Cruelty-Free Bio-Leather'],
-        defaultValue: 'Full-Grain Italian Calfskin'
-      },
-      {
-        key: 'heelHeight',
-        label: 'Heel Height & Structure',
-        type: 'select',
-        options: ['3.5 inch (90mm) Stiletto', '2.0 inch (50mm) Kitten Heel', '3.0 inch (75mm) Block Heel', 'Flat (10mm Comfort Sole)'],
-        defaultValue: '3.5 inch (90mm) Stiletto'
-      },
-      {
-        key: 'soleType',
-        label: 'Outsole Construction',
-        type: 'select',
-        options: ['Hand-Buffed Italian Leather Sole with Non-Slip Rubber Pod', 'Full Leather Sole', 'Shock-Absorbing Vibram Rubber Sole'],
-        defaultValue: 'Hand-Buffed Italian Leather Sole with Non-Slip Rubber Pod'
-      }
-    ]
-  },
-  'accessories': {
-    sampleImage: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Leather Belt & Buckle', url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Designer Sunglasses', url: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Silk Twill Scarf', url: 'https://images.unsplash.com/photo-1584030373081-f37b7bb4fa8e?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Full-Grain Calfskin Belt with Sculpted Solid Brass Buckle',
-    defaultSubtitle: 'Hand-Stitched Italian Saddle Leather with 24K Gold-Plated Hardware',
-    defaultPrice: 320,
-    defaultOriginalPrice: 380,
-    defaultSizes: '75cm (XS), 80cm (S), 85cm (M), 90cm (L), 95cm (XL)',
-    sizeLabel: 'Available Accessory Sizes / Dimensions',
-    sizePlaceholder: '75cm, 80cm, 85cm, 90cm, 95cm',
-    weightLabel: 'Item Weight (grams)',
-    defaultFeatures: [
-      'French edge-painted and hand-burnished finishing',
-      'Solid brass buckle finished with 24K micron gold plating',
-      'Full-grain bridle leather that patinas beautifully over time',
-      'Gift-ready packaging with travel cotton bag'
-    ],
-    fieldGroupTitle: 'Accessory Material & Hardware Specifications',
-    fieldGroupDesc: 'Set leather grade, hardware plating, dimensions, and craft certifications.',
-    customAttributes: [
-      {
-        key: 'materialType',
-        label: 'Primary Material',
-        type: 'select',
-        options: ['Full-Grain Italian Calfskin Leather', 'Handwoven 100% Silk Twill', 'Cellulose Acetate with Polarized Glass', 'Cashmere & Wool Blend'],
-        defaultValue: 'Full-Grain Italian Calfskin Leather'
-      },
-      {
-        key: 'hardwarePlating',
-        label: 'Hardware & Metal Finish',
-        type: 'select',
-        options: ['24K Micron Gold Plated Solid Brass', 'Brushed Palladium Silver', 'Polished Gunmetal Chrome', 'Matte Black Ceramic'],
-        defaultValue: '24K Micron Gold Plated Solid Brass'
-      },
-      {
-        key: 'dimensions',
-        label: 'Dimensions & Width',
-        type: 'text',
-        defaultValue: '30mm Width (Classic Trouser Width)',
-        placeholder: 'e.g. 30mm Width, 90x90cm'
-      }
-    ]
-  },
-  'perfumes': {
-    sampleImage: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Extrait de Parfum', url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80' },
-      { title: 'Pure Oud Oil Flacon', url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Niche Extrait de Parfum - Archival Oud & Amber',
-    defaultSubtitle: '30% Master Concentration with Rare Cambodian Agarwood & Damascena Rose',
-    defaultPrice: 380,
-    defaultOriginalPrice: 450,
-    defaultSizes: '50ml / 1.7 fl.oz, 100ml / 3.4 fl.oz',
-    sizeLabel: 'Bottle Volume Sizes',
-    sizePlaceholder: '50ml (1.7 fl oz), 100ml (3.4 fl oz)',
-    weightLabel: 'Packaged Net Weight (grams)',
-    defaultFeatures: [
-      'Formulated in Grasse, France with 30% pure perfume oil concentration',
-      'Aged Cambodian agarwood and sustainably harvested bourbon vanilla',
-      'Heavy crystal glass flacon with magnetic gold-plated zamak cap',
-      'Cruelty-free, vegan, and free from phthalates and synthetic dyes'
-    ],
-    fieldGroupTitle: 'Olfactory Pyramid & Perfume Specifications',
-    fieldGroupDesc: 'Set fragrance concentration, olfactory family, notes, and bottle volume.',
-    customAttributes: [
-      {
-        key: 'fragranceConcentration',
-        label: 'Perfume Concentration',
-        type: 'select',
-        options: ['Extrait de Parfum (30% Essential Oil)', 'Eau de Parfum (20% Oil)', 'Pure Attar Oil (100% Non-Alcoholic Concentrated Oil)'],
-        defaultValue: 'Extrait de Parfum (30% Essential Oil)'
-      },
-      {
-        key: 'olfactoryFamily',
-        label: 'Fragrance Olfactory Family',
-        type: 'select',
-        options: ['Woody Oriental & Smoky Oud', 'Floral Amber & Damascena Rose', 'Warm Spicy & Bourbon Vanilla', 'Fresh Citrus & Bergamot Aromatic'],
-        defaultValue: 'Woody Oriental & Smoky Oud'
-      },
-      {
-        key: 'topNotes',
-        label: 'Top & Heart Notes',
-        type: 'text',
-        defaultValue: 'Saffron, Pink Pepper, Turkish Rose, Agarwood',
-        placeholder: 'e.g. Saffron, Bergamot, Amber'
-      },
-      {
-        key: 'bottleVolume',
-        label: 'Bottle Volume',
-        type: 'text',
-        defaultValue: '50 ml / 1.7 fl. oz.',
-        placeholder: 'e.g. 50ml, 100ml'
-      }
-    ]
-  },
-  'general': {
-    sampleImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80',
-    presetImages: [
-      { title: 'Luxury Artifact', url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80' }
-    ],
-    defaultTitle: 'Artisanal Studio Catalog Piece',
-    defaultSubtitle: 'Handcrafted Heritage Collection Object',
-    defaultPrice: 450,
-    defaultOriginalPrice: 550,
-    defaultSizes: 'Standard Studio Dimension',
-    sizeLabel: 'Available Sizes',
-    sizePlaceholder: 'Standard, Small, Large',
-    weightLabel: 'Net Weight (grams)',
-    defaultFeatures: [
-      'Master artisan handcrafted finish',
-      'Certified authentic materials and non-toxic finishing',
-      'Secure protective packaging for safe transit'
-    ],
-    fieldGroupTitle: 'Product Specifications & Attributes',
-    fieldGroupDesc: 'Enter general product dimensions, materials, and artisan highlights.',
-    customAttributes: [
-      {
-        key: 'material',
-        label: 'Primary Material',
-        type: 'text',
-        defaultValue: 'Solid Recycled Alloy / Fine Ceramics',
-        placeholder: 'e.g. Marble, Solid Brass, Ceramic'
-      },
-      {
-        key: 'finish',
-        label: 'Finishing Technique',
-        type: 'text',
-        defaultValue: 'Hand-buffed Satin Luster',
-        placeholder: 'e.g. Polished, Glazed'
-      }
-    ]
-  }
-};
 
 export const ProductFormView: React.FC<ProductFormViewProps> = ({
   editingProduct,
@@ -913,1463 +189,1796 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
   onCancel,
   currencySymbol
 }) => {
-  // Stepper State (Step 1: Category Selection, Step 2: Product Details)
-  const [currentStep, setCurrentStep] = useState<1 | 2>(editingProduct ? 2 : 1);
-
-  // Cascading Category Browser State (4-level hierarchy)
-  const [lvl1Id, setLvl1Id] = useState<string>('women-fashion');
-  const [lvl2Id, setLvl2Id] = useState<string>('accessories');
-  const [lvl3Id, setLvl3Id] = useState<string>('jewellery');
-  const [lvl4Id, setLvl4Id] = useState<string>('necklaces');
-
-  // Search filter query in Step 1
-  const [categorySearchQuery, setCategorySearchQuery] = useState('');
-
-  // Modals state
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showGuidelineModal, setShowGuidelineModal] = useState(false);
-  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-
-  // Hidden File input ref
+  // File upload input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const replaceImgIndexRef = useRef<number | null>(null);
+  const sizeDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: editingProduct?.name || '',
-    subtitle: editingProduct?.subtitle || '',
-    price: editingProduct?.price || 1850,
-    originalPrice: editingProduct?.originalPrice || 2150,
-    stockCount: editingProduct?.stockCount ?? 12,
-    category: editingProduct?.category || 'necklaces',
-    metal: editingProduct?.metal || '18k-yellow-gold',
-    metalName: editingProduct?.metalName || '18K Recycled Yellow Gold',
-    karatPurity: editingProduct?.karatPurity || '750/1000 (18K Solid Gold)',
-    description: editingProduct?.description || '',
-    features: editingProduct?.features || [],
-    availableSizes: editingProduct?.availableSizes || [],
-    images: editingProduct?.images || [
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80'
-    ],
-    sku: editingProduct?.sku || `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
-    netWeight: '6.8 grams',
-    customAttributeValues: {} as Record<string, string>
+  // Modals & UI toggles
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [customImageUrl, setCustomImageUrl] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [saveTemplateSuccess, setSaveTemplateSuccess] = useState(false);
+
+  // Multiple Size selection states (matching user screenshot image.png)
+  const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
+  
+  // Initial selected sizes (defaults to ['2.2', '2.4', '2.6'] as seen in user's image.png)
+  const initialSizes = useMemo(() => {
+    if (editingProduct?.availableSizes && editingProduct.availableSizes.length > 0) {
+      return editingProduct.availableSizes;
+    }
+    if (editingProduct?.size && editingProduct.size.includes(',')) {
+      return editingProduct.size.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (editingProduct?.size) {
+      return [editingProduct.size];
+    }
+    return ['2.2', '2.4', '2.6'];
+  }, [editingProduct]);
+
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(initialSizes);
+  
+  // Copy price details to all sizes checkbox (defaults to true as shown in user screenshot)
+  const [copyPriceToAll, setCopyPriceToAll] = useState<boolean>(true);
+
+  // Size Variations state (one row per selected size with Meesho Price, Return Price, MRP, Stock)
+  const [sizeVariations, setSizeVariations] = useState<ProductSizeVariation[]>(() => {
+    const basePrice = editingProduct?.price || 3850;
+    const baseMrp = editingProduct?.originalPrice || 4800;
+    const baseReturn = Math.round(basePrice * 0.9);
+    const baseStock = editingProduct?.stockCount ?? 15;
+
+    if (editingProduct?.sizeVariations && editingProduct.sizeVariations.length > 0) {
+      return editingProduct.sizeVariations;
+    }
+
+    return initialSizes.map(sz => ({
+      size: sz,
+      price: basePrice,
+      returnPrice: baseReturn,
+      mrp: baseMrp,
+      stockCount: baseStock
+    }));
   });
 
-  const [featuresText, setFeaturesText] = useState(
-    (editingProduct?.features || []).join('\n')
-  );
-  const [sizesText, setSizesText] = useState(
-    (editingProduct?.availableSizes || []).join(', ')
-  );
-  const [imageUrlsText, setImageUrlsText] = useState(
-    (editingProduct?.images || []).join('\n')
-  );
-  const [isDraggingStep1, setIsDraggingStep1] = useState(false);
-  const [isDraggingStep2, setIsDraggingStep2] = useState(false);
-  const [showAdvancedUrlInput, setShowAdvancedUrlInput] = useState(false);
+  // "Same as Manufacturer Details" checkbox
+  const [sameAsManufacturer, setSameAsManufacturer] = useState<boolean>(true);
 
-  // Level 1 Node
-  const lvl1Node = useMemo(() => {
-    return CATEGORY_TREE.find(n => n.id === lvl1Id) || CATEGORY_TREE[0];
-  }, [lvl1Id]);
+  // Default initial form state
+  const [formData, setFormData] = useState({
+    netWeightGrams: editingProduct?.netWeightGrams || editingProduct?.weightGrams || '28.5',
+    productId: editingProduct?.productId || editingProduct?.sku || `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
+    name: editingProduct?.name || '',
+    
+    // Product Details
+    closure: editingProduct?.closure || 'Slip-On',
+    color: editingProduct?.color || 'White & Red',
+    genericName: editingProduct?.genericName || 'Sakha Pola',
+    netQuantity: editingProduct?.netQuantity || 'Set of 2',
+    occasion: editingProduct?.occasion || 'Bridal / Wedding',
+    plating: editingProduct?.plating || 'Micron Gold Plated',
+    diameter: editingProduct?.diameter || '64 mm',
+    dimensionMm: editingProduct?.dimensionMm || '6 mm',
+    sizing: editingProduct?.sizing || 'Non-Adjustable',
+    stoneType: editingProduct?.stoneType || 'No Stone',
+    trend: editingProduct?.trend || 'Traditional Bengali Bridal',
+    productType: editingProduct?.productType || 'Bengali Sakha Pola',
+    countryOfOrigin: editingProduct?.countryOfOrigin || editingProduct?.origin || 'India',
+    
+    // Manufacturer
+    manufacturerName: editingProduct?.manufacturerName || 'NaxtTo Bengali Heritage Karigar Guild',
+    manufacturerAddress: editingProduct?.manufacturerAddress || '14/2 Shankar Ghosh Lane, Bowbazar, Kolkata, West Bengal',
+    manufacturerPincode: editingProduct?.manufacturerPincode || '700012',
+    
+    // Packer
+    packerName: editingProduct?.packerName || 'NaxtTo Bengali Heritage Karigar Guild',
+    packerAddress: editingProduct?.packerAddress || '14/2 Shankar Ghosh Lane, Bowbazar, Kolkata, West Bengal',
+    packerPincode: editingProduct?.packerPincode || '700012',
+    
+    // Importer
+    importerName: editingProduct?.importerName || 'NA (Domestic Sourced India)',
+    importerAddress: editingProduct?.importerAddress || 'NA',
+    importerPincode: editingProduct?.importerPincode || '700012',
+    
+    // Other Attributes
+    baseMetal: editingProduct?.baseMetal || 'Conch Shell (Shankha)',
+    brand: editingProduct?.brand || 'NAXTTO',
+    description: editingProduct?.description || '',
 
-  // Level 2 Node
-  const lvl2Node = useMemo(() => {
-    return lvl1Node.children?.find(n => n.id === lvl2Id) || lvl1Node.children?.[0];
-  }, [lvl1Node, lvl2Id]);
+    // Pricing & Inventory base
+    price: editingProduct?.price || 3850,
+    originalPrice: editingProduct?.originalPrice || 4800,
+    stockCount: editingProduct?.stockCount ?? 15,
+    
+    // Images
+    images: editingProduct?.images && editingProduct.images.length > 0 
+      ? editingProduct.images 
+      : [
+          '/src/assets/images/shankha_pola_set_1790249913718.jpg',
+          '/src/assets/images/sakha_pola_stack_1790249812700.jpg'
+        ]
+  });
 
-  // Level 3 Node
-  const lvl3Node = useMemo(() => {
-    return lvl2Node?.children?.find(n => n.id === lvl3Id) || lvl2Node?.children?.[0];
-  }, [lvl2Node, lvl3Id]);
+  // Close size dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sizeDropdownRef.current && !sizeDropdownRef.current.contains(e.target as Node)) {
+        setIsSizeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // Level 4 Node (Leaf)
-  const lvl4Node = useMemo(() => {
-    return lvl3Node?.children?.find(n => n.id === lvl4Id) || lvl3Node?.children?.[0];
-  }, [lvl3Node, lvl4Id]);
-
-  // Current Breadcrumb Trail
-  const breadcrumbTrail = useMemo(() => {
-    const parts = [lvl1Node?.name, lvl2Node?.name, lvl3Node?.name, lvl4Node?.name].filter(Boolean);
-    return parts.join(' / ');
-  }, [lvl1Node, lvl2Node, lvl3Node, lvl4Node]);
-
-  // Detect active category config key based on the leaf node ID or categoryType
-  const activeCategoryKey = useMemo(() => {
-    if (lvl4Node?.categoryType && CATEGORY_CONFIGS[lvl4Node.categoryType]) {
-      return lvl4Node.categoryType;
-    }
-    if (lvl4Id && CATEGORY_CONFIGS[lvl4Id]) {
-      return lvl4Id;
-    }
-    if (lvl3Id && CATEGORY_CONFIGS[lvl3Id]) {
-      return lvl3Id;
-    }
-    if (lvl4Node?.mappedCategory && CATEGORY_CONFIGS[lvl4Node.mappedCategory]) {
-      return lvl4Node.mappedCategory;
-    }
-    return 'general';
-  }, [lvl4Node, lvl4Id, lvl3Id]);
-
-  const activeConfig = useMemo(() => {
-    return CATEGORY_CONFIGS[activeCategoryKey] || CATEGORY_CONFIGS['general'];
-  }, [activeCategoryKey]);
-
-  // When category changes in Step 1, adapt defaults IF NOT editing existing product
-  const applyCategoryDefaults = (categoryKey: string, leafNode: CategoryNode | undefined) => {
-    const config = CATEGORY_CONFIGS[categoryKey] || CATEGORY_CONFIGS['general'];
-    if (!editingProduct) {
-      const initialCustomValues: Record<string, string> = {};
-      config.customAttributes.forEach(attr => {
-        initialCustomValues[attr.key] = attr.defaultValue;
-      });
-
+  // Keep Packer synchronized when checkbox is checked
+  useEffect(() => {
+    if (sameAsManufacturer) {
       setFormData(prev => ({
         ...prev,
-        name: config.defaultTitle,
-        subtitle: config.defaultSubtitle,
-        price: config.defaultPrice,
-        originalPrice: config.defaultOriginalPrice,
-        category: leafNode?.mappedCategory || (prev.category as ProductCategory),
-        images: [config.sampleImage],
-        availableSizes: config.defaultSizes.split(',').map(s => s.trim()),
-        features: config.defaultFeatures,
-        customAttributeValues: initialCustomValues
+        packerName: prev.manufacturerName,
+        packerAddress: prev.manufacturerAddress,
+        packerPincode: prev.manufacturerPincode
       }));
-
-      setFeaturesText(config.defaultFeatures.join('\n'));
-      setSizesText(config.defaultSizes);
-      setImageUrlsText(config.sampleImage);
     }
-  };
+  }, [sameAsManufacturer, formData.manufacturerName, formData.manufacturerAddress, formData.manufacturerPincode]);
 
-  // Search Results Flattening
-  const searchResults = useMemo(() => {
-    if (!categorySearchQuery.trim()) return [];
-    const query = categorySearchQuery.toLowerCase();
-    const results: { path: string; l1: string; l2: string; l3: string; l4: string; leaf: CategoryNode }[] = [];
+  // Synchronize size variations when selectedSizes changes
+  const handleToggleSize = (size: string) => {
+    setSelectedSizes(prev => {
+      const isSelected = prev.includes(size);
+      let updatedSizes: string[];
+      if (isSelected) {
+        updatedSizes = prev.filter(s => s !== size);
+      } else {
+        // Keep order consistent with ALL_CATALOG_SIZES
+        updatedSizes = ALL_CATALOG_SIZES.filter(s => prev.includes(s) || s === size);
+      }
 
-    CATEGORY_TREE.forEach(l1 => {
-      l1.children?.forEach(l2 => {
-        l2.children?.forEach(l3 => {
-          l3.children?.forEach(l4 => {
-            const fullPath = `${l1.name} / ${l2.name} / ${l3.name} / ${l4.name}`;
-            if (
-              fullPath.toLowerCase().includes(query) ||
-              l4.name.toLowerCase().includes(query) ||
-              l3.name.toLowerCase().includes(query)
-            ) {
-              results.push({
-                path: fullPath,
-                l1: l1.id,
-                l2: l2.id,
-                l3: l3.id,
-                l4: l4.id,
-                leaf: l4
-              });
-            }
-          });
+      // Sync variations
+      setSizeVariations(currVariations => {
+        const firstVar = currVariations[0] || {
+          price: formData.price,
+          returnPrice: Math.round(formData.price * 0.9),
+          mrp: formData.originalPrice,
+          stockCount: formData.stockCount
+        };
+
+        return updatedSizes.map(sz => {
+          const existing = currVariations.find(v => v.size === sz);
+          if (existing) return existing;
+          return {
+            size: sz,
+            price: firstVar.price,
+            returnPrice: firstVar.returnPrice,
+            mrp: firstVar.mrp,
+            stockCount: firstVar.stockCount
+          };
         });
       });
-    });
 
-    return results.slice(0, 8);
-  }, [categorySearchQuery]);
-
-  const selectSearchResult = (item: { l1: string; l2: string; l3: string; l4: string; leaf: CategoryNode }) => {
-    setLvl1Id(item.l1);
-    setLvl2Id(item.l2);
-    setLvl3Id(item.l3);
-    setLvl4Id(item.l4);
-    setCategorySearchQuery('');
-
-    const configKey = item.leaf.categoryType || item.leaf.id || 'general';
-    applyCategoryDefaults(configKey, item.leaf);
-  };
-
-  // Column Selection Handlers
-  const handleSelectLvl1 = (node: CategoryNode) => {
-    setLvl1Id(node.id);
-    const firstL2 = node.children?.[0];
-    if (firstL2) {
-      setLvl2Id(firstL2.id);
-      const firstL3 = firstL2.children?.[0];
-      if (firstL3) {
-        setLvl3Id(firstL3.id);
-        const firstL4 = firstL3.children?.[0];
-        if (firstL4) {
-          setLvl4Id(firstL4.id);
-          const configKey = firstL4.categoryType || firstL4.id || 'general';
-          applyCategoryDefaults(configKey, firstL4);
-        }
-      }
-    }
-  };
-
-  const handleSelectLvl2 = (node: CategoryNode) => {
-    setLvl2Id(node.id);
-    const firstL3 = node.children?.[0];
-    if (firstL3) {
-      setLvl3Id(firstL3.id);
-      const firstL4 = firstL3.children?.[0];
-      if (firstL4) {
-        setLvl4Id(firstL4.id);
-        const configKey = firstL4.categoryType || firstL4.id || 'general';
-        applyCategoryDefaults(configKey, firstL4);
-      }
-    }
-  };
-
-  const handleSelectLvl3 = (node: CategoryNode) => {
-    setLvl3Id(node.id);
-    const firstL4 = node.children?.[0];
-    if (firstL4) {
-      setLvl4Id(firstL4.id);
-      const configKey = firstL4.categoryType || firstL4.id || 'general';
-      applyCategoryDefaults(configKey, firstL4);
-    }
-  };
-
-  const handleSelectLvl4 = (node: CategoryNode) => {
-    setLvl4Id(node.id);
-    const configKey = node.categoryType || node.id || 'general';
-    applyCategoryDefaults(configKey, node);
-  };
-
-  // Image Processing & Upload Handlers with client-side canvas compression
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const maxDim = 800;
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / Math.max(1, width));
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / Math.max(1, height));
-              height = maxDim;
-            }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, width);
-          canvas.height = Math.max(1, height);
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.72);
-            resolve(compressed);
-          } else {
-            resolve('');
-          }
-        };
-        img.onerror = () => {
-          resolve('');
-        };
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => resolve('');
-      reader.readAsDataURL(file);
+      return updatedSizes;
     });
   };
 
-  const processImageFiles = async (files: FileList | File[]) => {
-    const fileList = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (fileList.length === 0) return;
+  const handleClearAllSizes = () => {
+    setSelectedSizes([]);
+    setSizeVariations([]);
+  };
 
-    try {
-      const compressedList = await Promise.all(fileList.map(f => compressImage(f)));
-      const validImages = compressedList.filter(Boolean);
-      if (validImages.length > 0) {
-        setFormData(prev => {
-          const combined = [...validImages, ...prev.images];
-          setImageUrlsText(combined.join('\n'));
-          return { ...prev, images: combined };
+  // Update a single field in the size variation table
+  const handleUpdateVariationField = (
+    size: string, 
+    field: 'price' | 'returnPrice' | 'mrp' | 'stockCount', 
+    value: number
+  ) => {
+    setSizeVariations(prev => {
+      if (copyPriceToAll) {
+        // Apply to all rows simultaneously!
+        return prev.map(item => ({
+          ...item,
+          [field]: value,
+          // Auto-calculate return price if price changed and returnPrice wasn't manually set
+          ...(field === 'price' ? { returnPrice: Math.round(value * 0.9) } : {})
+        }));
+      } else {
+        // Apply only to this specific size variation
+        return prev.map(item => {
+          if (item.size === size) {
+            return {
+              ...item,
+              [field]: value,
+              ...(field === 'price' ? { returnPrice: Math.round(value * 0.9) } : {})
+            };
+          }
+          return item;
         });
       }
-    } catch (err) {
-      console.error('Error compressing uploaded images:', err);
+    });
+
+    // Also update base formData
+    if (field === 'price') {
+      setFormData(prev => ({ ...prev, price: value }));
+    } else if (field === 'mrp') {
+      setFormData(prev => ({ ...prev, originalPrice: value }));
+    } else if (field === 'stockCount') {
+      setFormData(prev => ({ ...prev, stockCount: value }));
     }
   };
 
+  // Available Studio Stock Media Assets for quick angle picker
+  const studioPresetImages = [
+    { title: 'Bengali Bridal Shankha Pola Set', url: '/src/assets/images/shankha_pola_set_1790249913718.jpg' },
+    { title: 'Sakha Pola Stack Detail', url: '/src/assets/images/sakha_pola_stack_1790249812700.jpg' },
+    { title: 'Pure Gold Badhano Loha', url: '/src/assets/images/loha_badhano_gold_1790249869592.jpg' },
+    { title: 'Hand-carved Mayur Mukhi Shankha', url: '/src/assets/images/mayur_mukhi_shankha_1790249854136.jpg' },
+    { title: 'Gold Badhano Crimson Pola', url: '/src/assets/images/gold_badhano_pola_1790249832633.jpg' },
+    { title: 'Bridal Bangle Stack Model', url: '/src/assets/images/bengali_bridal_bangles_1789477964190.jpg' },
+    { title: 'Daily Modern Pola Pair', url: '/src/assets/images/daily_modern_pola_1790250330549.jpg' },
+    { title: 'Bridal Wrist Ritual Angle', url: '/src/assets/images/bengali_bridal_wrist_1790249886691.jpg' },
+    { title: 'Artisan Goldsmith Badhano', url: '/src/assets/images/goldsmith_badhano_1790250296653.jpg' }
+  ];
+
+  // Handle image upload from computer
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processImageFiles(e.target.files);
-      e.target.value = '';
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const resultUrl = uploadEvent.target?.result as string;
+        if (resultUrl) {
+          if (replaceImgIndexRef.current !== null) {
+            // Replace specific image
+            setFormData(prev => {
+              const updated = [...prev.images];
+              updated[replaceImgIndexRef.current!] = resultUrl;
+              return { ...prev, images: updated };
+            });
+            replaceImgIndexRef.current = null;
+          } else {
+            // Add to end
+            setFormData(prev => ({
+              ...prev,
+              images: [...prev.images, resultUrl]
+            }));
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  const triggerAddImage = () => {
+    replaceImgIndexRef.current = null;
+    fileInputRef.current?.click();
+  };
+
+  const triggerChangeImage = (index: number) => {
+    replaceImgIndexRef.current = index;
+    fileInputRef.current?.click();
+  };
+
+  const removeImage = (index: number) => {
+    if (formData.images.length <= 1) {
+      alert('At least 1 product image is required for catalog verification.');
+      return;
     }
-  };
-
-  const handleSetCoverImage = (index: number) => {
-    if (index === 0) return;
-    setFormData(prev => {
-      const target = prev.images[index];
-      const rest = prev.images.filter((_, i) => i !== index);
-      const reordered = [target, ...rest];
-      setImageUrlsText(reordered.join('\n'));
-      return { ...prev, images: reordered };
-    });
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setFormData(prev => {
-      const filtered = prev.images.filter((_, i) => i !== index);
-      const result = filtered.length > 0 ? filtered : [activeConfig.sampleImage];
-      setImageUrlsText(result.join('\n'));
-      return { ...prev, images: result };
-    });
-  };
-
-  const handleApplySampleImage = (url: string) => {
     setFormData(prev => ({
       ...prev,
-      images: [url, ...prev.images.filter(img => img !== url)]
+      images: prev.images.filter((_, i) => i !== index)
     }));
-    setImageUrlsText(prev => `${url}\n${prev}`.trim());
   };
 
-  // Proceed to Step 2
-  const handleProceedToDetails = () => {
-    if (!formData.images || formData.images.length === 0) {
-      setFormData(prev => ({ ...prev, images: [activeConfig.sampleImage] }));
-      setImageUrlsText(activeConfig.sampleImage);
+  const handleSelectPresetImage = (url: string) => {
+    if (replaceImgIndexRef.current !== null) {
+      setFormData(prev => {
+        const updated = [...prev.images];
+        updated[replaceImgIndexRef.current!] = url;
+        return { ...prev, images: updated };
+      });
+      replaceImgIndexRef.current = null;
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, url]
+      }));
     }
-    // Initialize any unset custom attributes with defaults
-    const currentCustom = { ...formData.customAttributeValues };
-    activeConfig.customAttributes.forEach(attr => {
-      if (!currentCustom[attr.key]) {
-        currentCustom[attr.key] = attr.defaultValue;
-      }
-    });
-    setFormData(prev => ({ ...prev, customAttributeValues: currentCustom }));
-    setCurrentStep(2);
+    setShowImagePickerModal(false);
   };
 
-  // Final Form Submission
-  const handleSubmitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim()) {
-      alert('Please provide a listing title for the catalog.');
+  // Apply a pre-built template
+  const applyTemplate = (template: typeof PRESET_TEMPLATES[0]) => {
+    const tplSizes = template.sizes || ['2.2', '2.4', '2.6'];
+    setSelectedSizes(tplSizes);
+    
+    const tplVariations = tplSizes.map(sz => ({
+      size: sz,
+      price: template.price,
+      returnPrice: template.returnPrice || Math.round(template.price * 0.9),
+      mrp: template.mrp || template.originalPrice,
+      stockCount: template.stockCount
+    }));
+    setSizeVariations(tplVariations);
+
+    setFormData(prev => ({
+      ...prev,
+      genericName: template.genericName,
+      name: template.productName,
+      netWeightGrams: template.netWeight,
+      closure: template.closure,
+      color: template.color,
+      netQuantity: template.netQuantity,
+      occasion: template.occasion,
+      plating: template.plating,
+      diameter: template.diameter,
+      dimensionMm: template.dimensionMm,
+      sizing: template.sizing,
+      stoneType: template.stoneType,
+      trend: template.trend,
+      productType: template.type,
+      countryOfOrigin: template.countryOfOrigin,
+      manufacturerName: template.manufacturerName,
+      manufacturerAddress: template.manufacturerAddress,
+      manufacturerPincode: template.manufacturerPincode,
+      packerName: template.manufacturerName,
+      packerAddress: template.manufacturerAddress,
+      packerPincode: template.manufacturerPincode,
+      baseMetal: template.baseMetal,
+      brand: template.brand,
+      description: template.description,
+      price: template.price,
+      originalPrice: template.mrp || template.originalPrice,
+      stockCount: template.stockCount,
+      images: template.images && template.images.length > 0 ? template.images : prev.images
+    }));
+    setShowTemplateMenu(false);
+    setValidationErrors([]);
+  };
+
+  // Save current form values as custom template
+  const handleSaveAsCustomTemplate = () => {
+    try {
+      const customTemplate = {
+        name: formData.name ? `${formData.name.slice(0, 30)}...` : `Template ${new Date().toLocaleDateString()}`,
+        genericName: formData.genericName,
+        productName: formData.name,
+        netWeight: formData.netWeightGrams,
+        sizes: selectedSizes,
+        closure: formData.closure,
+        color: formData.color,
+        netQuantity: formData.netQuantity,
+        occasion: formData.occasion,
+        plating: formData.plating,
+        diameter: formData.diameter,
+        dimensionMm: formData.dimensionMm,
+        sizing: formData.sizing,
+        stoneType: formData.stoneType,
+        trend: formData.trend,
+        type: formData.productType,
+        countryOfOrigin: formData.countryOfOrigin,
+        manufacturerName: formData.manufacturerName,
+        manufacturerAddress: formData.manufacturerAddress,
+        manufacturerPincode: formData.manufacturerPincode,
+        baseMetal: formData.baseMetal,
+        brand: formData.brand,
+        description: formData.description,
+        price: sizeVariations[0]?.price || formData.price,
+        returnPrice: sizeVariations[0]?.returnPrice,
+        mrp: sizeVariations[0]?.mrp || formData.originalPrice,
+        stockCount: sizeVariations[0]?.stockCount || formData.stockCount,
+        images: formData.images
+      };
+
+      const existing = JSON.parse(localStorage.getItem('naxtto_seller_catalog_templates') || '[]');
+      existing.unshift(customTemplate);
+      localStorage.setItem('naxtto_seller_catalog_templates', JSON.stringify(existing.slice(0, 10)));
+      
+      setSaveTemplateSuccess(true);
+      setTimeout(() => setSaveTemplateSuccess(false), 3000);
+      setShowTemplateMenu(false);
+    } catch (err) {
+      console.warn('Failed to save custom template:', err);
+    }
+  };
+
+  // Get user's saved custom templates
+  const savedCustomTemplates = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('naxtto_seller_catalog_templates') || '[]');
+    } catch {
+      return [];
+    }
+  }, [saveTemplateSuccess]);
+
+  // Form submission validation & handling
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const errors: string[] = [];
+
+    if (!formData.name.trim()) errors.push('Product Name is required');
+    if (!formData.netWeightGrams) errors.push('Net Weight (gms) is required');
+    if (selectedSizes.length === 0) errors.push('Please select at least one Size option');
+    if (!formData.genericName) errors.push('Generic Name is required');
+    if (!formData.description.trim()) errors.push('Description is required');
+    if (!formData.images || formData.images.length === 0) errors.push('At least one catalog image is required');
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    const cleanedImages = imageUrlsText.split('\n').map(u => u.trim()).filter(Boolean);
-    const cleanedFeatures = featuresText.split('\n').map(f => f.trim()).filter(Boolean);
-    const cleanedSizes = sizesText.split(',').map(s => s.trim()).filter(Boolean);
+    const firstVar = sizeVariations[0];
+    const totalInventory = sizeVariations.reduce((sum, v) => sum + (v.stockCount || 0), 0);
 
-    onSave({
-      ...formData,
-      images: cleanedImages.length > 0 ? cleanedImages : [activeConfig.sampleImage],
-      features: cleanedFeatures.length > 0 ? cleanedFeatures : activeConfig.defaultFeatures,
-      availableSizes: cleanedSizes.length > 0 ? cleanedSizes : activeConfig.defaultSizes.split(',').map(s => s.trim()),
-      categoryBreadcrumbs: breadcrumbTrail,
-      categoryClass: lvl4Node?.name || 'General Product'
-    });
+    // Map into complete Product format
+    const productPayload: Partial<Product> = {
+      ...(editingProduct || {}),
+      name: formData.name.trim(),
+      subtitle: `${formData.baseMetal} • ${formData.plating} • ${formData.genericName}`,
+      price: firstVar?.price || Number(formData.price) || 2999,
+      originalPrice: firstVar?.mrp || Number(formData.originalPrice) || (firstVar?.price || 2999) * 1.25,
+      stockCount: totalInventory > 0 ? totalInventory : (Number(formData.stockCount) || 10),
+      inStock: totalInventory > 0,
+      images: formData.images,
+      description: formData.description.trim(),
+      category: (
+        formData.genericName.toLowerCase().includes('sakha') || formData.genericName.toLowerCase().includes('shankha')
+          ? 'shakha'
+          : formData.genericName.toLowerCase().includes('pola')
+          ? 'pola'
+          : formData.genericName.toLowerCase().includes('loha')
+          ? 'loha-badhano'
+          : formData.genericName.toLowerCase().includes('bangle') || formData.genericName.toLowerCase().includes('bracelet')
+          ? 'bracelets'
+          : formData.genericName.toLowerCase().includes('necklace')
+          ? 'necklaces'
+          : formData.genericName.toLowerCase().includes('ring')
+          ? 'rings'
+          : 'bridal-combos'
+      ) as ProductCategory,
+      metal: (
+        formData.baseMetal.toLowerCase().includes('conch')
+          ? 'pure-conch-shell'
+          : formData.baseMetal.toLowerCase().includes('acrylic') || formData.baseMetal.toLowerCase().includes('pola')
+          ? 'crimson-coral-acrylic'
+          : formData.baseMetal.toLowerCase().includes('iron')
+          ? 'iron-gold'
+          : formData.plating.toLowerCase().includes('22k')
+          ? '22k-yellow-gold'
+          : '18k-yellow-gold'
+      ) as MetalType,
+      metalName: `${formData.baseMetal} (${formData.plating})`,
+      style: (
+        formData.trend.toLowerCase().includes('bridal')
+          ? 'bridal-heritage'
+          : formData.trend.toLowerCase().includes('artisan')
+          ? 'hand-carved'
+          : 'traditional-bengali'
+      ) as JewelleryStyle,
+      styleName: formData.trend,
+      dimensions: `${formData.diameter} (Width: ${formData.dimensionMm})`,
+      weightGrams: formData.netWeightGrams,
+      karatPurity: formData.plating.includes('Gold') ? 'BIS Hallmarked 916 / 22K Micron Gold' : 'Guaranteed Authentic Sourced Shell & Alloy',
+      origin: formData.countryOfOrigin,
+      sku: formData.productId,
+      
+      // MULTI-SIZE SUPPORT: All selected sizes & variations
+      availableSizes: selectedSizes,
+      size: selectedSizes.join(', '),
+      sizeVariations: sizeVariations,
+
+      features: [
+        `Available Sizes: ${selectedSizes.join(', ')}`,
+        `Generic Name: ${formData.genericName}`,
+        `Closure: ${formData.closure}`,
+        `Color: ${formData.color}`,
+        `Net Quantity: ${formData.netQuantity}`,
+        `Plating: ${formData.plating}`,
+        `Diameter: ${formData.diameter}`,
+        `Base Metal: ${formData.baseMetal}`,
+        `BIS Hallmarking & Quality Assay Assured`
+      ],
+      // Supplier Portal catalog fields
+      netWeightGrams: formData.netWeightGrams,
+      productId: formData.productId,
+      closure: formData.closure,
+      color: formData.color,
+      genericName: formData.genericName,
+      netQuantity: formData.netQuantity,
+      occasion: formData.occasion,
+      plating: formData.plating,
+      diameter: formData.diameter,
+      dimensionMm: formData.dimensionMm,
+      sizing: formData.sizing,
+      stoneType: formData.stoneType,
+      trend: formData.trend,
+      productType: formData.productType,
+      countryOfOrigin: formData.countryOfOrigin,
+      manufacturerName: formData.manufacturerName,
+      manufacturerAddress: formData.manufacturerAddress,
+      manufacturerPincode: formData.manufacturerPincode,
+      packerName: formData.packerName,
+      packerAddress: formData.packerAddress,
+      packerPincode: formData.packerPincode,
+      importerName: formData.importerName,
+      importerAddress: formData.importerAddress,
+      importerPincode: formData.importerPincode,
+      baseMetal: formData.baseMetal,
+      brand: formData.brand
+    };
+
+    onSave(productPayload);
   };
 
-  // Financial calculations
-  const netPayout = Math.round(formData.price * 0.9);
-  const discountPercent = formData.originalPrice > formData.price 
-    ? Math.round(((formData.originalPrice - formData.price) / formData.originalPrice) * 100)
-    : 0;
-
   return (
-    <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm font-sans text-[#212121] overflow-hidden">
-      
-      {/* Hidden File Input */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileUpload} 
-        accept="image/*" 
-        multiple 
-        className="hidden" 
+    <div className="bg-[#f8f9fa] min-h-screen text-[#212121] pb-24 font-sans antialiased">
+      {/* Hidden native file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileUpload}
+        className="hidden"
       />
 
-      {/* 1. Top Bar / App Bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5ea] bg-white">
+      {/* 1. TOP HEADER - EXACT MATCH TO VIDEO */}
+      <div className="bg-white border-b border-[#e0e0e0] sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
+        {/* Left: Back Arrow + Page Title */}
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              if (currentStep === 2 && !editingProduct) {
-                setCurrentStep(1);
-              } else {
-                setShowDiscardConfirm(true);
-              }
-            }}
-            className="p-1 text-[#212121] hover:text-[#5022c3] transition-colors"
+            onClick={() => setShowDiscardConfirm(true)}
+            className="p-1 rounded-full hover:bg-gray-100 text-[#212121] transition-colors cursor-pointer"
             title="Go Back"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
           </button>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-base sm:text-lg font-bold text-[#212121] tracking-tight">
-              {editingProduct ? `Edit Catalog: ${editingProduct.name}` : 'Add Single Catalog'}
-            </h1>
-            <span className="px-2 py-0.5 bg-[#f0ebf8] text-[#5022c3] rounded text-[11px] font-semibold hidden md:inline-block">
-              {breadcrumbTrail}
-            </span>
-          </div>
+          <h1 className="text-base sm:text-lg font-bold text-[#212121] tracking-tight">
+            {editingProduct ? 'Edit Single Catalog' : 'Add Single Catalog'}
+          </h1>
         </div>
 
-        {/* Right Tutorial & Help Tools */}
-        <div className="flex items-center gap-4 text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setShowVideoModal(true)}
-            className="flex items-center gap-1.5 text-[#e53935] hover:text-[#c62828] transition-colors"
-          >
-            <PlayCircle className="w-4 h-4 fill-current text-white" />
-            <span className="hidden sm:inline">Learn to upload single catalog?</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowHelpModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0ebf8] text-[#5022c3] rounded-full hover:bg-[#e4d8f5] transition-colors"
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Need Help?</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Stepper Tab Header */}
-      <div className="px-6 border-b border-[#e5e5ea] bg-white flex items-center gap-8 text-xs font-semibold select-none">
-        
-        {/* Step 1 Tab */}
+        {/* Right: Learn to upload single catalog video link */}
         <button
           type="button"
-          onClick={() => setCurrentStep(1)}
-          className={`flex items-center gap-2 py-3.5 border-b-2 transition-all ${
-            currentStep === 1
-              ? 'border-[#5022c3] text-[#5022c3]'
-              : 'border-transparent text-[#717478] hover:text-[#212121]'
-          }`}
+          onClick={() => setShowVideoModal(true)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-[#212121] hover:text-[#5022c3] transition-colors py-1 px-2.5 rounded-lg hover:bg-purple-50 cursor-pointer"
         >
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
-            currentStep === 1
-              ? 'bg-[#5022c3] text-white'
-              : currentStep === 2
-              ? 'bg-emerald-600 text-white'
-              : 'bg-[#e5e5ea] text-[#717478]'
-          }`}>
-            {currentStep === 2 ? '✓' : '1'}
-          </span>
-          <span>1. Select Category</span>
+          <div className="w-5 h-4 bg-[#ff0000] rounded-xs flex items-center justify-center text-white shrink-0 shadow-xs">
+            <div className="w-0 h-0 border-y-[3.5px] border-y-transparent border-l-[5.5px] border-l-white ml-0.5" />
+          </div>
+          <span>Learn to upload single catalog</span>
         </button>
-
-        {/* Step 2 Tab */}
-        <button
-          type="button"
-          onClick={() => handleProceedToDetails()}
-          className={`flex items-center gap-2 py-3.5 border-b-2 transition-all ${
-            currentStep === 2
-              ? 'border-[#5022c3] text-[#5022c3]'
-              : 'border-transparent text-[#717478] hover:text-[#212121]'
-          }`}
-        >
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
-            currentStep === 2 ? 'bg-[#5022c3] text-white' : 'bg-[#e5e5ea] text-[#717478]'
-          }`}>
-            2
-          </span>
-          <span>2. Add Product Details ({lvl4Node?.name || 'Custom Category'})</span>
-        </button>
-
       </div>
 
-      {/* 3. STEP 1: SELECT CATEGORY & UPLOAD PHOTO */}
-      {currentStep === 1 && (
-        <div className="p-6 space-y-6">
-          
-          {/* Search Category Input */}
-          <div className="max-w-xl space-y-1.5 relative">
-            <label className="block text-xs font-bold text-[#212121]">Search Category</label>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#878787]" />
-              <input
-                type="text"
-                value={categorySearchQuery}
-                onChange={(e) => setCategorySearchQuery(e.target.value)}
-                placeholder="Try Sarees, Necklaces & Chains, Rings, Bangles, Kurtis, Footwear, Dresses..."
-                className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white text-xs rounded-xl pl-9 pr-4 py-2.5 outline-none transition-all"
-              />
-              {categorySearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setCategorySearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+      {/* Validation Banner if errors */}
+      {validationErrors.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold">
+              <AlertCircle className="w-4 h-4" />
+              <span>Please fill in the required catalog fields:</span>
             </div>
-
-            {/* Quick Filter Search Results Dropdown */}
-            {searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#e5e5ea] rounded-xl shadow-xl z-50 py-1 text-xs max-h-60 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-[#878787] uppercase tracking-wider bg-[#f5f5f7]">
-                  Matching Categories
-                </div>
-                {searchResults.map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => selectSearchResult(item)}
-                    className="w-full text-left px-3.5 py-2 hover:bg-[#f0ebf8] hover:text-[#5022c3] flex items-center justify-between transition-colors"
-                  >
-                    <span className="font-medium text-[#212121]">{item.path}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#878787]" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ul className="list-disc list-inside text-[11px] pl-2 space-y-0.5">
+              {validationErrors.map((err, i) => (
+                <li key={i}>{err}</li>
+              ))}
+            </ul>
           </div>
-
-          {/* Cascading 4-Column Category Hierarchy Browser + Right Image Preview */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {/* 4-Column Browser (8 cols) */}
-            <div className="lg:col-span-8 bg-white border border-[#e5e5ea] rounded-xl overflow-hidden shadow-xs grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#e5e5ea] h-[340px]">
-              
-              {/* Column 1: Main Categories */}
-              <div className="overflow-y-auto py-2 text-xs divide-y divide-gray-50 select-none">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-[#878787] uppercase tracking-wider">
-                  Departments
-                </div>
-                {CATEGORY_TREE.map(cat => {
-                  const isSelected = cat.id === lvl1Id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectLvl1(cat)}
-                      className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-[11px] font-medium transition-colors relative ${
-                        isSelected 
-                          ? 'bg-[#5022c3] text-white font-bold' 
-                          : 'text-[#212121] hover:bg-[#f5f5f7]'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {isSelected && (
-                        <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-[#5022c3] absolute -right-[6px] z-10 hidden sm:block" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Column 2: Level 2 Subcategories */}
-              <div className="overflow-y-auto py-2 text-xs divide-y divide-gray-50 select-none">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-[#878787] uppercase tracking-wider">
-                  Type
-                </div>
-                {lvl1Node.children?.map(cat => {
-                  const isSelected = cat.id === lvl2Id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectLvl2(cat)}
-                      className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-[11px] font-medium transition-colors relative ${
-                        isSelected 
-                          ? 'bg-[#5022c3] text-white font-bold' 
-                          : 'text-[#212121] hover:bg-[#f5f5f7]'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {isSelected && (
-                        <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-[#5022c3] absolute -right-[6px] z-10 hidden sm:block" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Column 3: Level 3 Sub-branches */}
-              <div className="overflow-y-auto py-2 text-xs divide-y divide-gray-50 select-none">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-[#878787] uppercase tracking-wider">
-                  Subcategory
-                </div>
-                {lvl2Node?.children?.map(cat => {
-                  const isSelected = cat.id === lvl3Id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectLvl3(cat)}
-                      className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-[11px] font-medium transition-colors relative ${
-                        isSelected 
-                          ? 'bg-[#5022c3] text-white font-bold' 
-                          : 'text-[#212121] hover:bg-[#f5f5f7]'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {isSelected && (
-                        <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-[#5022c3] absolute -right-[6px] z-10 hidden sm:block" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Column 4: Level 4 Leaf Categories */}
-              <div className="overflow-y-auto py-2 text-xs divide-y divide-gray-50 select-none">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-[#878787] uppercase tracking-wider">
-                  Product Class
-                </div>
-                {lvl3Node?.children?.map(cat => {
-                  const isSelected = cat.id === lvl4Id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectLvl4(cat)}
-                      className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-[11px] font-medium transition-colors ${
-                        isSelected 
-                          ? 'bg-[#5022c3] text-white font-bold' 
-                          : 'text-[#212121] hover:bg-[#f5f5f7]'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                  );
-                })}
-              </div>
-
-            </div>
-
-            {/* Right Preview Card & Upload Trigger (4 cols) */}
-            <div className="lg:col-span-4 bg-white border border-[#e5e5ea] rounded-xl overflow-hidden shadow-xs flex flex-col justify-between">
-              
-              {/* Category Breadcrumb Ribbon */}
-              <div className="bg-[#f0f4f9] px-4 py-2.5 text-center text-xs font-semibold text-[#1e293b] border-b border-[#e5e5ea] tracking-tight truncate">
-                {breadcrumbTrail}
-              </div>
-
-              {/* Guide / Sample Image View & Direct Drag-and-Drop Zone */}
-              <div 
-                onDragOver={(e) => { e.preventDefault(); setIsDraggingStep1(true); }}
-                onDragLeave={(e) => { e.preventDefault(); setIsDraggingStep1(false); }}
-                onDrop={(e) => { 
-                  e.preventDefault(); 
-                  setIsDraggingStep1(false); 
-                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    processImageFiles(e.dataTransfer.files);
-                  }
-                }}
-                className={`p-6 text-center space-y-4 transition-colors ${
-                  isDraggingStep1 ? 'bg-[#f0ebf8] border-2 border-dashed border-[#5022c3]' : ''
-                }`}
-              >
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-36 h-36 mx-auto rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] overflow-hidden flex items-center justify-center shadow-xs relative group cursor-pointer hover:border-[#5022c3] transition-all"
-                >
-                  <img
-                    src={formData.images[0] || activeConfig.sampleImage}
-                    alt="Category Preview"
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
-                  />
-                  <div className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                    {formData.images.length > 0 && formData.images[0] !== activeConfig.sampleImage ? 'UPLOADED PHOTO' : 'SAMPLE PREVIEW'}
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-bold transition-opacity gap-1">
-                    <Upload className="w-4 h-4" />
-                    <span>Click to change</span>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-[#212121]">
-                    {isDraggingStep1 ? 'Drop front photo here!' : 'Directly upload product front photo'}
-                  </p>
-                  <p className="text-[11px] text-[#717478] mt-0.5">
-                    Drag & drop directly from your computer or phone for {lvl4Node?.name}
-                  </p>
-                </div>
-
-                {/* Primary Upload Button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-2.5 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
-                >
-                  <UploadCloud className="w-4 h-4" />
-                  <span>Choose Images from Device</span>
-                </button>
-
-                {/* Suggested Sample Photos for current Category */}
-                <div className="pt-2">
-                  <p className="text-[10px] font-bold text-[#878787] uppercase tracking-wider mb-2">
-                    Or pick an atelier sample for {lvl4Node?.name || 'this category'}:
-                  </p>
-                  <div className="flex items-center justify-center gap-2">
-                    {activeConfig.presetImages.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleApplySampleImage(preset.url)}
-                        title={preset.title}
-                        className="w-9 h-9 rounded-lg overflow-hidden border-2 border-transparent hover:border-[#5022c3] transition-all hover:scale-110"
-                      >
-                        <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Quality Check Guidelines link */}
-              <div className="bg-[#fffbeb] p-3 border-t border-[#fef3c7] flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2 text-[#92400e]">
-                  <AlertCircle className="w-4 h-4 text-[#d97706] shrink-0" />
-                  <span className="font-medium">Photos Quality Check & Guidelines</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowGuidelineModal(true)}
-                  className="text-[#5022c3] font-bold hover:underline"
-                >
-                  View
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Bottom Footer Actions for Step 1 */}
-          <div className="flex items-center justify-between pt-4 border-t border-[#e5e5ea]">
-            <button
-              type="button"
-              onClick={() => setShowDiscardConfirm(true)}
-              className="px-4 py-2 border border-[#dadce0] rounded-xl text-xs font-semibold text-[#5022c3] hover:bg-[#f0ebf8] transition-colors"
-            >
-              Discard Catalog
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <span className="text-[11px] text-[#717478]">Selected Category Class:</span>
-                <p className="text-xs font-bold text-[#5022c3]">{lvl4Node?.name}</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleProceedToDetails}
-                className="px-6 py-2.5 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5"
-              >
-                <span>Continue to Product Details</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
         </div>
       )}
 
-      {/* 4. STEP 2: ADD PRODUCT DETAILS - DYNAMICALLY CONFIGURED FOR SELECTED CATEGORY */}
-      {currentStep === 2 && (
-        <form onSubmit={handleSubmitForm} className="p-6 space-y-6">
+      {/* 2. MAIN 2-COLUMN CATALOG CONTAINER */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Breadcrumb Info Bar with Change Category action */}
-          <div className="p-3.5 bg-[#f0f4f9] rounded-xl border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-[#5022c3] uppercase tracking-wider bg-[#f0ebf8] px-2 py-0.5 rounded">
-                  Selected Taxonomy
-                </span>
-                <span className="text-[11px] text-[#555] font-medium">Auto-configured fields for: <strong>{lvl4Node?.name}</strong></span>
-              </div>
-              <p className="font-bold text-[#212121] text-sm">{breadcrumbTrail}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="px-3.5 py-1.5 bg-white border border-[#dadce0] rounded-lg text-xs font-semibold text-[#5022c3] hover:bg-[#f0ebf8] transition-colors self-start sm:self-auto shadow-xs"
-            >
-              Change Category
-            </button>
-          </div>
-
-          {/* Quick Imagery Header Bar */}
-          <div className="p-4 rounded-xl border border-[#e5e5ea] bg-white space-y-3">
-            <div className="flex items-center justify-between">
+          {/* ========================================================= */}
+          {/* LEFT COLUMN: FORM DETAILS (70-75% WIDTH / 8-9 COLS)       */}
+          {/* ========================================================= */}
+          <div className="lg:col-span-8 xl:col-span-9 bg-white rounded-lg border border-[#e0e0e0] p-5 sm:p-7 shadow-xs space-y-7">
+            
+            {/* TOP ROW: Net Weight & Product ID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <h3 className="text-xs font-bold text-[#212121]">Product Imagery & Studio Angles</h3>
-                <p className="text-[11px] text-[#717478]">Upload front view, fit angles, hallmarking stamps, or close-ups for {lvl4Node?.name}.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 bg-[#5022c3] hover:bg-[#431bb0] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Upload New Angle</span>
-              </button>
-            </div>
-
-            {/* Thumbnail Row */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              {formData.images.map((imgUrl, imgIdx) => (
-                <div 
-                  key={imgIdx} 
-                  className={`relative w-20 h-20 rounded-xl overflow-hidden border bg-[#f5f5f7] group shrink-0 shadow-xs transition-all ${
-                    imgIdx === 0 ? 'border-[#5022c3] ring-2 ring-[#5022c3]/20' : 'border-[#e5e5ea]'
-                  }`}
-                >
-                  <img src={imgUrl} alt="Product Angle" className="w-full h-full object-cover" />
-                  {imgIdx === 0 ? (
-                    <span className="absolute bottom-0 inset-x-0 bg-[#5022c3] text-white text-[8px] font-bold text-center py-0.5 uppercase tracking-wide">
-                      Main Front
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSetCoverImage(imgIdx)}
-                      className="absolute inset-x-0 bottom-0 bg-black/75 hover:bg-[#5022c3] text-white text-[8px] font-semibold text-center py-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      Set Main
-                    </button>
-                  )}
-                  {formData.images.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(imgIdx)}
-                      className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-red-600 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {/* Add New Angle Slot */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-20 h-20 rounded-xl border-2 border-dashed border-[#dadce0] hover:border-[#5022c3] hover:bg-[#f0ebf8] flex flex-col items-center justify-center text-[#717478] hover:text-[#5022c3] transition-all group shrink-0"
-              >
-                <Plus className="w-4 h-4 mb-0.5 text-gray-400 group-hover:text-[#5022c3]" />
-                <span className="text-[9px] font-bold">Add Photo</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Section A: Core Identity & Pricing */}
-          <div className="border border-[#e5e5ea] rounded-xl p-4 bg-white space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2.5">
-              <Tag className="w-4 h-4 text-[#5022c3]" />
-              <h3 className="text-xs font-bold text-[#212121] uppercase tracking-wider">
-                1. General Product Identification & Pricing
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-              
-              {/* Title */}
-              <div className="sm:col-span-2 lg:col-span-3">
-                <label className="block font-bold mb-1 text-[#212121]">Listing Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={`e.g. ${activeConfig.defaultTitle}`}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none font-medium transition-all"
-                />
-              </div>
-
-              {/* Subtitle / Architecture Description */}
-              <div className="sm:col-span-2 lg:col-span-3">
-                <label className="block font-bold mb-1 text-[#212121]">Subtitle / Architecture Tagline</label>
-                <input
-                  type="text"
-                  value={formData.subtitle}
-                  onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder={`e.g. ${activeConfig.defaultSubtitle}`}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none transition-all"
-                />
-              </div>
-
-              {/* Primary Category Mapping */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Storefront Category *</label>
-                <select
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value as ProductCategory })}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none font-medium"
-                >
-                  <option value="necklaces">Necklaces & Chains</option>
-                  <option value="rings">Continuous Rings</option>
-                  <option value="earrings">Sculpted Hoops & Earrings</option>
-                  <option value="bracelets">Articulated Cuffs & Bangles</option>
-                  <option value="fine-collections">Fine Collections / Sets</option>
-                  <option value="bespoke">Bespoke Commissions</option>
-                </select>
-              </div>
-
-              {/* Listing Price */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Selling Price ({currencySymbol}) *</label>
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  value={formData.price}
-                  onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none font-bold text-sm"
-                />
-              </div>
-
-              {/* Original Price / MSRP */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Original / MSRP ({currencySymbol})</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={formData.originalPrice}
-                  onChange={e => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none"
-                />
-              </div>
-
-              {/* Settlement Payout Display */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Net Payout Settlement</label>
-                <div className="w-full bg-[#ecfdf5] border border-[#a7f3d0] rounded-xl px-3.5 py-2.5 font-bold text-emerald-700 text-sm flex items-center justify-between">
-                  <span>{currencySymbol}{netPayout}</span>
-                  <span className="text-[10px] text-emerald-600 font-medium">90% net (10% fees)</span>
-                </div>
-              </div>
-
-              {/* Inventory Units */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Vault Stock Units *</label>
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  value={formData.stockCount}
-                  onChange={e => setFormData({ ...formData, stockCount: Number(e.target.value) })}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none font-bold"
-                />
-              </div>
-
-              {/* SKU code */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">Inventory SKU / Identifier</label>
-                <input
-                  type="text"
-                  value={formData.sku}
-                  onChange={e => setFormData({ ...formData, sku: e.target.value })}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl px-3.5 py-2.5 outline-none font-mono text-[11px]"
-                />
-              </div>
-
-            </div>
-          </div>
-
-          {/* Section B: Dynamic Specific Specifications for the selected Category */}
-          <div className="border border-[#e5e5ea] rounded-xl p-4 bg-[#faf9fe] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#ebdffc] pb-2.5">
-              <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#5022c3]" />
-                <div>
-                  <h3 className="text-xs font-bold text-[#212121] uppercase tracking-wider">
-                    2. {activeConfig.fieldGroupTitle}
-                  </h3>
-                  <p className="text-[11px] text-[#717478]">{activeConfig.fieldGroupDesc}</p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 bg-[#5022c3] text-white text-[10px] font-bold rounded-full">
-                {lvl4Node?.name}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-              
-              {/* If jewellery-related: show Precious Metal Alloy & Hallmark */}
-              {(activeCategoryKey === 'necklaces' || activeCategoryKey === 'rings' || activeCategoryKey === 'bracelets' || activeCategoryKey === 'earrings' || activeCategoryKey === 'jewellery-set') && (
-                <>
-                  <div>
-                    <label className="block font-bold mb-1 text-[#212121]">Precious Metal Alloy *</label>
-                    <select
-                      value={formData.metal}
-                      onChange={e => {
-                        const m = e.target.value as MetalType;
-                        const nameMap: Record<MetalType, string> = {
-                          'pure-conch-shell': '100% Pure Conch Shell (Natural Shankha)',
-                          'crimson-coral-acrylic': 'Auspicious Coral Red Pola',
-                          '22k-yellow-gold': '22K Solid Gold (BIS 916 Hallmarked)',
-                          'iron-gold': 'Pure Iron & 22K Solid Gold (Loha Badhano)',
-                          '18k-yellow-gold': '18K Recycled Yellow Gold',
-                          '18k-white-gold': '18K Recycled White Gold',
-                          '18k-rose-gold': '18K Recycled Rose Gold',
-                          '925-sterling-silver': '925 Sterling Silver',
-                          'platinum': 'Platinum 950',
-                          'gold-vermeil': '18K Gold Vermeil'
-                        };
-                        setFormData({ ...formData, metal: m, metalName: nameMap[m] });
-                      }}
-                      className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none font-medium"
-                    >
-                      <option value="pure-conch-shell">100% Pure Conch Shell (Natural Shankha)</option>
-                      <option value="crimson-coral-acrylic">Auspicious Coral Red Pola</option>
-                      <option value="22k-yellow-gold">22K Solid Gold (BIS 916 Hallmarked)</option>
-                      <option value="iron-gold">Pure Iron & 22K Solid Gold (Loha Badhano)</option>
-                      <option value="18k-yellow-gold">18K Recycled Yellow Gold</option>
-                      <option value="18k-white-gold">18K Recycled White Gold</option>
-                      <option value="18k-rose-gold">18K Recycled Rose Gold</option>
-                      <option value="925-sterling-silver">925 Sterling Silver</option>
-                      <option value="platinum">Platinum 950</option>
-                      <option value="gold-vermeil">18K Gold Vermeil</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold mb-1 text-[#212121]">Karat Purity & Hallmark</label>
-                    <input
-                      type="text"
-                      value={formData.karatPurity}
-                      onChange={e => setFormData({ ...formData, karatPurity: e.target.value })}
-                      placeholder="e.g. 750/1000 (18K Solid Gold)"
-                      className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Dynamic Category Specific Attributes */}
-              {activeConfig.customAttributes.map(attr => (
-                <div key={attr.key}>
-                  <label className="block font-bold mb-1 text-[#212121]">{attr.label}</label>
-                  {attr.type === 'select' && attr.options ? (
-                    <select
-                      value={formData.customAttributeValues[attr.key] || attr.defaultValue}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setFormData(prev => ({
-                          ...prev,
-                          customAttributeValues: {
-                            ...prev.customAttributeValues,
-                            [attr.key]: val
-                          }
-                        }));
-                      }}
-                      className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none font-medium"
-                    >
-                      {attr.options.map((opt, i) => (
-                        <option key={i} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData.customAttributeValues[attr.key] ?? attr.defaultValue}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setFormData(prev => ({
-                          ...prev,
-                          customAttributeValues: {
-                            ...prev.customAttributeValues,
-                            [attr.key]: val
-                          }
-                        }));
-                      }}
-                      placeholder={attr.placeholder || ''}
-                      className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none"
-                    />
-                  )}
-                </div>
-              ))}
-
-              {/* Net Weight Field */}
-              <div>
-                <label className="block font-bold mb-1 text-[#212121]">
-                  {activeConfig.weightLabel || 'Approximate Net Weight'}
+                <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                  Enter Net Weight (gms) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.netWeight}
-                  onChange={e => setFormData({ ...formData, netWeight: e.target.value })}
-                  placeholder="e.g. 6.8 grams"
-                  className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none"
+                  required
+                  value={formData.netWeightGrams}
+                  onChange={e => setFormData({ ...formData, netWeightGrams: e.target.value })}
+                  placeholder="Enter Net Weight (gms)"
+                  className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] focus:ring-1 focus:ring-[#5022c3] outline-none transition-all"
                 />
               </div>
 
-              {/* Available Sizes Field (Dynamic Label) */}
-              <div className="sm:col-span-2">
-                <label className="block font-bold mb-1 text-[#212121]">
-                  {activeConfig.sizeLabel} (comma separated)
+              <div>
+                <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                  Product Id (Optional)
                 </label>
                 <input
                   type="text"
-                  value={sizesText}
-                  onChange={e => setSizesText(e.target.value)}
-                  placeholder={activeConfig.sizePlaceholder}
-                  className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-xl px-3.5 py-2.5 outline-none"
+                  value={formData.productId}
+                  onChange={e => setFormData({ ...formData, productId: e.target.value })}
+                  placeholder="Enter Style code/ Product ID (opt)"
+                  className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] focus:ring-1 focus:ring-[#5022c3] outline-none transition-all"
                 />
               </div>
-
-            </div>
-          </div>
-
-          {/* Section C: Key Features & Direct Image URLs */}
-          <div className="border border-[#e5e5ea] rounded-xl p-4 bg-white space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2.5">
-              <ShieldCheck className="w-4 h-4 text-[#5022c3]" />
-              <h3 className="text-xs font-bold text-[#212121] uppercase tracking-wider">
-                3. Artisan Highlights & Description
-              </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-              
-              {/* Key Bullet Features */}
-              <div className="sm:col-span-2 lg:col-span-3">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-bold text-[#212121]">Key Artisan Highlights (one per line)</label>
-                  <button
-                    type="button"
+            {/* SECOND ROW: Product Name & Multiple Size Selector (EXACT MATCH TO USER SCREENSHOT image.png) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Product Name with Sparkle Icon */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-[#555] flex items-center gap-1">
+                    <span>Product Name</span>
+                    <span className="text-red-500">*</span>
+                    <Info className="w-3 h-3 text-gray-400" title="Listing title as visible to customers on catalog" />
+                  </label>
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter Product Name"
+                    className="w-full h-10 pl-3 pr-10 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] focus:ring-1 focus:ring-[#5022c3] outline-none transition-all"
+                  />
+                  <div 
+                    className="absolute right-2.5 p-1 bg-purple-50 text-[#5022c3] rounded-xs cursor-pointer hover:bg-purple-100 transition-colors"
+                    title="AI Auto-Title Suggestion"
                     onClick={() => {
-                      setFeaturesText(activeConfig.defaultFeatures.join('\n'));
+                      if (!formData.name) {
+                        setFormData({ 
+                          ...formData, 
+                          name: `Authentic Bengali ${formData.genericName} (${formData.plating})` 
+                        });
+                      }
                     }}
-                    className="text-[10px] text-[#5022c3] font-bold hover:underline flex items-center gap-1"
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Reset to {lvl4Node?.name} defaults</span>
-                  </button>
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
                 </div>
-                <textarea
-                  rows={4}
-                  value={featuresText}
-                  onChange={e => setFeaturesText(e.target.value)}
-                  className="w-full bg-[#f5f5f7] border border-[#e5e5ea] focus:border-[#5022c3] focus:bg-white rounded-xl p-3 outline-none"
-                  placeholder="Engineered anti-tangle herringbone link..."
-                />
               </div>
 
-              {/* Direct Image Upload Studio & Media Manager */}
-              <div className="sm:col-span-2 lg:col-span-3 space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="block font-bold text-[#212121]">Product Photos & Studio Imagery</label>
-                    <p className="text-[11px] text-[#717478]">Upload front view, side angles, close-ups, or hallmark certificate photos directly from your device.</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-1.5 bg-[#5022c3] hover:bg-[#431bb0] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-                    >
-                      <UploadCloud className="w-3.5 h-3.5" />
-                      <span>Upload Direct Images</span>
-                    </button>
-                  </div>
-                </div>
+              {/* Multi-Select Size Dropdown (Exact Match to user screenshot) */}
+              <div className="relative" ref={sizeDropdownRef}>
+                <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                  Size <span className="text-red-500">*</span>
+                </label>
 
-                {/* Drag & Drop Upload Zone */}
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingStep2(true); }}
-                  onDragLeave={(e) => { e.preventDefault(); setIsDraggingStep2(false); }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDraggingStep2(false);
-                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                      processImageFiles(e.dataTransfer.files);
-                    }
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
-                    isDraggingStep2
-                      ? 'border-[#5022c3] bg-[#f0ebf8] scale-[1.01]'
-                      : 'border-[#dadce0] bg-[#faf9fe] hover:border-[#5022c3] hover:bg-[#f5f2fd]'
+                {/* Dropdown Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
+                  className={`w-full h-10 px-3 text-xs bg-white border rounded-md flex items-center justify-between transition-all cursor-pointer ${
+                    isSizeDropdownOpen ? 'border-[#5022c3] ring-1 ring-[#5022c3]' : 'border-[#d2d2d2] hover:border-gray-400'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-[#f0ebf8] text-[#5022c3] flex items-center justify-center mb-2.5">
-                    <UploadCloud className="w-6 h-6" />
-                  </div>
-                  <p className="text-xs font-bold text-[#212121]">
-                    {isDraggingStep2 ? 'Drop your images here now!' : 'Click to browse or drag and drop image files directly from your computer / phone'}
-                  </p>
-                  <p className="text-[11px] text-[#717478] mt-0.5">
-                    Supports PNG, JPG, JPEG, WEBP, HEIC • Upload multiple photos simultaneously
-                  </p>
-                </div>
+                  <span className={`truncate ${selectedSizes.length > 0 ? 'text-[#212121] font-medium' : 'text-gray-400'}`}>
+                    {selectedSizes.length > 0 ? selectedSizes.join(', ') : 'Select Sizes'}
+                  </span>
+                  {isSizeDropdownOpen ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
+                  )}
+                </button>
 
-                {/* Visual Gallery of Uploaded Angles */}
-                {formData.images.length > 0 && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-[#212121]">Uploaded Product Angles ({formData.images.length})</span>
-                      <span className="text-[#717478]">The first photo will be used as the catalog main thumbnail</span>
+                {/* Dropdown Menu Overlay (Matching screenshot checkboxes & buttons) */}
+                {isSizeDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#d2d2d2] rounded-lg shadow-xl z-50 p-3 animate-fadeIn">
+                    <div className="text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                      Select Available Sizes:
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                      {formData.images.map((imgUrl, imgIdx) => (
-                        <div
-                          key={imgIdx}
-                          className={`relative rounded-xl overflow-hidden border bg-white shadow-xs group transition-all ${
-                            imgIdx === 0 ? 'border-[#5022c3] ring-2 ring-[#5022c3]/20' : 'border-[#e5e5ea]'
-                          }`}
-                        >
-                          <div className="aspect-square bg-[#f5f5f7] overflow-hidden flex items-center justify-center">
-                            <img src={imgUrl} alt={`Product Angle ${imgIdx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                          </div>
+                    {/* Scrollable Checkbox Grid */}
+                    <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1 py-1">
+                      {ALL_CATALOG_SIZES.map(sz => {
+                        const isChecked = selectedSizes.includes(sz);
+                        return (
+                          <label
+                            key={sz}
+                            className={`flex items-center gap-2 p-1.5 rounded-md text-xs cursor-pointer select-none transition-colors ${
+                              isChecked ? 'bg-purple-50 text-[#5022c3] font-semibold' : 'text-[#333] hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => handleToggleSize(sz)}
+                              className="w-4 h-4 rounded text-[#5022c3] accent-[#5022c3] cursor-pointer"
+                            />
+                            <span>{sz}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
 
-                          {/* Badges */}
-                          {imgIdx === 0 ? (
-                            <div className="absolute top-1.5 left-1.5 bg-[#5022c3] text-white text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
-                              <Star className="w-2.5 h-2.5 fill-current" />
-                              <span>COVER PHOTO</span>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleSetCoverImage(imgIdx)}
-                              className="absolute top-1.5 left-1.5 bg-black/70 hover:bg-[#5022c3] text-white text-[9px] font-semibold px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-xs"
-                            >
-                              Set as Cover
-                            </button>
-                          )}
-
-                          {/* Angle Label & Delete Button Bar */}
-                          <div className="p-2 flex items-center justify-between bg-white border-t border-gray-100 text-[10px]">
-                            <span className="font-semibold text-[#555]">
-                              {imgIdx === 0 ? 'Angle 1 (Front)' : `Angle ${imgIdx + 1}`}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveImage(imgIdx)}
-                              title="Remove photo"
-                              className="text-gray-400 hover:text-red-600 transition-colors p-0.5 rounded"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Quick Add Card Slot */}
+                    {/* Footer Actions: Clear Filter & Apply */}
+                    <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-[#dadce0] hover:border-[#5022c3] hover:bg-[#f0ebf8] flex flex-col items-center justify-center text-center p-3 text-[#717478] hover:text-[#5022c3] transition-all group"
+                        onClick={handleClearAllSizes}
+                        className="text-xs font-semibold text-[#5022c3] hover:underline cursor-pointer"
                       >
-                        <Plus className="w-6 h-6 mb-1 text-gray-400 group-hover:text-[#5022c3] transition-colors" />
-                        <span className="text-[11px] font-bold">Add Another Photo</span>
+                        Clear Filter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsSizeDropdownOpen(false)}
+                        className="px-4 py-1.5 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-md transition-colors cursor-pointer"
+                      >
+                        Apply
                       </button>
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
 
-                {/* Category Atelier Sample Photos */}
-                <div className="p-3 bg-[#f0f4f9] rounded-xl border border-[#e5e5ea] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                  <div>
-                    <span className="font-bold text-[#212121] text-[11px]">Need inspiration? Pick a curated studio sample photo:</span>
-                    <p className="text-[10px] text-[#717478]">Click to instantly apply professional atelier photography for {lvl4Node?.name}.</p>
+            {/* MULTI-SIZE VARIATIONS PRICING TABLE (EXACT MATCH TO USER SCREENSHOT image.png) */}
+            {selectedSizes.length > 0 && (
+              <div className="space-y-3 pt-1">
+                {/* Copy Price Details to all sizes Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-[#212121]">
+                  <input
+                    type="checkbox"
+                    checked={copyPriceToAll}
+                    onChange={e => setCopyPriceToAll(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#5022c3] accent-[#5022c3] cursor-pointer"
+                  />
+                  <span>Copy price details to all sizes</span>
+                  <span className="text-[11px] text-gray-500 font-normal">
+                    (Editing any row updates all {selectedSizes.length} sizes automatically)
+                  </span>
+                </label>
+
+                {/* Variations Table */}
+                <div className="border border-[#e0e0e0] rounded-lg overflow-x-auto shadow-2xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#f0f4f9] text-[#212121] border-b border-[#e0e0e0] text-[11px] font-bold">
+                        <th className="py-3 px-4 w-28">Size</th>
+                        <th className="py-3 px-4 min-w-[160px]">
+                          <div className="flex items-center gap-1">
+                            <span>Meesho Price*</span>
+                            <Info className="w-3 h-3 text-gray-400" title="Final selling price shown to the customer" />
+                          </div>
+                        </th>
+                        <th className="py-3 px-4 min-w-[180px]">
+                          <div className="flex items-center gap-1">
+                            <span>Wrong/Defective Returns Price</span>
+                            <Info className="w-3 h-3 text-gray-400" title="Payout settlement after returns & logistics protection" />
+                          </div>
+                        </th>
+                        <th className="py-3 px-4 min-w-[150px]">
+                          <div className="flex items-center gap-1">
+                            <span>MRP*</span>
+                            <Info className="w-3 h-3 text-gray-400" title="Maximum Retail Price printed on packaging" />
+                          </div>
+                        </th>
+                        <th className="py-3 px-4 min-w-[120px]">
+                          <div className="flex items-center gap-1">
+                            <span>Stock (Units)</span>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#e5e5ea] bg-white">
+                      {sizeVariations.map((vRow, rIdx) => (
+                        <tr key={vRow.size} className="hover:bg-[#fafafa] transition-colors">
+                          {/* Size label */}
+                          <td className="py-3 px-4 font-bold text-[#212121]">
+                            <span className="px-2.5 py-1 bg-gray-100 rounded text-xs font-semibold text-[#333]">
+                              {vRow.size}
+                            </span>
+                          </td>
+
+                          {/* Meesho Price Input */}
+                          <td className="py-2.5 px-4">
+                            <div className="relative flex items-center">
+                              <span className="absolute left-2.5 text-gray-400 font-medium text-xs">
+                                {currencySymbol}
+                              </span>
+                              <input
+                                type="number"
+                                min={1}
+                                required
+                                value={vRow.price}
+                                onChange={e => handleUpdateVariationField(vRow.size, 'price', Number(e.target.value))}
+                                className="w-full h-9 pl-7 pr-2 text-xs font-semibold text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                              />
+                            </div>
+                          </td>
+
+                          {/* Wrong/Defective Returns Price Input */}
+                          <td className="py-2.5 px-4">
+                            <div className="relative flex items-center">
+                              <span className="absolute left-2.5 text-gray-400 font-medium text-xs">
+                                {currencySymbol}
+                              </span>
+                              <input
+                                type="number"
+                                min={1}
+                                value={vRow.returnPrice || Math.round(vRow.price * 0.9)}
+                                onChange={e => handleUpdateVariationField(vRow.size, 'returnPrice', Number(e.target.value))}
+                                className="w-full h-9 pl-7 pr-2 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                              />
+                            </div>
+                          </td>
+
+                          {/* MRP Input */}
+                          <td className="py-2.5 px-4">
+                            <div className="relative flex items-center">
+                              <span className="absolute left-2.5 text-gray-400 font-medium text-xs">
+                                {currencySymbol}
+                              </span>
+                              <input
+                                type="number"
+                                min={1}
+                                required
+                                value={vRow.mrp || Math.round(vRow.price * 1.25)}
+                                onChange={e => handleUpdateVariationField(vRow.size, 'mrp', Number(e.target.value))}
+                                className="w-full h-9 pl-7 pr-2 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                              />
+                            </div>
+                          </td>
+
+                          {/* Stock Inventory Units */}
+                          <td className="py-2.5 px-4">
+                            <input
+                              type="number"
+                              min={0}
+                              required
+                              value={vRow.stockCount ?? 15}
+                              onChange={e => handleUpdateVariationField(vRow.size, 'stockCount', Number(e.target.value))}
+                              className="w-full h-9 px-2 text-xs text-center font-bold text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 1: PRODUCT DETAILS */}
+            <div className="pt-2">
+              <h2 className="text-sm font-bold text-[#212121] mb-4 pb-2 border-b border-[#f0f0f0]">
+                Product Details
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+                
+                {/* Closure */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Closure <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.closure}
+                    onChange={e => setFormData({ ...formData, closure: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Slip-On">Slip-On</option>
+                    <option value="Openable">Openable</option>
+                    <option value="Screw">Screw</option>
+                    <option value="Interlock">Interlock</option>
+                    <option value="Lobster Claw">Lobster Claw</option>
+                    <option value="S-Hook">S-Hook</option>
+                    <option value="Drawstring">Drawstring</option>
+                    <option value="Spring Ring">Spring Ring</option>
+                    <option value="None">None</option>
+                  </select>
+                </div>
+
+                {/* Color */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Color <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.color}
+                    onChange={e => setFormData({ ...formData, color: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="White & Red">White &amp; Red</option>
+                    <option value="Red">Red</option>
+                    <option value="White">White</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Maroon">Maroon</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Multicolor">Multicolor</option>
+                    <option value="Black">Black</option>
+                    <option value="Rose Gold">Rose Gold</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Coral">Coral</option>
+                  </select>
+                </div>
+
+                {/* Generic Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Generic Name <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.genericName}
+                    onChange={e => setFormData({ ...formData, genericName: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none font-medium"
+                  >
+                    <option value="">Select</option>
+                    <option value="Sakha Pola">Sakha Pola</option>
+                    <option value="Bangles">Bangles</option>
+                    <option value="Loha Badhano">Loha Badhano</option>
+                    <option value="Bracelet">Bracelet</option>
+                    <option value="Kada">Kada</option>
+                    <option value="Churi">Churi</option>
+                    <option value="Chunri Pola">Chunri Pola</option>
+                    <option value="Necklace">Necklace</option>
+                    <option value="Jewellery Set">Jewellery Set</option>
+                    <option value="Earrings">Earrings</option>
+                    <option value="Ring">Ring</option>
+                    <option value="Mangalsutra">Mangalsutra</option>
+                  </select>
+                </div>
+
+                {/* Net Quantity (N) */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Net Quantity (N) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.netQuantity}
+                    onChange={e => setFormData({ ...formData, netQuantity: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Set of 2">Set of 2</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="Set of 4">Set of 4</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                    <option value="12">12</option>
+                  </select>
+                </div>
+
+                {/* Occasion */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Occasion <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.occasion}
+                    onChange={e => setFormData({ ...formData, occasion: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Bridal / Wedding">Bridal / Wedding</option>
+                    <option value="Festive">Festive</option>
+                    <option value="Dailywear">Dailywear</option>
+                    <option value="Traditional">Traditional</option>
+                    <option value="Party">Party</option>
+                    <option value="Puja">Puja</option>
+                    <option value="Anniversary">Anniversary</option>
+                    <option value="Casual">Casual</option>
+                  </select>
+                </div>
+
+                {/* Plating */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Plating <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.plating}
+                    onChange={e => setFormData({ ...formData, plating: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Micron Gold Plated">Micron Gold Plated</option>
+                    <option value="Gold Plated">Gold Plated</option>
+                    <option value="18K Gold Plated">18K Gold Plated</option>
+                    <option value="22K Gold Plated">22K Gold Plated</option>
+                    <option value="Silver Plated">Silver Plated</option>
+                    <option value="Copper Plated">Copper Plated</option>
+                    <option value="Rhodium Plated">Rhodium Plated</option>
+                    <option value="No Plating">No Plating</option>
+                  </select>
+                </div>
+
+                {/* Product Dimension (Diameter) */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Product Dimension (Diameter)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.diameter}
+                    onChange={e => setFormData({ ...formData, diameter: e.target.value })}
+                    placeholder="Enter Product Diameter"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Product Dimension (mm) */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Product Dimension (mm)
+                  </label>
+                  <select
+                    value={formData.dimensionMm}
+                    onChange={e => setFormData({ ...formData, dimensionMm: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="2 mm">2 mm</option>
+                    <option value="3 mm">3 mm</option>
+                    <option value="4 mm">4 mm</option>
+                    <option value="5 mm">5 mm</option>
+                    <option value="6 mm">6 mm</option>
+                    <option value="8 mm">8 mm</option>
+                    <option value="10 mm">10 mm</option>
+                    <option value="12 mm">12 mm</option>
+                    <option value="15 mm">15 mm</option>
+                    <option value="20 mm">20 mm</option>
+                  </select>
+                </div>
+
+                {/* Sizing */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Sizing <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.sizing}
+                    onChange={e => setFormData({ ...formData, sizing: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Non-Adjustable">Non-Adjustable</option>
+                    <option value="Adjustable">Adjustable</option>
+                    <option value="Choot / Openable">Choot / Openable</option>
+                  </select>
+                </div>
+
+                {/* Stone Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Stone Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.stoneType}
+                    onChange={e => setFormData({ ...formData, stoneType: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="No Stone">No Stone</option>
+                    <option value="American Diamond (AD)">American Diamond (AD)</option>
+                    <option value="Cubic Zirconia (CZ)">Cubic Zirconia (CZ)</option>
+                    <option value="Pearl">Pearl</option>
+                    <option value="Ruby">Ruby</option>
+                    <option value="Emerald">Emerald</option>
+                    <option value="Kundan">Kundan</option>
+                    <option value="Polki">Polki</option>
+                    <option value="Coral">Coral</option>
+                  </select>
+                </div>
+
+                {/* Trend */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Trend <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.trend}
+                    onChange={e => setFormData({ ...formData, trend: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Traditional Bengali Bridal">Traditional Bengali Bridal</option>
+                    <option value="Handcrafted Artisan">Handcrafted Artisan</option>
+                    <option value="Temple Jewellery">Temple Jewellery</option>
+                    <option value="Antique">Antique</option>
+                    <option value="Minimalist">Minimalist</option>
+                    <option value="Contemporary">Contemporary</option>
+                    <option value="Filigree Badhano">Filigree Badhano</option>
+                  </select>
+                </div>
+
+                {/* Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.productType}
+                    onChange={e => setFormData({ ...formData, productType: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Bengali Sakha Pola">Bengali Sakha Pola</option>
+                    <option value="Loha Badhano">Loha Badhano</option>
+                    <option value="Chunri Pola">Chunri Pola</option>
+                    <option value="Mukhi Shankha">Mukhi Shankha</option>
+                    <option value="Kada">Kada</option>
+                    <option value="Bangle Set">Bangle Set</option>
+                    <option value="Single Bangle">Single Bangle</option>
+                  </select>
+                </div>
+
+                {/* Country of Origin */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    COUNTRY OF ORIGIN <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.countryOfOrigin}
+                    onChange={e => setFormData({ ...formData, countryOfOrigin: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none font-medium"
+                  >
+                    <option value="India">India</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="United Arab Emirates">United Arab Emirates</option>
+                  </select>
+                </div>
+
+                {/* Manufacturer Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Manufacturer Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manufacturerName}
+                    onChange={e => setFormData({ ...formData, manufacturerName: e.target.value })}
+                    placeholder="Enter Manufacturer Name"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Manufacturer Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Manufacturer Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manufacturerAddress}
+                    onChange={e => setFormData({ ...formData, manufacturerAddress: e.target.value })}
+                    placeholder="Enter Manufacturer Address"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Manufacturer Pincode */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Manufacturer Pincode <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.manufacturerPincode}
+                    onChange={e => setFormData({ ...formData, manufacturerPincode: e.target.value })}
+                    placeholder="Enter Manufacturer Pincode"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Packer Name + Same as Manufacturer Checkbox */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Packer Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={sameAsManufacturer}
+                    value={formData.packerName}
+                    onChange={e => setFormData({ ...formData, packerName: e.target.value })}
+                    placeholder="Enter Packer Name"
+                    className={`w-full h-10 px-3 text-xs text-[#212121] border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none ${
+                      sameAsManufacturer ? 'bg-[#f5f5f5] text-gray-600' : 'bg-white'
+                    }`}
+                  />
+                  <label className="mt-2 flex items-center gap-2 cursor-pointer select-none text-xs text-[#444]">
+                    <input
+                      type="checkbox"
+                      checked={sameAsManufacturer}
+                      onChange={e => setSameAsManufacturer(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#5022c3] accent-[#5022c3] cursor-pointer"
+                    />
+                    <span>Same as Manufacturer Details</span>
+                  </label>
+                </div>
+
+                {/* Packer Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Packer Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={sameAsManufacturer}
+                    value={formData.packerAddress}
+                    onChange={e => setFormData({ ...formData, packerAddress: e.target.value })}
+                    placeholder="Enter Packer Address"
+                    className={`w-full h-10 px-3 text-xs text-[#212121] border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none ${
+                      sameAsManufacturer ? 'bg-[#f5f5f5] text-gray-600' : 'bg-white'
+                    }`}
+                  />
+                </div>
+
+                {/* Packer Pincode */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Packer Pincode <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={sameAsManufacturer}
+                    value={formData.packerPincode}
+                    onChange={e => setFormData({ ...formData, packerPincode: e.target.value })}
+                    placeholder="Enter Packer Pincode"
+                    className={`w-full h-10 px-3 text-xs text-[#212121] border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none ${
+                      sameAsManufacturer ? 'bg-[#f5f5f5] text-gray-600' : 'bg-white'
+                    }`}
+                  />
+                </div>
+
+                {/* Importer Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Importer Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.importerName}
+                    onChange={e => setFormData({ ...formData, importerName: e.target.value })}
+                    placeholder="Enter Importer Name"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Importer Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Importer Address
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.importerAddress}
+                    onChange={e => setFormData({ ...formData, importerAddress: e.target.value })}
+                    placeholder="Enter Importer Address"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+                {/* Importer Pincode */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Importer Pincode
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.importerPincode}
+                    onChange={e => setFormData({ ...formData, importerPincode: e.target.value })}
+                    placeholder="Enter Importer Pincode"
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none"
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* SECTION 2: OTHER ATTRIBUTES */}
+            <div className="pt-2">
+              <h2 className="text-sm font-bold text-[#212121] mb-4 pb-2 border-b border-[#f0f0f0]">
+                Other Attributes
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Base Metal */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Base Metal
+                  </label>
+                  <select
+                    value={formData.baseMetal}
+                    onChange={e => setFormData({ ...formData, baseMetal: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none font-medium"
+                  >
+                    <option value="">Select</option>
+                    <option value="Conch Shell (Shankha)">Conch Shell (Shankha)</option>
+                    <option value="Acrylic / Resin (Pola)">Acrylic / Resin (Pola)</option>
+                    <option value="Iron (Loha)">Iron (Loha)</option>
+                    <option value="Brass">Brass</option>
+                    <option value="Copper">Copper</option>
+                    <option value="Alloy">Alloy</option>
+                    <option value="925 Sterling Silver">925 Sterling Silver</option>
+                    <option value="18K Gold">18K Gold</option>
+                    <option value="22K Gold">22K Gold</option>
+                  </select>
+                </div>
+
+                {/* Brand */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                    Brand
+                  </label>
+                  <select
+                    value={formData.brand}
+                    onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] outline-none font-medium"
+                  >
+                    <option value="NAXTTO">NAXTTO</option>
+                    <option value="NAXTTO Fine Jewellery">NAXTTO Fine Jewellery</option>
+                    <option value="Bengali Heritage Karigar">Bengali Heritage Karigar</option>
+                    <option value="Swarna Shilpi">Swarna Shilpi</option>
+                    <option value="Generic">Generic / Unbranded</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mt-4">
+                <label className="block text-xs font-semibold text-[#555] mb-1.5">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter Description"
+                  className="w-full p-3 text-xs text-[#212121] bg-white border border-[#d2d2d2] rounded-md focus:border-[#5022c3] focus:ring-1 focus:ring-[#5022c3] outline-none transition-all leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* LEGAL DISCLAIMER AT BOTTOM - EXACT TEXT AS IN VIDEO */}
+            <div className="pt-2 text-[10px] text-[#787878] leading-relaxed border-t border-[#f0f0f0]">
+              <p>
+                By listing your product(s) on Meesho/NaxtTo platform, you agree to comply with the applicable T&amp;C of the platform, as updated from time to time. You confirm that the product information (including labels, claim and packaging etc.) uploaded/shared, complies with Legal Metrology Act, 2009, Bureau of Indian Standards Act, 2016 (with applicable Quality Control Orders) and all other applicable rules and regulations. You also confirm that you are authorized to list and sell the product and have necessary licenses, brand approvals and permits as required under applicable law. In respect of each product listed within the category of Gold and Silver Jewellery, Bullion, Coins and other applicable products, you agree that you are BIS certified and each product complies with Bureau of Indian Standards (Hallmarking) Regulations, 2018. If your product is found to be non-compliant or violating any applicable law, your catalog may be delisted and penal action may be taken.
+              </p>
+            </div>
+
+          </div>
+
+          {/* ========================================================= */}
+          {/* RIGHT COLUMN: PHOTO GUIDELINES & UPLOADED IMAGES          */}
+          {/* ========================================================= */}
+          <div className="lg:col-span-4 xl:col-span-3 space-y-5 lg:sticky lg:top-20">
+            
+            {/* 1. PHOTO GUIDELINES CARD */}
+            <div className="bg-white rounded-lg border border-[#e0e0e0] p-4 shadow-xs space-y-3.5">
+              
+              {/* Item 1: Front View */}
+              <div className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="w-12 h-12 rounded border border-[#e0e0e0] overflow-hidden bg-[#fafafa] shrink-0">
+                  <img
+                    src="/src/assets/images/shankha_pola_set_1790249913718.jpg"
+                    alt="Upload Front View"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-[#212121]">Upload Front View Image</h4>
+                  <p className="text-[10px] text-[#757575]">Primary clear straight frontal perspective</p>
+                </div>
+              </div>
+
+              {/* Item 2: Zoomed In View */}
+              <div className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="w-12 h-12 rounded border border-[#e0e0e0] overflow-hidden bg-[#fafafa] shrink-0">
+                  <img
+                    src="/src/assets/images/sakha_pola_stack_1790249812700.jpg"
+                    alt="Zoomed In Image"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-[#212121]">Zoomed In Image</h4>
+                  <p className="text-[10px] text-[#757575]">Upload Close Up View of carving &amp; wire work</p>
+                </div>
+              </div>
+
+              {/* Item 3: Top View */}
+              <div className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="w-12 h-12 rounded border border-[#e0e0e0] overflow-hidden bg-[#fafafa] shrink-0">
+                  <img
+                    src="/src/assets/images/loha_badhano_gold_1790249869592.jpg"
+                    alt="Seller Top Image"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-[#212121]">Seller Top Image</h4>
+                  <p className="text-[10px] text-[#757575]">Add Top View showing circular curvature</p>
+                </div>
+              </div>
+
+              {/* Item 4: Size Chart */}
+              <div className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="w-12 h-12 rounded border border-[#e0e0e0] overflow-hidden bg-purple-50 flex items-center justify-center shrink-0 text-[#5022c3]">
+                  <FileCheck className="w-6 h-6 stroke-[1.5]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-[#212121]">Size Chart *</h4>
+                  <p className="text-[10px] text-[#757575] leading-tight">
+                    Size chart size wise body measurements should be given.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 2. UPLOADED IMAGES CARD - EXACT MATCH TO VIDEO */}
+            <div className="bg-white rounded-lg border border-[#e0e0e0] p-4 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-[#212121]">Uploaded Images</h3>
+                <span className="text-[11px] text-[#757575] font-medium">{formData.images.length} added</span>
+              </div>
+
+              {/* Image Grid with Red Border around Thumbnails + CHANGE button */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                {formData.images.map((imgUrl, idx) => (
+                  <div key={idx} className="flex flex-col items-center">
+                    {/* Thumbnail Box with Red border as seen in video! */}
+                    <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded border-2 border-[#e53935] overflow-hidden bg-[#fafafa] shadow-xs group">
+                      <img
+                        src={imgUrl}
+                        alt={`Angle ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Delete button on hover */}
+                      {formData.images.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-600 text-white rounded-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                      {idx === 0 && (
+                        <span className="absolute bottom-0 inset-x-0 bg-red-600/90 text-white text-[8px] font-bold text-center py-0.5 uppercase tracking-wide">
+                          Front Image *
+                        </span>
+                      )}
+                    </div>
+
+                    {/* CHANGE Button Link right below thumbnail */}
+                    <button
+                      type="button"
+                      onClick={() => triggerChangeImage(idx)}
+                      className="mt-1 text-[10px] font-semibold text-[#5022c3] hover:underline uppercase tracking-wide cursor-pointer"
+                    >
+                      CHANGE
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {activeConfig.presetImages.map((preset, idx) => (
+                ))}
+
+                {/* "+ Add Images" Dotted Box Button */}
+                <div className="flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowImagePickerModal(true)}
+                    className="w-18 h-18 sm:w-20 sm:h-20 rounded border-2 border-dashed border-[#5022c3] bg-purple-50/40 hover:bg-purple-50 text-[#5022c3] flex flex-col items-center justify-center transition-all cursor-pointer group"
+                    title="Add more photos"
+                  >
+                    <Plus className="w-5 h-5 text-[#5022c3] group-hover:scale-110 transition-transform mb-0.5" />
+                    <span className="text-[10px] font-bold text-[#5022c3]">Add Images</span>
+                  </button>
+                  <span className="mt-1 text-[10px] text-transparent select-none">-</span>
+                </div>
+              </div>
+
+              {/* Upload Assistance hint */}
+              <p className="text-[10px] text-[#757575] pt-1">
+                Upload up to 6 studio views: Front, Zoomed In, Top angle &amp; size reference.
+              </p>
+            </div>
+
+          </div>
+
+        </form>
+      </div>
+
+      {/* 3. STICKY BOTTOM BAR - EXACT MATCH TO VIDEO */}
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-[#e0e0e0] px-4 sm:px-8 py-3 z-40 flex items-center justify-between shadow-lg">
+        {/* Left: Discard Catalog Button */}
+        <button
+          type="button"
+          onClick={() => setShowDiscardConfirm(true)}
+          className="px-4 py-2 border border-[#d2d2d2] rounded-md text-xs font-semibold text-[#555] hover:text-[#212121] hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          Discard Catalog
+        </button>
+
+        {/* Center/Right: [Fill] Save Template + Save and Go Back + Submit Catalog */}
+        <div className="flex items-center gap-2 sm:gap-3 relative">
+          
+          {/* [Fill] Save Template Button with Green Fill Badge */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowTemplateMenu(!showTemplateMenu)}
+              className="px-3.5 py-2 border border-[#d2d2d2] rounded-md text-xs font-semibold text-[#212121] hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <span className="bg-[#2e7d32] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-xs tracking-wider uppercase">
+                Fill
+              </span>
+              <span>Save Template</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+            </button>
+
+            {/* Template Dropdown Menu */}
+            {showTemplateMenu && (
+              <div className="absolute bottom-full right-0 mb-2 w-80 bg-white border border-[#e0e0e0] rounded-xl shadow-xl z-50 p-2 text-xs divide-y divide-gray-100 animate-scaleUp">
+                <div className="p-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-[#212121] text-[11px] uppercase tracking-wider">
+                      Catalog Presets (1-Click Fill)
+                    </span>
+                    <Sparkles className="w-3.5 h-3.5 text-[#5022c3]" />
+                  </div>
+                  <div className="space-y-1">
+                    {PRESET_TEMPLATES.map((tmpl, tIdx) => (
                       <button
-                        key={idx}
+                        key={tIdx}
                         type="button"
-                        onClick={() => handleApplySampleImage(preset.url)}
-                        title={preset.title}
-                        className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white hover:border-[#5022c3] transition-all hover:scale-105 shadow-xs"
+                        onClick={() => applyTemplate(tmpl)}
+                        className="w-full text-left p-2 rounded-lg hover:bg-purple-50 hover:text-[#5022c3] text-[#333] transition-colors cursor-pointer"
                       >
-                        <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
+                        <p className="font-semibold text-xs">{tmpl.name}</p>
+                        <p className="text-[10px] text-gray-500 truncate">
+                          {tmpl.genericName} • Sizes: {(tmpl.sizes || []).join(', ')} • {tmpl.netWeight}g
+                        </p>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Collapsible Optional Direct Image URLs (Advanced fallback) */}
-                <div className="pt-1">
+                {/* User's custom saved templates */}
+                {savedCustomTemplates.length > 0 && (
+                  <div className="p-2 space-y-1">
+                    <span className="font-bold text-[#212121] text-[10px] uppercase tracking-wider text-gray-500">
+                      My Saved Templates
+                    </span>
+                    {savedCustomTemplates.map((tmpl: any, sIdx: number) => (
+                      <button
+                        key={sIdx}
+                        type="button"
+                        onClick={() => applyTemplate(tmpl)}
+                        className="w-full text-left p-1.5 rounded-md hover:bg-gray-100 text-xs text-[#212121] truncate cursor-pointer"
+                      >
+                        ★ {tmpl.name} ({tmpl.sizes?.join(', ') || 'Variations'})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="p-2 pt-2.5">
                   <button
                     type="button"
-                    onClick={() => setShowAdvancedUrlInput(!showAdvancedUrlInput)}
-                    className="text-[11px] font-semibold text-[#717478] hover:text-[#5022c3] flex items-center gap-1.5 transition-colors"
+                    onClick={handleSaveAsCustomTemplate}
+                    className="w-full py-1.5 bg-[#f0ebf8] hover:bg-[#e4dbf5] text-[#5022c3] font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <Link className="w-3.5 h-3.5" />
-                    <span>{showAdvancedUrlInput ? 'Hide URL import options' : 'Or import from Image URLs (Advanced)'}</span>
+                    <Bookmark className="w-3.5 h-3.5" />
+                    <span>Save Current Values as My Template</span>
                   </button>
-
-                  {showAdvancedUrlInput && (
-                    <div className="mt-2 p-3 bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl space-y-1.5">
-                      <label className="block font-bold text-[11px] text-[#212121]">Paste Direct Image URLs (one per line)</label>
-                      <textarea
-                        rows={3}
-                        value={imageUrlsText}
-                        onChange={e => {
-                          setImageUrlsText(e.target.value);
-                          const parsed = e.target.value.split('\n').map(u => u.trim()).filter(Boolean);
-                          if (parsed.length > 0) {
-                            setFormData(prev => ({ ...prev, images: parsed }));
-                          }
-                        }}
-                        className="w-full bg-white border border-[#e5e5ea] focus:border-[#5022c3] rounded-lg p-2.5 outline-none font-mono text-[11px]"
-                        placeholder="https://images.unsplash.com/..."
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
-
-            </div>
+            )}
           </div>
 
-          {/* Action Bar */}
-          <div className="flex items-center justify-between pt-4 border-t border-[#e5e5ea]">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="px-4 py-2 border border-[#dadce0] rounded-xl text-xs font-semibold text-[#717478] hover:text-[#212121] hover:bg-[#f5f5f7] transition-colors flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Category</span>
-            </button>
+          {/* Save and Go Back Button */}
+          <button
+            type="button"
+            onClick={() => handleSubmit()}
+            className="px-4 py-2 border border-[#d2d2d2] rounded-md text-xs font-semibold text-[#212121] hover:bg-gray-50 transition-colors shadow-2xs cursor-pointer"
+          >
+            Save and Go Back
+          </button>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDiscardConfirm(true)}
-                className="px-4 py-2 border border-[#dadce0] rounded-xl text-xs font-semibold text-[#717478] hover:text-[#212121]"
-              >
-                Discard
-              </button>
+          {/* Submit Catalog Button */}
+          <button
+            type="button"
+            onClick={() => handleSubmit()}
+            className="px-6 py-2 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Check className="w-4 h-4" />
+            <span>Submit Catalog</span>
+          </button>
+        </div>
+      </div>
 
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5"
-              >
-                <Check className="w-4 h-4" />
-                <span>{editingProduct ? 'Save Catalog Updates' : 'Publish Catalog'}</span>
-              </button>
-            </div>
-          </div>
-
-        </form>
-      )}
-
-      {/* 5. Tutorial Video Modal */}
+      {/* 4. LEARN TO UPLOAD SINGLE CATALOG VIDEO TUTORIAL MODAL */}
       {showVideoModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 text-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-[#e5e5ea]">
-              <div className="flex items-center gap-2 text-[#e53935] font-bold text-sm">
-                <PlayCircle className="w-5 h-5 fill-current text-white" />
-                <span>Single Catalog Upload Tutorial</span>
+              <div className="flex items-center gap-2 text-[#ff0000] font-bold text-sm">
+                <div className="w-5 h-4 bg-[#ff0000] rounded-xs flex items-center justify-center text-white">
+                  <div className="w-0 h-0 border-y-[3.5px] border-y-transparent border-l-[5.5px] border-l-white ml-0.5" />
+                </div>
+                <span className="text-[#212121]">Learn to Upload Single Catalog</span>
               </div>
-              <button onClick={() => setShowVideoModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
+              <button
+                type="button"
+                onClick={() => setShowVideoModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="aspect-video bg-neutral-900 rounded-xl overflow-hidden flex flex-col items-center justify-center text-white p-4 text-center space-y-2">
-              <PlayCircle className="w-12 h-12 text-[#5022c3]" />
-              <p className="font-semibold text-sm">Interactive Walkthrough</p>
-              <p className="text-[11px] text-gray-400">Step 1: Pick category &gt; Step 2: Upload studio photo &gt; Step 3: Publish with live inventory.</p>
+
+            {/* Video preview container */}
+            <div className="aspect-video bg-gradient-to-br from-neutral-900 via-neutral-800 to-purple-950 rounded-xl overflow-hidden flex flex-col items-center justify-center text-white p-6 text-center relative group">
+              <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform cursor-pointer">
+                <PlayCircle className="w-8 h-8" />
+              </div>
+              <p className="font-bold text-sm mt-3">Single Catalog Upload &amp; Multi-Size Variations</p>
+              <p className="text-[11px] text-gray-300 mt-1 max-w-sm">
+                1. Select all available sizes (2.2, 2.4, 2.6) &gt; 2. Enter prices with &quot;Copy to all sizes&quot; &gt; 3. Add front and zoom angles &gt; 4. Publish catalog.
+              </p>
             </div>
+
+            {/* Checklist guide */}
+            <div className="space-y-2 text-xs text-[#444] bg-[#f9fafb] p-3.5 rounded-xl border border-gray-100">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span><strong>Multiple Size Variations:</strong> List all stock sizes in one catalog so customers can pick their perfect fit.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span><strong>Front View Mandatory:</strong> Front perspective on a seamless pure white backdrop.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span><strong>Legal Compliance:</strong> BIS Hallmarking registration details apply to all gold/silver items.</span>
+              </div>
+            </div>
+
             <button
+              type="button"
               onClick={() => setShowVideoModal(false)}
-              className="w-full py-2 bg-[#5022c3] text-white font-bold rounded-xl"
+              className="w-full py-2.5 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
             >
-              Got it, continue uploading
+              Understood, Return to Catalog
             </button>
           </div>
         </div>
       )}
 
-      {/* 6. Help Support Modal */}
-      {showHelpModal && (
+      {/* 5. ADD / CHANGE IMAGES MODAL */}
+      {showImagePickerModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 text-xs">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-[#e5e5ea]">
               <div className="flex items-center gap-2 text-[#5022c3] font-bold text-sm">
-                <HelpCircle className="w-5 h-5" />
-                <span>Catalog Support & Assistance</span>
+                <ImageIcon className="w-5 h-5" />
+                <span>Add / Replace Product Images</span>
               </div>
-              <button onClick={() => setShowHelpModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
+              <button
+                type="button"
+                onClick={() => setShowImagePickerModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="space-y-2 text-[#555]">
-              <p className="font-semibold text-[#212121]">Need assistance listing your inventory?</p>
-              <p>• <strong>Category Mapping:</strong> Selecting {lvl4Node?.name || 'your category'} configures specific fields like chain weaves, carat weights, or silk types.</p>
-              <p>• <strong>Settlement Payouts:</strong> Automatic 90% merchant settlement with armored transit coverage.</p>
-              <p>• <strong>Purity Standards:</strong> All pieces receive BIS / Government assay certifications.</p>
+
+            {/* Quick Upload from Device Button */}
+            <div className="p-4 border-2 border-dashed border-[#5022c3] rounded-xl bg-purple-50/30 text-center space-y-2">
+              <Upload className="w-8 h-8 text-[#5022c3] mx-auto" />
+              <p className="text-xs font-bold text-[#212121]">Upload from your Computer or Phone</p>
+              <p className="text-[11px] text-[#666]">Supports high-resolution JPG, PNG, WebP studio photos.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImagePickerModal(false);
+                  triggerAddImage();
+                }}
+                className="px-4 py-2 bg-[#5022c3] hover:bg-[#431bb0] text-white text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Browse Files</span>
+              </button>
             </div>
-            <button
-              onClick={() => setShowHelpModal(false)}
-              className="w-full py-2 bg-[#5022c3] text-white font-bold rounded-xl"
-            >
-              Close Help
-            </button>
+
+            {/* Studio Bengali Jewellery Presets */}
+            <div className="space-y-2">
+              <span className="block text-[11px] font-bold text-[#555] uppercase tracking-wider">
+                Or Pick from High-Resolution Studio Gallery:
+              </span>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-1">
+                {studioPresetImages.map((img, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleSelectPresetImage(img.url)}
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#5022c3] transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <img src={img.url} alt={img.title} className="w-full h-full object-cover" />
+                    <span className="absolute inset-x-0 bottom-0 bg-black/70 text-white text-[8px] font-medium p-0.5 truncate text-center">
+                      {img.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Direct Web URL */}
+            <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+              <input
+                type="url"
+                value={customImageUrl}
+                onChange={e => setCustomImageUrl(e.target.value)}
+                placeholder="Or paste image URL (https://...)"
+                className="flex-1 h-9 px-3 text-xs border border-gray-300 rounded-lg outline-none focus:border-[#5022c3]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (customImageUrl.trim()) {
+                    handleSelectPresetImage(customImageUrl.trim());
+                    setCustomImageUrl('');
+                  }
+                }}
+                className="px-3.5 py-2 bg-[#5022c3] text-white text-xs font-bold rounded-lg cursor-pointer"
+              >
+                Add URL
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 7. Image Guidelines Modal */}
-      {showGuidelineModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 text-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-[#e5e5ea]">
-              <div className="flex items-center gap-2 text-[#d97706] font-bold text-sm">
-                <AlertCircle className="w-5 h-5" />
-                <span>Quality Check Photography Guidelines</span>
-              </div>
-              <button onClick={() => setShowGuidelineModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-2 text-[#444]">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>Front Perspective:</strong> Main image must show clean frontal perspective without harsh reflections.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>Resolution:</strong> Minimum 800 x 800px on clean white or high-contrast neutral background.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>No Watermarks:</strong> Avoid promotional text overlays, merchant logos, or contact details in images.</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowGuidelineModal(false)}
-              className="w-full py-2 bg-[#5022c3] text-white font-bold rounded-xl"
-            >
-              I Understand the Guidelines
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 8. Discard Confirmation Modal */}
+      {/* 6. DISCARD CONFIRMATION MODAL */}
       {showDiscardConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 text-xs text-center">
-            <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-2xl">
+            <div className="w-12 h-12 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center">
               <Trash2 className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-[#212121]">Discard Catalog Draft?</h4>
-              <p className="text-[#717478] mt-1">All unsaved category and product details will be discarded.</p>
+              <h3 className="text-base font-bold text-[#212121]">Discard Catalog?</h3>
+              <p className="text-xs text-[#757575] mt-1">
+                Any unsaved changes will be lost and you will return to the listings table.
+              </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setShowDiscardConfirm(false)}
-                className="flex-1 py-2 border border-[#dadce0] rounded-xl font-semibold text-[#212121] hover:bg-[#f5f5f7]"
+                className="flex-1 py-2 border border-[#d2d2d2] rounded-lg text-xs font-semibold text-[#212121] hover:bg-gray-50 cursor-pointer"
               >
                 Keep Editing
               </button>
@@ -2379,12 +1988,20 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                   setShowDiscardConfirm(false);
                   onCancel();
                 }}
-                className="flex-1 py-2 bg-rose-600 text-white rounded-xl font-semibold hover:bg-rose-700"
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
               >
                 Discard
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast feedback when custom template is saved */}
+      {saveTemplateSuccess && (
+        <div className="fixed bottom-20 right-8 bg-[#2e7d32] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-bold flex items-center gap-2 z-50 animate-bounce">
+          <Check className="w-4 h-4" />
+          <span>Template saved successfully! Use [Fill] to apply anytime.</span>
         </div>
       )}
 
