@@ -1,4 +1,10 @@
 import { Product, InstagramPost, BlogPost, UserProfile } from '../types';
+import imgSakhaPolaStack from '../assets/images/sakha_pola_stack_1790248952333.jpg';
+import imgGoldBadhanoPola from '../assets/images/gold_badhano_pola_1790248970104.jpg';
+import imgMayurMukhiShankha from '../assets/images/mayur_mukhi_shankha_1790248994760.jpg';
+import imgLohaBadhanoGold from '../assets/images/loha_badhano_gold_1790249014501.jpg';
+import imgBengaliBridalWrist from '../assets/images/bengali_bridal_wrist_1790249031176.jpg';
+import imgShankhaPolaSet from '../assets/images/shankha_pola_set_1790249048447.jpg';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
@@ -13,8 +19,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'mukhi-design',
     styleName: 'Mayur Mukhi Traditional',
     images: [
-      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=1000&q=85',
+      imgMayurMukhiShankha,
+      imgSakhaPolaStack,
       'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'Authentic pair of pristine white conch shell bangles meticulously hand-carved by master Bengali shankhari artisans. Features the sacred peacock (Mayur) face motif with feather plumage etchings, signifying grace, marital harmony, and auspicious longevity.',
@@ -77,8 +83,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'daily-wear',
     styleName: 'Classic Daily Comfort',
     images: [
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85',
+      imgGoldBadhanoPola,
+      imgSakhaPolaStack,
       'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'The definitive traditional crimson red pola pair, polished to a glass-like luster. Engineered with high-density break-resistant material, rounded comfort inner walls, and unfading vermilion color for daily household and festive wear.',
@@ -128,9 +134,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'filigree-badhano',
     styleName: 'Borkhi Diamond Wire Work',
     images: [
-      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1598560917505-59a3ad559071?auto=format&fit=crop&w=1000&q=85'
+      imgGoldBadhanoPola,
+      imgSakhaPolaStack,
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'Masterpiece Bengali bridal jewellery. Lustrous vermilion red pola bangles bound in pure 22K (916) BIS hallmarked yellow gold wire, handcrafted in the traditional geometric borkhi (rhombus diamond-cut) pattern with reinforced gold locks.',
     story: 'Gold badhano is a time-honored tradition where fine goldsmiths hand-draw gold wire through diminishing steel dies, shaping each filigree diamond leaf around the curvature of the pola with pinpoint heat welding.',
@@ -233,9 +239,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'mukhi-design',
     styleName: 'Makara Mukhi Heritage',
     images: [
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85'
+      imgLohaBadhanoGold,
+      imgBengaliBridalWrist,
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=1000&q=85'
     ],
     description: 'The sacred Bengali Loha (iron bangle), an indispensable protector for married women, masterfully encased in 22K hallmarked gold. Featuring dual mythical Makara (sea creature) terminal heads with ruby crystal accents.',
     story: 'In Bengali tradition, the groom slips the Loha onto the bride’s left wrist as a shield of health and prosperity. We preserve the sacred pure iron core while wrapping it in warm 22K gold for lifetime beauty.',
@@ -285,10 +291,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     style: 'bridal-heritage',
     styleName: 'Sampurna Bridal Heirloom',
     images: [
-      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85'
+      imgBengaliBridalWrist,
+      imgShankhaPolaSet,
+      imgSakhaPolaStack,
+      imgGoldBadhanoPola
     ],
     description: 'The ultimate royal Bengali bridal heirloom set. Includes 1 Pair 22K Gold Crown Badhano Shankha, 1 Pair 22K Gold Borkhi Badhano Pola, and 1 Piece 22K Gold Makara Loha Badhano, packed in a red Banarasi silk bridal box.',
     story: 'Created for the modern bride who treasures generational sanctity. Every element of this 5-piece bridal suite is coordinated for uniform bangle sizing, gold color match, and aesthetic harmony on the wedding altar.',
@@ -792,24 +798,24 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INSTAGRAM_FEED: InstagramPost[] = [
   {
     id: 'ig-01',
-    username: 'naxtto.sakhapola',
-    handle: '@naxtto.sakhapola',
+    username: 'debolina.banerjee',
+    handle: '@debolina_b',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1611591475155-4284ec9c0e7f?auto=format&fit=crop&w=800&q=85',
-    caption: 'Pure conch shell whispering sacred maritime heritage. The Mayur Mukhi Shankha hand-carved in Nabadwip. #SakhaPola #BengaliBride #Shankha #NaxtTo',
+    image: imgSakhaPolaStack,
+    caption: 'Pure white Mayur Mukhi Shankha and 22K gold-bound Pola stack on my wedding morning with traditional red alta. The conch feels so cool and pure on the wrist! #SakhaPola #BengaliBride #NaxtTo',
     likes: 2450,
     commentsCount: 68,
     timestamp: '2 hours ago',
-    taggedProductIds: ['sp-001'],
+    taggedProductIds: ['sp-001', 'sp-003'],
     location: 'Kolkata, West Bengal'
   },
   {
     id: 'ig-02',
-    username: 'kolkata_bridal_couture',
-    handle: '@kolkata_bridal',
+    username: 'subhasree.weddings',
+    handle: '@subhasree_weddings',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=800&q=85',
-    caption: '22K gold borkhi wire wrapped around crimson pola. A bridal classic that will never go out of style. @naxtto.sakhapola #GoldBadhano #Pola #BengaliWedding',
+    image: imgGoldBadhanoPola,
+    caption: 'Macro beauty: 22K BIS hallmarked solid gold Borkhi wire work meticulously wrapped around deep crimson Pola. Heirloom craftsmanship by Bowbazar goldsmiths. #GoldBadhano #Pola #22kGold',
     likes: 3820,
     commentsCount: 112,
     timestamp: '1 day ago',
@@ -818,55 +824,55 @@ export const INSTAGRAM_FEED: InstagramPost[] = [
   },
   {
     id: 'ig-03',
-    username: 'naxtto.sakhapola',
-    handle: '@naxtto.sakhapola',
+    username: 'ananya.ghosh',
+    handle: '@ananya_ghosh_',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85',
-    caption: 'Daily wear red pola that retains its mirror shine through water, work, and festive celebrations. #DailyPola #EverydayAuspicious #BengaliTradition',
+    image: imgMayurMukhiShankha,
+    caption: 'Authentic conch shell hand-carved in Nabadwip. The Mayur Mukhi peacock terminals and chiseled plumage have that sacred natural conch acoustic resonance. #PureShankha #NabadwipCraft',
     likes: 1940,
     commentsCount: 45,
     timestamp: '2 days ago',
-    taggedProductIds: ['sp-002', 'sp-009'],
-    location: 'Bishnupur, West Bengal'
+    taggedProductIds: ['sp-001'],
+    location: 'Nabadwip, West Bengal'
   },
   {
     id: 'ig-04',
-    username: 'sreemoyee_diaries',
-    handle: '@sreemoyee_d',
+    username: 'rituparna_roy',
+    handle: '@rituparna_roy',
     avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=800&q=85',
-    caption: 'My complete Sampurna Bou bridal set arrived in this red silk trunk! 22K hallmarked gold badhano shankha and pola that felt so royal on my wedding day. #BengaliBou',
+    image: imgLohaBadhanoGold,
+    caption: 'Makara Mukhi 22K Gold Loha Badhano: Solid wrought iron encased in certified 22K gold with dual sea-dragon terminal heads. The timeless protective shield of Bengali married women. #LohaBadhano',
     likes: 4120,
     commentsCount: 129,
     timestamp: '4 days ago',
-    taggedProductIds: ['sp-006'],
-    location: 'Kolkata, India'
+    taggedProductIds: ['sp-005'],
+    location: 'Salt Lake, Kolkata'
   },
   {
     id: 'ig-05',
-    username: 'naxtto.sakhapola',
-    handle: '@naxtto.sakhapola',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
-    caption: 'Makara Mukhi 22K Gold Loha Badhano: The sacred shield of marital health and prosperity, hand-engraved with ancient Vedic iconography. #LohaBadhano',
+    username: 'poulomi_sen',
+    handle: '@poulomi_sen',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    image: imgBengaliBridalWrist,
+    caption: 'Saat Paake Ghora ready! Stacked my NaxtTo Shakha, Pola, and 22K gold badhano bangles with my heirloom red Banarasi saree. Received endless compliments on the intricate carving! #BengaliBou #ShakhaPolaStack',
     likes: 2890,
     commentsCount: 73,
     timestamp: '5 days ago',
-    taggedProductIds: ['sp-005'],
-    location: 'Bengal Heritage Atelier'
+    taggedProductIds: ['sp-006', 'sp-001', 'sp-002'],
+    location: 'Ballygunge, Kolkata'
   },
   {
     id: 'ig-06',
-    username: 'priyanka_sengupta',
-    handle: '@priyanka_sg',
+    username: 'madhumita_pal',
+    handle: '@madhumita_pal',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85',
-    caption: 'The delicate openwork floral jaal on this shankha is pure poetry. Handcrafted in Bishnupur by true hereditary masters. #HandCarvedShankha',
+    image: imgShankhaPolaSet,
+    caption: 'The complete Sampurna Bou bridal hamper arrived in a red silk trunk with brass vermilion thali. Certified BIS hallmarked 22K gold, genuine conch shell, and lustrous crimson pola. #AuspiciousBlessing #NaxtToAtelier',
     likes: 3100,
     commentsCount: 88,
     timestamp: '1 week ago',
-    taggedProductIds: ['sp-007'],
-    location: 'Nabadwip, West Bengal'
+    taggedProductIds: ['sp-006'],
+    location: 'Burdwan, West Bengal'
   }
 ];
 

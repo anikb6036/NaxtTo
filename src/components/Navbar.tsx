@@ -372,9 +372,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       action: () => { onNavigateToAtelier(); } 
     },
     { 
-      label: 'JOURNAL', 
-      shortLabel: 'JOURNAL',
-      action: () => { onNavigateToJournal(); } 
+      label: 'LOOKBOOK', 
+      shortLabel: 'LOOKBOOK',
+      action: () => { 
+        if (onOpenPdfCatalogue) {
+          onOpenPdfCatalogue();
+        } else {
+          onNavigateToAtelier();
+        }
+      } 
     },
   ];
 

@@ -17,7 +17,6 @@ import {
 import { 
   INITIAL_PRODUCTS, 
   INSTAGRAM_FEED, 
-  BLOG_POSTS, 
   DEMO_USER 
 } from './data/mockData';
 import { Navbar } from './components/Navbar';
@@ -41,7 +40,6 @@ import { CartDrawer } from './components/CartDrawer';
 import { InstagramFeed } from './components/InstagramFeed';
 import { NewsletterSignup } from './components/NewsletterSignup';
 import { WishlistDrawer } from './components/WishlistDrawer';
-import { BlogSection } from './components/BlogSection';
 import { AtelierEthos } from './components/AtelierEthos';
 import { ChannelPartners } from './components/ChannelPartners';
 import { Footer } from './components/Footer';
@@ -843,7 +841,6 @@ export default function App() {
 
   // Section Refs for direct navigation
   const catalogRef = useRef<HTMLDivElement>(null);
-  const journalRef = useRef<HTMLDivElement>(null);
   const ethosRef = useRef<HTMLDivElement>(null);
 
   const scrollToCatalog = () => {
@@ -854,20 +851,16 @@ export default function App() {
     }, 10);
   };
 
-  const scrollToJournal = () => {
-    setCurrentView('shop');
-    setSelectedProduct(null);
-    setTimeout(() => {
-      journalRef.current?.scrollIntoView({ behavior: 'auto' });
-    }, 10);
-  };
-
   const scrollToEthos = () => {
     setCurrentView('shop');
     setSelectedProduct(null);
     setTimeout(() => {
       ethosRef.current?.scrollIntoView({ behavior: 'auto' });
     }, 10);
+  };
+
+  const scrollToJournal = () => {
+    scrollToEthos();
   };
 
   // Toast notifier helper
@@ -1852,21 +1845,6 @@ export default function App() {
           {/* Atelier Craftsmanship & 15-Page PDF Lookbook Catalogue Section */}
           <div ref={ethosRef} className="scroll-mt-16">
             <AtelierEthos onOpenFullscreenCatalogue={() => setIsPdfCatalogueOpen(true)} />
-          </div>
-
-          {/* Comprehensive SEO-Friendly Blog Section */}
-          <div ref={journalRef} className="scroll-mt-16">
-            <BlogSection
-              posts={BLOG_POSTS}
-              products={products}
-              onSelectProduct={(p) => {
-                setSelectedProduct(p);
-                setCurrentView('product-detail');
-                window.scrollTo(0, 0);
-              }}
-              onAddToCart={handleAddToCart}
-              currencySymbol={currencySymbol}
-            />
           </div>
 
           {/* Email Signup Form for Newsletters */}

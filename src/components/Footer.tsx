@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul className="space-y-2 text-[11px] text-[#a39d96]">
               <li>
-                <button onClick={onNavigateToJournal} className="hover:text-white transition-colors">
+                <button onClick={onNavigateToAtelier} className="hover:text-white transition-colors">
                   The Sacred Meaning of Sakha Pola
                 </button>
               </li>
@@ -101,12 +101,12 @@ export const Footer: React.FC<FooterProps> = ({
                 </button>
               </li>
               <li>
-                <button onClick={onNavigateToJournal} className="hover:text-white transition-colors">
+                <button onClick={onNavigateToAtelier} className="hover:text-white transition-colors">
                   Bangle Sizing Guide (2.2 to 2.10)
                 </button>
               </li>
               <li>
-                <button onClick={onNavigateToJournal} className="hover:text-white transition-colors">
+                <button onClick={onNavigateToAtelier} className="hover:text-white transition-colors">
                   Conch Shell Cleaning & Preservation
                 </button>
               </li>

@@ -11,9 +11,96 @@ import {
   Award
 } from 'lucide-react';
 import { InstagramPost, Product } from '../types';
+import imgSakhaPolaStack from '../assets/images/sakha_pola_stack_1790249812700.jpg';
+import imgGoldBadhanoPola from '../assets/images/gold_badhano_pola_1790249832633.jpg';
+import imgMayurMukhiShankha from '../assets/images/mayur_mukhi_shankha_1790249854136.jpg';
+import imgLohaBadhanoGold from '../assets/images/loha_badhano_gold_1790249869592.jpg';
+import imgBengaliBridalWrist from '../assets/images/bengali_bridal_wrist_1790249886691.jpg';
+import imgShankhaPolaSet from '../assets/images/shankha_pola_set_1790249913718.jpg';
+
+const SAKHA_POLA_FEED_ITEMS: InstagramPost[] = [
+  {
+    id: 'ig-sp-01',
+    username: 'debolina.banerjee',
+    handle: '@debolina_b',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    image: imgSakhaPolaStack,
+    caption: 'Pure white Mayur Mukhi Shankha & 22K gold-bound Pola stack on my wedding morning with traditional red alta. The conch feels so cool and sacred on the wrist! #SakhaPola #BengaliBride #NaxtTo',
+    likes: 2450,
+    commentsCount: 68,
+    timestamp: '2 hours ago',
+    taggedProductIds: ['sp-001', 'sp-003'],
+    location: 'Kolkata, West Bengal'
+  },
+  {
+    id: 'ig-sp-02',
+    username: 'subhasree.weddings',
+    handle: '@subhasree_weddings',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
+    image: imgGoldBadhanoPola,
+    caption: 'Macro beauty: 22K BIS hallmarked solid gold Borkhi wire work meticulously wrapped around deep crimson Pola. Heirloom craftsmanship by Bowbazar goldsmiths. #GoldBadhano #Pola #22kGold',
+    likes: 3820,
+    commentsCount: 112,
+    timestamp: '1 day ago',
+    taggedProductIds: ['sp-003'],
+    location: 'Bowbazar, Kolkata'
+  },
+  {
+    id: 'ig-sp-03',
+    username: 'ananya.ghosh',
+    handle: '@ananya_ghosh_',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    image: imgMayurMukhiShankha,
+    caption: 'Authentic conch shell hand-carved in Nabadwip. The Mayur Mukhi peacock terminals and chiseled plumage have that sacred natural conch acoustic resonance. #PureShankha #NabadwipCraft',
+    likes: 1940,
+    commentsCount: 45,
+    timestamp: '2 days ago',
+    taggedProductIds: ['sp-001'],
+    location: 'Nabadwip, West Bengal'
+  },
+  {
+    id: 'ig-sp-04',
+    username: 'rituparna_roy',
+    handle: '@rituparna_roy',
+    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
+    image: imgLohaBadhanoGold,
+    caption: 'Makara Mukhi 22K Gold Loha Badhano: Solid wrought iron encased in certified 22K gold with dual sea-dragon terminal heads. The timeless protective shield of Bengali married women. #LohaBadhano',
+    likes: 4120,
+    commentsCount: 129,
+    timestamp: '4 days ago',
+    taggedProductIds: ['sp-005'],
+    location: 'Salt Lake, Kolkata'
+  },
+  {
+    id: 'ig-sp-05',
+    username: 'poulomi_sen',
+    handle: '@poulomi_sen',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    image: imgBengaliBridalWrist,
+    caption: 'Saat Paake Ghora ready! Stacked my NaxtTo Shakha, Pola, and 22K gold badhano bangles with my heirloom red Banarasi saree. Received endless compliments on the intricate carving! #BengaliBou #ShakhaPolaStack',
+    likes: 2890,
+    commentsCount: 73,
+    timestamp: '5 days ago',
+    taggedProductIds: ['sp-006', 'sp-001', 'sp-002'],
+    location: 'Ballygunge, Kolkata'
+  },
+  {
+    id: 'ig-sp-06',
+    username: 'madhumita_pal',
+    handle: '@madhumita_pal',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    image: imgShankhaPolaSet,
+    caption: 'The complete Sampurna Bou bridal hamper arrived in a red silk trunk with brass vermilion thali. Certified BIS hallmarked 22K gold, genuine conch shell, and lustrous crimson pola. #AuspiciousBlessing #NaxtToAtelier',
+    likes: 3100,
+    commentsCount: 88,
+    timestamp: '1 week ago',
+    taggedProductIds: ['sp-006'],
+    location: 'Burdwan, West Bengal'
+  }
+];
 
 interface InstagramFeedProps {
-  posts: InstagramPost[];
+  posts?: InstagramPost[];
   products: Product[];
   onSelectProduct: (product: Product) => void;
   onAddToCart: (product: Product, size?: string, finish?: any) => void;
@@ -27,6 +114,7 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
   onAddToCart,
   currencySymbol
 }) => {
+  const displayPosts = SAKHA_POLA_FEED_ITEMS;
   const [selectedPost, setSelectedPost] = useState<InstagramPost | null>(null);
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [addedAnimationId, setAddedAnimationId] = useState<string | null>(null);
@@ -57,16 +145,16 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
         {/* Editorial Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#1d1d1f]">
-              <Instagram className="w-4 h-4" />
-              <span>The NaxtTo Collective</span>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#8C271E]">
+              <Instagram className="w-4 h-4 text-[#8C271E]" />
+              <span>The NaxtTo Sakha Pola Circle</span>
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl text-[#1d1d1f] font-normal leading-tight">
-              Worn in modern life, <br />
-              <span className="italic text-[#86868b]">documented worldwide.</span>
+              Worn with bridal pride, <br />
+              <span className="italic text-[#86868b]">cherished across generations.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#6e6e73] font-light">
-              Explore how patrons around the globe stack, style, and live in our minimalist solid gold and diamond heirlooms. Tag <strong>@naxtto.jewels</strong> to be curated.
+              Explore how Bengali brides, modern patrons, and heirloom connoisseurs stack, style, and celebrate in our certified conch shell Shankha, 22K gold-bound Pola, and protective Loha. Tag <strong>@naxtto.sakhapola</strong> to be featured in our bridal gallery.
             </p>
           </div>
 
@@ -77,8 +165,8 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
               rel="noreferrer"
               className="px-5 py-2.5 bg-white hover:bg-[#f5f5f7] border border-[#e5e5ea] text-[#1d1d1f] text-xs font-medium tracking-[0.14em] uppercase rounded-full shadow-xs transition-all flex items-center gap-2"
             >
-              <Instagram className="w-3.5 h-3.5" />
-              <span>Follow @naxtto.jewels</span>
+              <Instagram className="w-3.5 h-3.5 text-[#8C271E]" />
+              <span>Follow @naxtto.sakhapola</span>
               <ExternalLink className="w-3 h-3 text-[#86868b]" />
             </a>
           </div>
@@ -86,7 +174,7 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
 
         {/* Interactive Shoppable Instagram Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          {posts.map((post) => {
+          {displayPosts.map((post) => {
             const isLiked = !!likedPosts[post.id];
             const likeCount = post.likes + (isLiked ? 1 : 0);
 
@@ -104,8 +192,8 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
                   loading="lazy"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (target.src !== 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85') {
-                      target.src = 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85';
+                    if (target.src !== imgSakhaPolaStack) {
+                      target.src = imgSakhaPolaStack;
                     }
                   }}
                 />
@@ -150,20 +238,20 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
         {/* Press Accolades & Social Proof Quotes */}
         <div className="pt-8 border-t border-[#E0D7C9] grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           <div className="space-y-1">
-            <span className="font-serif text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">VOGUE</span>
-            <p className="text-[11px] text-[#7A7065] italic">"The gold standard for the modern minimalist."</p>
+            <span className="font-serif text-base sm:text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">ANANDABAZAR PATRIKA</span>
+            <p className="text-[11px] text-[#7A7065] italic">"Reviving 1,500 years of Bengali conch shell & 22K gold badhano mastery."</p>
           </div>
           <div className="space-y-1">
-            <span className="font-serif text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">HARPER'S BAZAAR</span>
-            <p className="text-[11px] text-[#7A7065] italic">"Heirlooms designed for effortless daily rotation."</p>
+            <span className="font-serif text-base sm:text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">SANANDA BRIDAL</span>
+            <p className="text-[11px] text-[#7A7065] italic">"The definitive heirloom standard for the contemporary Bengali bride."</p>
           </div>
           <div className="space-y-1">
-            <span className="font-serif text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">ELLE ATELIER</span>
-            <p className="text-[11px] text-[#7A7065] italic">"Pioneering closed-loop 100% recycled gold."</p>
+            <span className="font-serif text-base sm:text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">FEMINA BENGAL</span>
+            <p className="text-[11px] text-[#7A7065] italic">"Natural conch shell resonance paired seamlessly with BIS hallmarked gold."</p>
           </div>
           <div className="space-y-1">
-            <span className="font-serif text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">FINANCIAL TIMES</span>
-            <p className="text-[11px] text-[#7A7065] italic">"Subtle, substantial, and mathematically pure."</p>
+            <span className="font-serif text-base sm:text-lg tracking-widest text-[#1A1816] uppercase block font-semibold">THE TELEGRAPH METRO</span>
+            <p className="text-[11px] text-[#7A7065] italic">"Bridging centuries-old Nabadwip craft with modern certified purity."</p>
           </div>
         </div>
       </div>
@@ -196,8 +284,8 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
                 className="w-full h-full max-h-[480px] object-cover"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (target.src !== 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85') {
-                    target.src = 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=800&q=85';
+                  if (target.src !== imgSakhaPolaStack) {
+                    target.src = imgSakhaPolaStack;
                   }
                 }}
               />

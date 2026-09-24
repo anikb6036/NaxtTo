@@ -47,6 +47,67 @@ export const AtelierEthos: React.FC<AtelierEthosProps> = ({ onOpenFullscreenCata
       className="w-full bg-white text-[#1d1d1f] py-8 sm:py-12 border-t border-[#e5e5ea]"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Editorial Section Top Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-[#eeeae4]">
+          <div className="space-y-2">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C271E] block">
+              Archival Lookbook & Atelier Compendium
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl text-[#1d1d1f] font-normal leading-tight">
+              NaxtTo Sakha Pola <br />
+              <span className="italic text-[#86868b]">Generational Heirloom Catalogue.</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-[#6e6e73] font-light max-w-2xl">
+              Immerse yourself in our complete 15-page bridal compendium documenting Bengal’s ancestral Shankha conch carvings, 22K BIS hallmarked gold badhano wirework, and sacred protective Loha bangles.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-full bg-[#f4efe8] p-1 border border-[#e5dfd7]">
+              <button
+                onClick={() => setViewMode('continuous')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  viewMode === 'continuous'
+                    ? 'bg-[#2d2a26] text-white shadow-xs'
+                    : 'text-[#524e48] hover:text-[#1d1d1f]'
+                }`}
+              >
+                All 15 Pages
+              </button>
+              <button
+                onClick={() => setViewMode('interactive')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  viewMode === 'interactive'
+                    ? 'bg-[#2d2a26] text-white shadow-xs'
+                    : 'text-[#524e48] hover:text-[#1d1d1f]'
+                }`}
+              >
+                Interactive Slide
+              </button>
+            </div>
+
+            {onOpenFullscreenCatalogue && (
+              <button
+                onClick={onOpenFullscreenCatalogue}
+                className="px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-[#d1ccc6] text-[#1d1d1f] text-xs font-medium tracking-wider uppercase rounded-full shadow-xs transition-all flex items-center gap-1.5"
+                title="Open Fullscreen Reader"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-[#8C271E]" />
+                <span>Fullscreen</span>
+              </button>
+            )}
+
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-[#d1ccc6] text-[#1d1d1f] text-xs font-medium tracking-wider uppercase rounded-full shadow-xs transition-all flex items-center gap-1.5"
+              title="Print or Save PDF"
+            >
+              <Printer className="w-3.5 h-3.5 text-[#8C271E]" />
+              <span>Print PDF</span>
+            </button>
+          </div>
+        </div>
+
         {/* View Mode 1: Interactive Presentation Canvas */}
         {viewMode === 'interactive' && (
           <div className="space-y-6 animate-fadeIn">
