@@ -1,5 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { getAllOrders, createOrderInDb, updateOrderStatusInDb } from '../../src/db/helpers';
+import { 
+  getAllOrders, 
+  createOrderInDb, 
+  updateOrderStatusInDb,
+  deleteOrderFromDb,
+  clearAllOrdersFromDb 
+} from '../../src/db/helpers';
 import { Order } from '../../src/types';
 import { 
   sendEmailWithResend, 
@@ -200,3 +206,25 @@ ordersRouter.patch('/:id/status', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message || 'Failed to update order status' });
   }
 });
+
+// DELETE /api/orders - clear all orders
+ordersRouter.delete('/', async (req: Request, res: Response) => {
+  try {
+    await clearAllOrdersFromDb();
+    res.json({ success: true, message: 'All orders cleared successfully from database' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to clear orders' });
+  }
+});
+
+// DELETE /api/orders/:id - delete single order
+ordersRouter.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await deleteOrderFromDb(id);
+    res.json({ success: true, message: `Order #${id} deleted successfully from database` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete order' });
+  }
+});
+

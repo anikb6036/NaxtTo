@@ -726,6 +726,61 @@ export async function updateOrderStatusInFirestore(
   }
 }
 
+// Identifiers of demo/dummy orders that must be excluded across the entire application
+export const DUMMY_ORDER_IDENTIFIERS = new Set<string>([
+  'NXT-2026-78951',
+  'NXT-2026-37994',
+  'NXT-2026-90586',
+  'NXT-2026-63621',
+  'NXT-2026-88392'
+]);
+
+const DELETED_ORDERS_KEY = 'naxtto_deleted_order_ids';
+
+export function getDeletedOrderIds(): Set<string> {
+  const deleted = new Set<string>(DUMMY_ORDER_IDENTIFIERS);
+  try {
+    const raw = localStorage.getItem(DELETED_ORDERS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(id => deleted.add(id));
+      }
+    }
+  } catch {}
+  return deleted;
+}
+
+export function recordOrderDeletion(orderId: string): void {
+  if (!orderId) return;
+  try {
+    const raw = localStorage.getItem(DELETED_ORDERS_KEY);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    if (!list.includes(orderId)) {
+      list.push(orderId);
+      safeSetItem(DELETED_ORDERS_KEY, JSON.stringify(list));
+    }
+
+    // Also remove from naxtto_all_orders in localStorage
+    const saved = localStorage.getItem('naxtto_all_orders');
+    if (saved) {
+      const parsed: Order[] = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(o => o && o.id !== orderId && o.orderNumber !== orderId);
+        safeSetItem('naxtto_all_orders', JSON.stringify(cleaned));
+      }
+    }
+  } catch (err) {
+    console.warn('Error recording order deletion:', err);
+  }
+}
+
+export function clearAllOrderRecords(): void {
+  try {
+    safeSetItem('naxtto_all_orders', JSON.stringify([]));
+  } catch {}
+}
+
 /**
  * Real-time subscription to all orders in Firestore for Admin Panel / Seller Hub
  */
@@ -734,12 +789,20 @@ export function subscribeToAllOrders(callback: (orders: Order[]) => void): () =>
     const ordersCol = collection(firestore, 'orders');
     return onSnapshot(ordersCol, (snapshot) => {
       const ordersList: Order[] = [];
+      const deletedIds = getDeletedOrderIds();
+
       snapshot.forEach((docSnap) => {
         const d = docSnap.data();
         if (d && (d.id || d.orderNumber)) {
+          const id = d.id || docSnap.id;
+          const orderNum = d.orderNumber || d.id || docSnap.id;
+          if (deletedIds.has(id) || deletedIds.has(orderNum) || DUMMY_ORDER_IDENTIFIERS.has(id) || DUMMY_ORDER_IDENTIFIERS.has(orderNum)) {
+            return;
+          }
+
           ordersList.push({
-            id: d.id || docSnap.id,
-            orderNumber: d.orderNumber || d.id || docSnap.id,
+            id,
+            orderNumber: orderNum,
             date: d.date || new Date().toISOString().split('T')[0],
             status: d.status || 'Confirmed',
             items: Array.isArray(d.items) ? d.items : [],
@@ -1003,6 +1066,54 @@ export async function fetchAllOrdersFromFirestore(): Promise<Order[]> {
   } catch (err) {
     console.warn('Fetch all orders from Firestore notice:', err);
     return [];
+  }
+}
+
+/**
+ * Permanently delete an individual order from Firestore and local cache
+ */
+export async function deleteOrderFromFirestore(orderId: string): Promise<boolean> {
+  if (!orderId) return false;
+  recordOrderDeletion(orderId);
+  try {
+    const orderDocRef = doc(firestore, 'orders', orderId);
+    await deleteDoc(orderDocRef).catch(() => {});
+
+    // Also look up and delete any doc matching orderNumber or id
+    const snap = await getDocs(collection(firestore, 'orders')).catch(() => null);
+    if (snap) {
+      for (const docSnap of snap.docs) {
+        const d = docSnap.data();
+        if (docSnap.id === orderId || d.id === orderId || d.orderNumber === orderId) {
+          await deleteDoc(docSnap.ref).catch(() => {});
+        }
+      }
+    }
+    return true;
+  } catch (err) {
+    console.warn(`Failed to delete order ${orderId} from Firestore:`, err);
+    return false;
+  }
+}
+
+/**
+ * Permanently purge all orders from Firestore cloud storage and local caches
+ */
+export async function clearAllOrdersFromFirestore(): Promise<number> {
+  try {
+    clearAllOrderRecords();
+    const snap = await getDocs(collection(firestore, 'orders')).catch(() => null);
+    let count = 0;
+    if (snap) {
+      for (const docSnap of snap.docs) {
+        await deleteDoc(docSnap.ref).catch(() => {});
+        count++;
+      }
+    }
+    return count;
+  } catch (err) {
+    console.warn('Failed to clear all orders from Firestore:', err);
+    return 0;
   }
 }
 

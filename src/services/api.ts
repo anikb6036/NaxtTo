@@ -120,6 +120,28 @@ export const apiClient = {
     }
   },
 
+  // Delete single order
+  async deleteOrder(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+      return res.ok;
+    } catch (err) {
+      console.warn('API deleteOrder error:', err);
+      return false;
+    }
+  },
+
+  // Clear all orders (remove test/dummy orders)
+  async clearAllOrders(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/orders', { method: 'DELETE' });
+      return res.ok;
+    } catch (err) {
+      console.warn('API clearAllOrders error:', err);
+      return false;
+    }
+  },
+
   // Authentication
   async login(email: string, password: string) {
     try {

@@ -135,114 +135,190 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     setShowReviewForm(true);
   };
 
-  // Gallery sliding carousel state & refs
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const isProgrammaticScrollRef = useRef(false);
+  // Gallery Swipe State & Gesture Handlers
+  const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isSwiping, setIsSwiping] = useState<boolean>(false);
+  const touchStartXRef = useRef<number>(0);
+  const touchStartYRef = useRef<number>(0);
+  const currentDragOffsetRef = useRef<number>(0);
+  const isHorizontalSwipeRef = useRef<boolean | null>(null);
   const isPointerDownRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollStartRef = useRef(0);
-  const hasDraggedRef = useRef(false);
+  const pointerStartXRef = useRef(0);
+  const hasPointerDraggedRef = useRef(false);
+
+  const imagesCount = product.images?.length || 0;
 
   const scrollToImage = (index: number) => {
-    if (index < 0 || index >= product.images.length) return;
+    if (index < 0 || index >= imagesCount) return;
     setActiveImageIndex(index);
-    if (carouselRef.current) {
-      isProgrammaticScrollRef.current = true;
-      const width = carouselRef.current.clientWidth;
-      carouselRef.current.scrollTo({
-        left: index * width,
-        behavior: 'smooth'
-      });
-      setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 450);
-    }
-  };
-
-  const handleCarouselScroll = () => {
-    if (isProgrammaticScrollRef.current || !carouselRef.current) return;
-    const container = carouselRef.current;
-    const width = container.clientWidth;
-    if (width > 0) {
-      const newIndex = Math.round(container.scrollLeft / width);
-      if (newIndex >= 0 && newIndex < product.images.length && newIndex !== activeImageIndex) {
-        setActiveImageIndex(newIndex);
-      }
-    }
+    setDragOffset(0);
+    currentDragOffsetRef.current = 0;
   };
 
   const handleNextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (activeImageIndex < product.images.length - 1) {
-      scrollToImage(activeImageIndex + 1);
-    } else {
-      scrollToImage(0);
-    }
+    if (imagesCount <= 1) return;
+    setActiveImageIndex(prev => (prev < imagesCount - 1 ? prev + 1 : 0));
+    setDragOffset(0);
   };
 
   const handlePrevImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (activeImageIndex > 0) {
-      scrollToImage(activeImageIndex - 1);
-    } else {
-      scrollToImage(product.images.length - 1);
+    if (imagesCount <= 1) return;
+    setActiveImageIndex(prev => (prev > 0 ? prev - 1 : imagesCount - 1));
+    setDragOffset(0);
+  };
+
+  // Touch Handlers for Mobile & Tablet Swiping
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (imagesCount <= 1) return;
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    currentDragOffsetRef.current = 0;
+    isHorizontalSwipeRef.current = null;
+    setIsSwiping(true);
+    setDragOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isSwiping || isHorizontalSwipeRef.current === false) return;
+    const touch = e.touches[0];
+    const diffX = touch.clientX - touchStartXRef.current;
+    const diffY = touch.clientY - touchStartYRef.current;
+
+    // Detect gesture direction on first significant movement
+    if (isHorizontalSwipeRef.current === null) {
+      if (Math.abs(diffX) > 7 || Math.abs(diffY) > 7) {
+        if (Math.abs(diffX) >= Math.abs(diffY)) {
+          isHorizontalSwipeRef.current = true;
+        } else {
+          isHorizontalSwipeRef.current = false;
+          setIsSwiping(false);
+          setDragOffset(0);
+          return;
+        }
+      }
+    }
+
+    if (isHorizontalSwipeRef.current) {
+      // Elastic resistance at boundary edges
+      let resistance = 1;
+      if ((activeImageIndex === 0 && diffX > 0) || (activeImageIndex === imagesCount - 1 && diffX < 0)) {
+        resistance = 0.3;
+      }
+      const adjustedOffset = diffX * resistance;
+      currentDragOffsetRef.current = adjustedOffset;
+      setDragOffset(adjustedOffset);
     }
   };
 
+  const handleTouchEnd = () => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+    const offset = currentDragOffsetRef.current;
+    const threshold = 40;
+
+    if (offset < -threshold) {
+      // Swiped Left -> Next Image
+      if (activeImageIndex < imagesCount - 1) {
+        setActiveImageIndex(prev => prev + 1);
+      } else {
+        setActiveImageIndex(0);
+      }
+    } else if (offset > threshold) {
+      // Swiped Right -> Previous Image
+      if (activeImageIndex > 0) {
+        setActiveImageIndex(prev => prev - 1);
+      } else {
+        setActiveImageIndex(imagesCount - 1);
+      }
+    }
+    setDragOffset(0);
+    currentDragOffsetRef.current = 0;
+    isHorizontalSwipeRef.current = null;
+  };
+
+  // Pointer / Mouse Drag Handlers for Desktop Swiping
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0 || !carouselRef.current) return;
+    if (e.button !== 0 || imagesCount <= 1) return;
+    if ((e.target as HTMLElement).closest('button, a')) return;
+
     isPointerDownRef.current = true;
-    hasDraggedRef.current = false;
-    startXRef.current = e.clientX;
-    scrollStartRef.current = carouselRef.current.scrollLeft;
+    hasPointerDraggedRef.current = false;
+    pointerStartXRef.current = e.clientX;
+    currentDragOffsetRef.current = 0;
+    setIsSwiping(true);
+    setDragOffset(0);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPointerDownRef.current || !carouselRef.current) return;
-    const delta = e.clientX - startXRef.current;
-    if (Math.abs(delta) > 6) {
-      hasDraggedRef.current = true;
-      carouselRef.current.scrollLeft = scrollStartRef.current - delta;
+    if (!isPointerDownRef.current) return;
+    const diffX = e.clientX - pointerStartXRef.current;
+    if (Math.abs(diffX) > 6) {
+      hasPointerDraggedRef.current = true;
+      let resistance = 1;
+      if ((activeImageIndex === 0 && diffX > 0) || (activeImageIndex === imagesCount - 1 && diffX < 0)) {
+        resistance = 0.3;
+      }
+      const adjustedOffset = diffX * resistance;
+      currentDragOffsetRef.current = adjustedOffset;
+      setDragOffset(adjustedOffset);
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerUp = () => {
     if (!isPointerDownRef.current) return;
     isPointerDownRef.current = false;
-    if (hasDraggedRef.current && carouselRef.current) {
-      const width = carouselRef.current.clientWidth;
-      const targetIndex = Math.round(carouselRef.current.scrollLeft / width);
-      scrollToImage(targetIndex);
+    setIsSwiping(false);
+    const offset = currentDragOffsetRef.current;
+    const threshold = 40;
+
+    if (hasPointerDraggedRef.current) {
+      if (offset < -threshold) {
+        if (activeImageIndex < imagesCount - 1) {
+          setActiveImageIndex(prev => prev + 1);
+        } else {
+          setActiveImageIndex(0);
+        }
+      } else if (offset > threshold) {
+        if (activeImageIndex > 0) {
+          setActiveImageIndex(prev => prev - 1);
+        } else {
+          setActiveImageIndex(imagesCount - 1);
+        }
+      }
+    }
+    setDragOffset(0);
+    currentDragOffsetRef.current = 0;
+  };
+
+  const handlePointerCancel = () => {
+    if (isPointerDownRef.current) {
+      isPointerDownRef.current = false;
+      setIsSwiping(false);
+      setDragOffset(0);
+      currentDragOffsetRef.current = 0;
     }
   };
+
+  // Auto-scroll active thumbnail into view when image changes
+  useEffect(() => {
+    const activeThumb = document.getElementById(`thumb-img-${activeImageIndex}`);
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeImageIndex]);
 
   // Reset state when product changes
   useEffect(() => {
     setActiveImageIndex(0);
+    setDragOffset(0);
     setSelectedFinish(product.availableFinishes?.[0]?.type || product.metal);
     setSelectedSize(product.availableSizes?.[0] || 'Standard');
     setQuantity(1);
     window.scrollTo(0, 0);
-    if (carouselRef.current) {
-      carouselRef.current.scrollTo({ left: 0, behavior: 'auto' });
-    }
   }, [product.id]);
-
-  // Keep carousel aligned on screen resize or device orientation change
-  useEffect(() => {
-    if (!carouselRef.current) return;
-    const observer = new ResizeObserver(() => {
-      if (carouselRef.current) {
-        const width = carouselRef.current.clientWidth;
-        carouselRef.current.scrollTo({
-          left: activeImageIndex * width,
-          behavior: 'auto'
-        });
-      }
-    });
-    observer.observe(carouselRef.current);
-    return () => observer.disconnect();
-  }, [activeImageIndex]);
 
   const handleAddReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -520,22 +596,106 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 ))}
               </div>
 
-              {/* Main Image Display Box */}
-              <div className="relative flex-1 aspect-square bg-white rounded-lg border border-[#e7e7e7] overflow-hidden flex items-center justify-center select-none group">
-                <img
-                  src={product.images[activeImageIndex] || product.images[0]}
-                  alt={product.name}
-                  className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-                />
+              {/* Main Image Display Box with Real-time Touch Swiping & Mouse Dragging */}
+              <div 
+                id="product-image-swipe-box"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowLeft') handlePrevImage();
+                  if (e.key === 'ArrowRight') handleNextImage();
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerCancel}
+                className="relative flex-1 aspect-square bg-white rounded-lg border border-[#e7e7e7] overflow-hidden flex items-center justify-center select-none group touch-pan-y cursor-grab active:cursor-grabbing focus:outline-none focus:ring-1 focus:ring-[#007185]/40"
+              >
+                {/* Sliding Strip Track containing all product images */}
+                <div 
+                  className={`w-full h-full flex items-center ${
+                    isSwiping ? 'transition-none' : 'transition-transform duration-300 ease-out'
+                  }`}
+                  style={{
+                    transform: `translateX(calc(-${activeImageIndex * 100}% + ${dragOffset}px))`,
+                  }}
+                >
+                  {product.images.map((img, idx) => (
+                    <div 
+                      key={idx} 
+                      className="w-full h-full shrink-0 flex items-center justify-center p-4 relative"
+                    >
+                      <img
+                        src={img}
+                        alt={`${product.name} - view ${idx + 1}`}
+                        draggable={false}
+                        className="w-full h-full object-contain pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Left & Right Chevron Arrows for quick switching */}
+                {imagesCount > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      id="gallery-swipe-prev-btn"
+                      onClick={handlePrevImage}
+                      aria-label="Previous product image"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#d5d9d9] shadow-md flex items-center justify-center text-[#0F1111] hover:text-[#007185] opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 cursor-pointer active:scale-95"
+                    >
+                      <ChevronLeft className="w-5 h-5 -ml-0.5" />
+                    </button>
+                    <button
+                      type="button"
+                      id="gallery-swipe-next-btn"
+                      onClick={handleNextImage}
+                      aria-label="Next product image"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#d5d9d9] shadow-md flex items-center justify-center text-[#0F1111] hover:text-[#007185] opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 cursor-pointer active:scale-95"
+                    >
+                      <ChevronRight className="w-5 h-5 -mr-0.5" />
+                    </button>
+                  </>
+                )}
+
+                {/* Swipe Pagination Dots on Mobile / Tablet */}
+                {imagesCount > 1 && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/25 backdrop-blur-xs z-10 pointer-events-none sm:hidden">
+                    {product.images.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          activeImageIndex === idx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Floating Top-Left "Swipe" Indicator badge / counter */}
+                {imagesCount > 1 && (
+                  <div className="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs border border-gray-200 text-[10px] font-medium text-gray-600 shadow-2xs z-10 flex items-center gap-1 pointer-events-none">
+                    <span>{activeImageIndex + 1} / {imagesCount}</span>
+                  </div>
+                )}
 
                 {/* Floating Top-Right Buttons: Share & Wishlist */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+                <div 
+                  className="absolute top-3 right-3 flex flex-col gap-2 z-10"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
                   <a
                     id="floating-image-share-whatsapp-btn"
                     href={whatsappShareUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (navigator.clipboard) {
                         navigator.clipboard.writeText(productShareUrl).catch(() => {});
                         setCopiedLink(true);
@@ -548,7 +708,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <WhatsAppLogo className="w-4 h-4 text-[#25D366]" />}
                   </a>
                   <button
-                    onClick={() => onToggleWishlist(product)}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleWishlist(product);
+                    }}
                     className={`w-9 h-9 rounded-full bg-white/95 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center justify-center transition-all cursor-pointer ${
                       isWishlisted ? 'text-rose-600' : 'text-[#565959] hover:text-[#0F1111]'
                     }`}
@@ -561,18 +725,28 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 {/* Floating Zoom Button (Bottom Right) */}
                 <button
                   type="button"
-                  onClick={() => setShowLightbox(true)}
-                  className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center justify-center text-[#565959] hover:text-[#0F1111] transition-all text-xs cursor-pointer"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowLightbox(true);
+                  }}
+                  className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center justify-center text-[#565959] hover:text-[#0F1111] transition-all text-xs cursor-pointer z-10"
                   title="Zoom Image"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
                 </button>
 
-                {/* Floating "Ask Rufus" AI Pill (Bottom Left, matching professional design in image 2) */}
+                {/* Floating "Ask Rufus" AI Pill (Bottom Left) */}
                 <button
                   type="button"
-                  onClick={() => setShowRufusModal(true)}
-                  className="absolute bottom-3 left-3 px-3 py-1.5 rounded-full bg-white/95 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center gap-1.5 text-xs text-[#0F1111] font-medium transition-all hover:border-[#007185] cursor-pointer"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowRufusModal(true);
+                  }}
+                  className="absolute bottom-3 left-3 px-3 py-1.5 rounded-full bg-white/95 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center gap-1.5 text-xs text-[#0F1111] font-medium transition-all hover:border-[#007185] cursor-pointer z-10"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#de7921]" />
                   <span>Ask Rufus</span>
@@ -1816,12 +1990,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       )}
       {showLightbox && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none touch-pan-y"
           onClick={() => setShowLightbox(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         >
           <button
             onClick={() => setShowLightbox(false)}
-            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-20"
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-20 cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
@@ -1834,7 +2012,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   e.stopPropagation();
                   handlePrevImage();
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all z-20"
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all z-20 cursor-pointer"
                 aria-label="Previous Image"
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -1845,7 +2023,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   e.stopPropagation();
                   handleNextImage();
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all z-20"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all z-20 cursor-pointer"
                 aria-label="Next Image"
               >
                 <ChevronRight className="w-6 h-6" />
@@ -1853,12 +2031,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             </>
           )}
 
-          <img
-            src={product.images[activeImageIndex] || product.images[0]}
-            alt={product.name}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
+          <div 
+            className="max-w-full max-h-[90vh] flex items-center justify-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            <img
+              src={product.images[activeImageIndex] || product.images[0]}
+              alt={product.name}
+              draggable={false}
+              className={`max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl pointer-events-none select-none ${
+                isSwiping ? 'transition-none' : 'transition-transform duration-300 ease-out'
+              }`}
+              style={{
+                transform: `translateX(${dragOffset}px)`
+              }}
+            />
+          </div>
 
           {product.images.length > 1 && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-white text-xs font-medium z-20">

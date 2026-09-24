@@ -68,13 +68,19 @@ import {
   sanitizeOrderForStorage,
   saveOrderToFirestore,
   updateOrderStatusInFirestore,
+  deleteOrderFromFirestore,
+  clearAllOrdersFromFirestore,
   subscribeToAllOrders,
   saveProductToFirestore,
   deleteProductFromFirestore,
   subscribeToAllProducts,
   getDeletedProductIds,
   recordProductDeletion,
-  subscribeToDeletedProducts
+  subscribeToDeletedProducts,
+  getDeletedOrderIds,
+  recordOrderDeletion,
+  clearAllOrderRecords,
+  DUMMY_ORDER_IDENTIFIERS
 } from './utils/userStorage';
 import { parseRouteFromLocation, syncBrowserUrl, AppView } from './utils/routes';
 
@@ -170,7 +176,21 @@ export default function App() {
     try {
       const saved = localStorage.getItem('naxtto_all_orders');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const deleted = getDeletedOrderIds();
+          const clean = parsed.filter(o => 
+            o && 
+            !deleted.has(o.id) && 
+            !deleted.has(o.orderNumber) && 
+            !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+            !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+          );
+          if (clean.length !== parsed.length) {
+            safeSetItem('naxtto_all_orders', JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
     } catch {
       // ignore
@@ -329,26 +349,22 @@ export default function App() {
   const refreshOrders = useCallback(async () => {
     try {
       const serverOrders = await apiClient.getOrders();
-      if (Array.isArray(serverOrders) && serverOrders.length > 0) {
-        setOrders(prev => {
-          const map = new Map<string, Order>();
-          // Combine existing with server orders
-          (Array.isArray(prev) ? prev : []).forEach(o => {
-            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
-          });
-          serverOrders.forEach(o => {
-            if (o && (o.id || o.orderNumber)) {
-              map.set(o.id || o.orderNumber, o);
-            }
-          });
-          const combined = Array.from(map.values()).sort((a, b) => {
-            const timeA = new Date(a.date || (a as any).createdAt || 0).getTime();
-            const timeB = new Date(b.date || (b as any).createdAt || 0).getTime();
-            return timeB - timeA;
-          });
-          safeSetItem('naxtto_all_orders', JSON.stringify(combined.slice(0, 50).map(sanitizeOrderForStorage)));
-          return combined;
+      if (Array.isArray(serverOrders)) {
+        const deleted = getDeletedOrderIds();
+        const valid = serverOrders.filter(o => 
+          o && 
+          !deleted.has(o.id) && 
+          !deleted.has(o.orderNumber) && 
+          !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+          !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+        );
+        const sorted = [...valid].sort((a, b) => {
+          const timeA = new Date(a.date || (a as any).createdAt || 0).getTime();
+          const timeB = new Date(b.date || (b as any).createdAt || 0).getTime();
+          return timeB - timeA;
         });
+        setOrders(sorted);
+        safeSetItem('naxtto_all_orders', JSON.stringify(sorted.slice(0, 50).map(sanitizeOrderForStorage)));
       }
     } catch (err) {
       console.warn('Orders sync notice:', err);
@@ -363,44 +379,35 @@ export default function App() {
   // Real-time Firestore cloud orders listener for Admin Panel & Patron tracking
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((remoteOrders) => {
-      if (remoteOrders && remoteOrders.length > 0) {
-        setOrders(prev => {
-          const map = new Map<string, Order>();
-          (prev || []).forEach(o => {
-            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
-          });
-          remoteOrders.forEach(o => {
-            if (o && (o.id || o.orderNumber)) map.set(o.id || o.orderNumber, o);
-          });
-          const combined = Array.from(map.values()).sort((a, b) => {
-            const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
-            const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
-            return timeB - timeA;
-          });
-          safeSetItem('naxtto_all_orders', JSON.stringify(combined.slice(0, 50).map(sanitizeOrderForStorage)));
-          return combined;
-        });
+      const deleted = getDeletedOrderIds();
+      const valid = (remoteOrders || []).filter(o => 
+        o && 
+        !deleted.has(o.id) && 
+        !deleted.has(o.orderNumber) && 
+        !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+        !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+      );
 
-        // Sync order status updates to current patron user.orderHistory in real time
-        setUser(prev => {
-          if (!prev || !prev.orderHistory || prev.orderHistory.length === 0) return prev;
-          let changed = false;
-          const updatedHistory = prev.orderHistory.map(localOrd => {
-            const match = remoteOrders.find(r => r.id === localOrd.id || r.orderNumber === localOrd.orderNumber);
-            if (match && (match.status !== localOrd.status || match.trackingNumber !== localOrd.trackingNumber)) {
-              changed = true;
-              return { 
-                ...localOrd, 
-                status: match.status, 
-                trackingNumber: match.trackingNumber, 
-                statusUpdates: match.statusUpdates 
-              };
-            }
-            return localOrd;
-          });
-          return changed ? { ...prev, orderHistory: updatedHistory } : prev;
-        });
-      }
+      const sorted = [...valid].sort((a, b) => {
+        const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+        const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+        return timeB - timeA;
+      });
+
+      setOrders(sorted);
+      safeSetItem('naxtto_all_orders', JSON.stringify(sorted.slice(0, 50).map(sanitizeOrderForStorage)));
+
+      // Sync order status updates to current patron user.orderHistory in real time
+      setUser(prev => {
+        if (!prev || !prev.orderHistory || prev.orderHistory.length === 0) return prev;
+        const cleanedHistory = prev.orderHistory.filter(o => 
+          !deleted.has(o.id) && 
+          !deleted.has(o.orderNumber) && 
+          !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+          !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+        );
+        return { ...prev, orderHistory: cleanedHistory };
+      });
     });
 
     return () => {
@@ -478,14 +485,48 @@ export default function App() {
     };
   }, []);
 
+  // One-time startup purge to guarantee no dummy orders linger in storage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('naxtto_all_orders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const deleted = getDeletedOrderIds();
+          const clean = parsed.filter(o => 
+            o && 
+            !deleted.has(o.id) && 
+            !deleted.has(o.orderNumber) && 
+            !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+            !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+          );
+          safeSetItem('naxtto_all_orders', JSON.stringify(clean));
+          setOrders(clean);
+        }
+      }
+    } catch {}
+  }, []);
+
   // Listen to cross-window storage updates and local dispatch events
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'naxtto_all_orders' && e.newValue) {
+      if (e.key === 'naxtto_all_orders') {
+        if (!e.newValue) {
+          setOrders([]);
+          return;
+        }
         try {
           const parsed = JSON.parse(e.newValue);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setOrders(parsed);
+          if (Array.isArray(parsed)) {
+            const deleted = getDeletedOrderIds();
+            const clean = parsed.filter(o => 
+              o && 
+              !deleted.has(o.id) && 
+              !deleted.has(o.orderNumber) && 
+              !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
+              !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
+            );
+            setOrders(clean);
           }
         } catch {}
       }
@@ -1353,6 +1394,33 @@ export default function App() {
     showToast(`Order #${orderId.slice(-6)} status updated to "${newStatus}".`);
   };
 
+  const handleDeleteOrder = (orderId: string) => {
+    setOrders(prev => {
+      const updated = prev.filter(o => o.id !== orderId);
+      safeSetItem('naxtto_all_orders', JSON.stringify(updated.slice(0, 50).map(sanitizeOrderForStorage)));
+      return updated;
+    });
+    setUser(prev => ({
+      ...prev,
+      orderHistory: (prev.orderHistory || []).filter(o => o.id !== orderId)
+    }));
+    deleteOrderFromFirestore(orderId);
+    apiClient.deleteOrder(orderId);
+    showToast(`Order #${orderId.slice(-6)} removed.`);
+  };
+
+  const handleClearAllOrders = async () => {
+    setOrders([]);
+    localStorage.removeItem('naxtto_all_orders');
+    setUser(prev => ({
+      ...prev,
+      orderHistory: []
+    }));
+    await clearAllOrdersFromFirestore();
+    await apiClient.clearAllOrders();
+    showToast('All dummy / test orders have been purged from the seller panel.');
+  };
+
   const handleAdminSignOut = () => {
     setIsStaffAuthenticated(false);
     setStaffUser(null);
@@ -1477,6 +1545,8 @@ export default function App() {
           onAddProduct={handleAddProduct}
           onUpdateProduct={handleUpdateProduct}
           onDeleteProduct={handleDeleteProduct}
+          onDeleteOrder={handleDeleteOrder}
+          onClearAllOrders={handleClearAllOrders}
           onUpdateOrderStatus={handleUpdateOrderStatus}
           onBackToShop={() => {
             setCurrentView('shop');

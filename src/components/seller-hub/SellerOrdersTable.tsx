@@ -14,10 +14,12 @@ import {
   RefreshCw,
   Printer,
   PackageCheck,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import { Order } from '../../types';
 import { ShippingLabelModal } from './ShippingLabelModal';
+import { getDeletedOrderIds, DUMMY_ORDER_IDENTIFIERS } from '../../utils/userStorage';
 
 interface SellerOrdersTableProps {
   orders: Order[];
@@ -25,6 +27,8 @@ interface SellerOrdersTableProps {
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   currencySymbol: string;
   onRefreshOrders?: () => void;
+  onDeleteOrder?: (orderId: string) => void;
+  onClearAllOrders?: () => void;
 }
 
 export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
@@ -32,7 +36,9 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
   onSelectOrder,
   onUpdateOrderStatus,
   currencySymbol,
-  onRefreshOrders
+  onRefreshOrders,
+  onDeleteOrder,
+  onClearAllOrders
 }) => {
   const [orderStatusTab, setOrderStatusTab] = useState<'all' | 'pending' | 'accepted' | 'shipped' | 'delivered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,6 +129,21 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
             <Download className="w-3.5 h-3.5 text-[#717478]" />
             <span>Export CSV</span>
           </button>
+          {orders.length > 0 && onClearAllOrders && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to remove all ${orders.length} orders from the seller panel? This will reset order data to 0.`)) {
+                  onClearAllOrders();
+                }
+              }}
+              className="border border-[#fecaca] bg-[#fef2f2] hover:bg-[#fee2e2] text-[#dc2626] rounded-lg px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Purge all test/dummy orders"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear All Orders</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -302,6 +323,21 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        {onDeleteOrder && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Delete order #${ord.orderNumber || ord.id}?`)) {
+                                onDeleteOrder(ord.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-md hover:bg-[#fef2f2] text-[#717478] hover:text-[#dc2626] transition-colors cursor-pointer"
+                            title="Delete this order"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

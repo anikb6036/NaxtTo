@@ -348,6 +348,33 @@ export async function updateOrderStatusInDb(id: string, status: string): Promise
   return true;
 }
 
+export async function deleteOrderFromDb(id: string): Promise<boolean> {
+  const existingIdx = inMemoryOrders.findIndex(o => o.id === id);
+  if (existingIdx >= 0) {
+    inMemoryOrders.splice(existingIdx, 1);
+  }
+  if (db) {
+    try {
+      await db.delete(orders).where(eq(orders.id, id));
+    } catch {
+      // In-memory store updated
+    }
+  }
+  return true;
+}
+
+export async function clearAllOrdersFromDb(): Promise<boolean> {
+  inMemoryOrders.length = 0;
+  if (db) {
+    try {
+      await db.delete(orders);
+    } catch {
+      // In-memory store cleared
+    }
+  }
+  return true;
+}
+
 export async function subscribeNewsletterInDb(email: string): Promise<boolean> {
   const cleanEmail = email.trim().toLowerCase();
   const existing = inMemorySubscribers.find(s => s.email === cleanEmail);

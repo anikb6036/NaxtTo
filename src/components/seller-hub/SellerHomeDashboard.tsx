@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   CheckCircle2, 
   PlusCircle, 
@@ -20,7 +20,8 @@ import {
   Lock,
   Building,
   CreditCard,
-  MapPin
+  MapPin,
+  Trash2
 } from 'lucide-react';
 import { Product, Order } from '../../types';
 import { SellerNavTab } from './SellerSidebar';
@@ -32,6 +33,7 @@ interface SellerHomeDashboardProps {
   onAddNewListing: () => void;
   currencySymbol: string;
   sellerName?: string;
+  onClearAllOrders?: () => void;
 }
 
 export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
@@ -40,11 +42,12 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
   onNavigateTab,
   onAddNewListing,
   currencySymbol,
-  sellerName = 'NaxtTo'
+  sellerName = 'NaxtTo',
+  onClearAllOrders
 }) => {
   // Active timeframe tab for insights (Daily / Weekly / Monthly)
   const [insightTimeframe, setInsightTimeframe] = useState<'Daily' | 'Weekly' | 'Monthly'>('Daily');
-  const [activeDataPoint, setActiveDataPoint] = useState<number | null>(6); // Default highlight latest (14th Sep)
+  const [activeDataPoint, setActiveDataPoint] = useState<number | null>(null);
 
   // Account setup state for interactive modals
   const [setupModal, setSetupModal] = useState<'password' | 'business' | 'bank' | 'warehouse' | null>(null);
@@ -70,16 +73,126 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
     (p) => (p.stockCount ?? 0) > 0 && (p.stockCount ?? 0) <= 3
   ).length;
 
-  // Chart data matching the screenshot (8th - 14th Sep '26)
-  const chartData = [
-    { day: '8th', date: '8 Sep', sales: 1200, views: 5400, orders: 1 },
-    { day: '9th', date: '9 Sep', sales: 1900, views: 6100, orders: 2 },
-    { day: '10th', date: '10 Sep', sales: 2200, views: 6800, orders: 3 },
-    { day: '11th', date: '11 Sep', sales: 3600, views: 8900, orders: 5 },
-    { day: '12th', date: '12 Sep', sales: 650, views: 4200, orders: 1 },
-    { day: '13th', date: '13 Sep', sales: 2900, views: 7650, orders: 4 },
-    { day: '14th', date: '14 Sep', sales: 680, views: 7812, orders: orders.length > 0 ? orders.length : 4 },
-  ];
+  // Real-time Dynamic Chart Data based exclusively on actual orders and dates
+  const chartData = useMemo(() => {
+    const today = new Date();
+    const data: {
+      day: string;
+      date: string;
+      fullDate: string;
+      sales: number;
+      views: number;
+      orders: number;
+    }[] = [];
+
+    const getDaySuffix = (d: number) => {
+      if (d > 3 && d < 21) return 'th';
+      switch (d % 10) {
+        case 1:  return 'st';
+        case 2:  return 'nd';
+        case 3:  return 'rd';
+        default: return 'th';
+      }
+    };
+
+    if (insightTimeframe === 'Daily') {
+      // Last 7 days ending today
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dayNum = d.getDate();
+        const monthShort = d.toLocaleString('en-US', { month: 'short' });
+        const dateIso = d.toISOString().split('T')[0];
+
+        // Find actual orders placed on this calendar day
+        const dayOrders = orders.filter((o) => {
+          const ordDate = (o.date || o.createdAt || '').slice(0, 10);
+          return ordDate === dateIso;
+        });
+
+        const daySales = dayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        data.push({
+          day: `${dayNum}${getDaySuffix(dayNum)}`,
+          date: `${dayNum} ${monthShort}`,
+          fullDate: dateIso,
+          sales: daySales,
+          views: 0, // Real traffic visits (0 when clean)
+          orders: dayOrders.length
+        });
+      }
+    } else if (insightTimeframe === 'Weekly') {
+      // Last 4 weeks
+      for (let i = 3; i >= 0; i--) {
+        const endD = new Date(today);
+        endD.setDate(today.getDate() - (i * 7));
+        const startD = new Date(endD);
+        startD.setDate(endD.getDate() - 6);
+        const startIso = startD.toISOString().split('T')[0];
+        const endIso = endD.toISOString().split('T')[0];
+
+        const weekOrders = orders.filter((o) => {
+          const ordDate = (o.date || o.createdAt || '').slice(0, 10);
+          return ordDate >= startIso && ordDate <= endIso;
+        });
+
+        const weekSales = weekOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        data.push({
+          day: `Wk ${4 - i}`,
+          date: `${startD.getDate()} ${startD.toLocaleString('en-US', { month: 'short' })} - ${endD.getDate()} ${endD.toLocaleString('en-US', { month: 'short' })}`,
+          fullDate: `${startIso} to ${endIso}`,
+          sales: weekSales,
+          views: 0,
+          orders: weekOrders.length
+        });
+      }
+    } else {
+      // Last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthShort = d.toLocaleString('en-US', { month: 'short' });
+        const year = d.getFullYear();
+        const yearMonth = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        const monthOrders = orders.filter((o) => {
+          const ordDate = (o.date || o.createdAt || '').slice(0, 7);
+          return ordDate === yearMonth;
+        });
+
+        const monthSales = monthOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        data.push({
+          day: monthShort,
+          date: `${monthShort} ${year}`,
+          fullDate: yearMonth,
+          sales: monthSales,
+          views: 0,
+          orders: monthOrders.length
+        });
+      }
+    }
+
+    return data;
+  }, [orders, insightTimeframe]);
+
+  // Keep active point in sync with timeframe updates
+  useEffect(() => {
+    setActiveDataPoint(chartData.length - 1);
+  }, [insightTimeframe, chartData.length]);
+
+  // Active highlighted point
+  const selectedIndex = activeDataPoint !== null && activeDataPoint < chartData.length 
+    ? activeDataPoint 
+    : chartData.length - 1;
+  const activePointData = chartData[selectedIndex] || {
+    day: 'Today',
+    date: 'Today',
+    fullDate: '',
+    sales: 0,
+    views: 0,
+    orders: 0
+  };
 
   // SVG Chart Geometry Constants
   const chartWidth = 560;
@@ -89,11 +202,13 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
   const paddingTop = 25;
   const paddingBottom = 40;
 
-  const maxVal = 4000;
+  const maxSales = Math.max(...chartData.map((d) => d.sales), 0);
+  const maxVal = maxSales > 0 ? Math.ceil((maxSales * 1.25) / 1000) * 1000 : 1000;
   const minVal = 0;
 
   const getX = (index: number) => {
     const usableWidth = chartWidth - paddingLeft - paddingRight;
+    if (chartData.length <= 1) return paddingLeft + usableWidth / 2;
     return paddingLeft + (index / (chartData.length - 1)) * usableWidth;
   };
 
@@ -104,7 +219,10 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
 
   const polylinePoints = chartData.map((d, i) => `${getX(i)},${getY(d.sales)}`).join(' ');
 
-  const activePointData = activeDataPoint !== null ? chartData[activeDataPoint] : chartData[chartData.length - 1];
+  // Grid steps (0, 25%, 50%, 75%, 100%)
+  const gridSteps = [0, maxVal * 0.25, maxVal * 0.5, maxVal * 0.75, maxVal];
+
+  const currentMonthYear = new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' });
 
   return (
     <div className="space-y-6 pb-12">
@@ -126,11 +244,28 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
           {/* Card A: To do list */}
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-5 shadow-xs transition-shadow hover:shadow-sm">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#f3f4f6]">
-              <div className="w-7 h-7 rounded-lg bg-[#f0f3f8] flex items-center justify-center text-[#556075]">
-                <FileText className="w-4 h-4" />
+            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-[#f3f4f6]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#f0f3f8] flex items-center justify-center text-[#556075]">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <h2 className="text-base font-bold text-[#1f242e]">To do list</h2>
               </div>
-              <h2 className="text-base font-bold text-[#1f242e]">To do list</h2>
+              {orders.length > 0 && onClearAllOrders && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Remove all ${orders.length} dummy/test orders from the seller panel? This will reset pending orders to 0.`)) {
+                      onClearAllOrders();
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#dc2626] bg-[#fef2f2] hover:bg-[#fee2e2] border border-[#fecaca] rounded-lg transition-colors cursor-pointer"
+                  title="Purge all test/dummy orders"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Clear Test Orders ({orders.length})</span>
+                </button>
+              )}
             </div>
 
             {/* 4 Action Sub-Cards */}
@@ -144,9 +279,11 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 <div className="space-y-1">
                   <div className="relative w-8 h-8 rounded-lg bg-[#fcf2e8] border border-[#fae2cb] flex items-center justify-center text-[#b45309]">
                     <Package className="w-4 h-4" />
-                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#f59e0b] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
-                      !
-                    </span>
+                    {pendingOrdersCount > 0 && (
+                      <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#f59e0b] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                        !
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-medium text-[#595f6e] pt-1">Pending Orders</p>
                   <div className="flex items-center gap-1 text-[#4f46e5] font-bold text-base group-hover:translate-x-0.5 transition-transform">
@@ -165,9 +302,11 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 <div className="space-y-1">
                   <div className="relative w-8 h-8 rounded-lg bg-[#f0f5ff] border border-[#dbe6fe] flex items-center justify-center text-[#2563eb]">
                     <Download className="w-4 h-4" />
-                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#3b82f6] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
-                      ↓
-                    </span>
+                    {downloadLabelsCount > 0 && (
+                      <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#3b82f6] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                        ↓
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-medium text-[#595f6e] pt-1">Download Labels</p>
                   <div className="flex items-center gap-1 text-[#4f46e5] font-bold text-base group-hover:translate-x-0.5 transition-transform">
@@ -186,9 +325,11 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 <div className="space-y-1">
                   <div className="relative w-8 h-8 rounded-lg bg-[#fef2f2] border border-[#fecaca] flex items-center justify-center text-[#dc2626]">
                     <FileText className="w-4 h-4" />
-                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#ef4444] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
-                      ×
-                    </span>
+                    {outOfStockCount > 0 && (
+                      <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#ef4444] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                        ×
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-medium text-[#595f6e] pt-1">Out of Stock</p>
                   <div className="flex items-center gap-1 text-[#4f46e5] font-bold text-base group-hover:translate-x-0.5 transition-transform">
@@ -207,9 +348,11 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 <div className="space-y-1">
                   <div className="relative w-8 h-8 rounded-lg bg-[#fffbeb] border border-[#fde68a] flex items-center justify-center text-[#d97706]">
                     <FileText className="w-4 h-4" />
-                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#f59e0b] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
-                      ↓
-                    </span>
+                    {lowStockCount > 0 && (
+                      <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#f59e0b] text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                        !
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-medium text-[#595f6e] pt-1">Low Stock</p>
                   <div className="flex items-center gap-1 text-[#4f46e5] font-bold text-base group-hover:translate-x-0.5 transition-transform">
@@ -241,7 +384,7 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                     onClick={() => setInsightTimeframe(tab)}
                     className={`px-3 py-1 rounded-md transition-all ${
                       insightTimeframe === tab
-                        ? 'bg-white text-[#4f46e5] shadow-xs'
+                        ? 'bg-white text-[#4f46e5] shadow-xs font-bold'
                         : 'text-[#6b7280] hover:text-[#111827]'
                     }`}
                   >
@@ -258,8 +401,9 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 <div className="min-w-[480px]">
                   <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto overflow-visible select-none">
                     {/* Background horizontal grid lines */}
-                    {[0, 1000, 2000, 3000, 4000].map((val) => {
+                    {gridSteps.map((val) => {
                       const y = getY(val);
+                      const label = val === 0 ? '0' : val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k` : `${Math.round(val)}`;
                       return (
                         <g key={val}>
                           <line
@@ -279,7 +423,7 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                             fill="#9ca3af"
                             fontFamily="sans-serif"
                           >
-                            {val === 0 ? '0' : `${val / 1000}k`}
+                            {label}
                           </text>
                         </g>
                       );
@@ -295,7 +439,7 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                       fill="#6b7280"
                       fontWeight="500"
                     >
-                      Sales
+                      Sales ({currencySymbol})
                     </text>
 
                     {/* Gradient Fill under the line */}
@@ -322,15 +466,50 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                       strokeLinejoin="round"
                     />
 
+                    {/* Empty state hint when sales are 0 */}
+                    {maxSales === 0 && (
+                      <g transform={`translate(${chartWidth / 2}, ${chartHeight / 2 - 12})`}>
+                        <rect
+                          x="-140"
+                          y="-16"
+                          width="280"
+                          height="34"
+                          rx="6"
+                          fill="#f9fafb"
+                          stroke="#e5e7eb"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x="0"
+                          y="-1"
+                          textAnchor="middle"
+                          fontSize="10"
+                          fill="#4b5563"
+                          fontWeight="600"
+                        >
+                          No order sales recorded for this period
+                        </text>
+                        <text
+                          x="0"
+                          y="11"
+                          textAnchor="middle"
+                          fontSize="8.5"
+                          fill="#9ca3af"
+                        >
+                          Live revenue trends plot automatically as orders arrive
+                        </text>
+                      </g>
+                    )}
+
                     {/* Interactive Data Dots & Hover Hitbox */}
                     {chartData.map((d, i) => {
                       const cx = getX(i);
                       const cy = getY(d.sales);
-                      const isHovered = activeDataPoint === i;
+                      const isHovered = selectedIndex === i;
 
                       return (
                         <g 
-                          key={d.day} 
+                          key={d.day + i} 
                           className="cursor-pointer"
                           onMouseEnter={() => setActiveDataPoint(i)}
                           onClick={() => setActiveDataPoint(i)}
@@ -353,7 +532,7 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                             cx={cx}
                             cy={cy}
                             r={isHovered ? 6 : 4}
-                            fill="#2563eb"
+                            fill={isHovered ? '#2563eb' : '#60a5fa'}
                             stroke="#ffffff"
                             strokeWidth="2"
                             className="transition-all"
@@ -375,22 +554,22 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                           {isHovered && (
                             <g transform={`translate(${cx}, ${cy - 28})`}>
                               <rect
-                                x="-32"
+                                x="-48"
                                 y="-14"
-                                width="64"
-                                height="18"
+                                width="96"
+                                height="20"
                                 rx="4"
                                 fill="#1e293b"
                               />
                               <text
                                 x="0"
-                                y="-2"
+                                y="0"
                                 textAnchor="middle"
-                                fontSize="9.5"
+                                fontSize="9"
                                 fill="#ffffff"
                                 fontWeight="bold"
                               >
-                                {currencySymbol}{d.sales.toLocaleString()}
+                                {currencySymbol}{d.sales.toLocaleString()} ({d.orders} {d.orders === 1 ? 'ord' : 'ords'})
                               </text>
                             </g>
                           )}
@@ -398,16 +577,16 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                       );
                     })}
 
-                    {/* Bottom Month Marker */}
+                    {/* Bottom Period Marker */}
                     <text
                       x={chartWidth / 2}
                       y={chartHeight - 6}
                       textAnchor="middle"
-                      fontSize="10.5"
-                      fill="#6b7280"
+                      fontSize="10"
+                      fill="#9ca3af"
                       fontWeight="500"
                     >
-                      Sep '26
+                      {insightTimeframe === 'Monthly' ? 'Last 6 Months' : currentMonthYear}
                     </text>
                   </svg>
                 </div>
@@ -424,8 +603,8 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                     <span className="text-xl font-extrabold text-[#111827]">
                       {activePointData.views.toLocaleString()}
                     </span>
-                    <span className="inline-flex items-center text-xs font-semibold text-[#dc2626] bg-[#fef2f2] px-2 py-0.5 rounded-md">
-                      ▼ 5.35%
+                    <span className="inline-flex items-center text-[10px] font-semibold text-[#6b7280] bg-[#f3f4f6] px-2 py-0.5 rounded-md">
+                      Live Traffic
                     </span>
                   </div>
                 </div>
@@ -439,9 +618,15 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                     <span className="text-xl font-extrabold text-[#111827]">
                       {activePointData.orders}
                     </span>
-                    <span className="inline-flex items-center text-xs font-semibold text-[#16a34a] bg-[#f0fdf4] px-2 py-0.5 rounded-md">
-                      ▲ 33.33%
-                    </span>
+                    {activePointData.orders > 0 ? (
+                      <span className="inline-flex items-center text-xs font-semibold text-[#16a34a] bg-[#f0fdf4] px-2 py-0.5 rounded-md">
+                        {activePointData.orders} {activePointData.orders === 1 ? 'order' : 'orders'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center text-[10px] font-semibold text-[#6b7280] bg-[#f3f4f6] px-2 py-0.5 rounded-md">
+                        0 orders
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -451,14 +636,14 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
             <div className="pt-4 border-t border-[#f3f4f6] mt-4 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => onNavigateTab('reports')}
+                onClick={() => onNavigateTab('orders')}
                 className="px-4 py-2 border border-[#4f46e5] text-[#4f46e5] hover:bg-[#4f46e5]/5 text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
-                View More Details
+                View Orders Ledger
               </button>
 
               <span className="text-[11px] text-[#9ca3af]">
-                Updated live based on customer catalogue visits
+                Updated live based on customer catalogue purchases
               </span>
             </div>
           </div>
@@ -473,7 +658,7 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
                 Grow your business with ads
               </h3>
               <p className="text-xs text-[#166534] leading-relaxed">
-                Reach high-intent Bengali brides and fine jewellery buyers across NaxtTo &amp; partner marketplaces. Get up to 4.2x ROI on your product listings.
+                Reach high-intent Bengali brides and fine jewellery buyers across NaxtTo &amp; partner marketplaces. Boost listing visibility and patron conversions.
               </p>
               <div className="pt-2 flex items-center gap-3">
                 <button
@@ -493,45 +678,13 @@ export const SellerHomeDashboard: React.FC<SellerHomeDashboardProps> = ({
               </div>
             </div>
 
-            {/* Cartoon Box Presentation Illustration */}
-            <div className="relative shrink-0 flex items-center justify-center">
-              {/* Illustrated presentation easel board */}
-              <div className="w-28 h-24 bg-white rounded-lg border-2 border-[#86efac] shadow-md p-2 flex flex-col justify-between transform -rotate-3">
-                <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-1">
-                  <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                  <span className="text-[7px] font-bold text-[#6b7280]">ROI +340%</span>
+            {/* Elegant Marketing Spotlight Iconography */}
+            <div className="relative shrink-0 flex items-center justify-center p-3">
+              <div className="w-24 h-24 rounded-2xl bg-white/90 border border-[#86efac] shadow-sm flex flex-col items-center justify-center gap-2 text-center p-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#dcfce7] text-[#16a34a] flex items-center justify-center">
+                  <Megaphone className="w-5 h-5" />
                 </div>
-                {/* Mini bar chart */}
-                <div className="flex items-end justify-between h-10 px-1">
-                  <div className="w-2 h-4 bg-[#bbf7d0] rounded-t-xs" />
-                  <div className="w-2 h-6 bg-[#86efac] rounded-t-xs" />
-                  <div className="w-2 h-8 bg-[#4ade80] rounded-t-xs" />
-                  <div className="w-2 h-10 bg-[#22c55e] rounded-t-xs animate-pulse" />
-                </div>
-                {/* Upward trend line */}
-                <div className="flex items-center text-[7px] text-[#16a34a] font-bold">
-                  <span>▲ 4.2x Sales</span>
-                </div>
-              </div>
-
-              {/* Cute smiling delivery box mascot */}
-              <div className="w-20 h-20 bg-[#f59e0b] rounded-xl border-2 border-[#b45309] shadow-lg p-1.5 flex flex-col items-center justify-between -ml-4 z-10 transform rotate-6">
-                <div className="w-full flex justify-between px-1">
-                  <div className="w-1.5 h-1.5 bg-[#78350f] rounded-full" />
-                  <div className="w-1.5 h-1.5 bg-[#78350f] rounded-full" />
-                </div>
-                {/* Eyes and big happy smile */}
-                <div className="flex flex-col items-center">
-                  <div className="flex gap-2 mb-0.5">
-                    <div className="w-1.5 h-2 bg-[#1f2937] rounded-full" />
-                    <div className="w-1.5 h-2 bg-[#1f2937] rounded-full" />
-                  </div>
-                  <div className="w-4 h-2 border-b-2 border-[#1f2937] rounded-full" />
-                </div>
-                {/* Shipping Tape */}
-                <div className="w-full h-2 bg-[#d97706]/70 rounded-xs flex items-center justify-center">
-                  <span className="text-[6px] text-white font-bold tracking-widest uppercase">ADS</span>
-                </div>
+                <span className="text-[10px] font-bold text-[#15803d]">Promoted Reach</span>
               </div>
             </div>
           </div>

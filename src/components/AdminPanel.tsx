@@ -68,6 +68,8 @@ interface AdminPanelProps {
   onAddProduct: (product: Product) => void;
   onUpdateProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
+  onDeleteOrder?: (orderId: string) => void;
+  onClearAllOrders?: () => void;
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   onBackToShop: () => void;
   onSignOut: () => void;
@@ -96,6 +98,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onAddProduct,
   onUpdateProduct,
   onDeleteProduct,
+  onDeleteOrder,
+  onClearAllOrders,
   onUpdateOrderStatus,
   onBackToShop,
   onSignOut,
@@ -596,6 +600,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onAddNewListing={handleAddNewListing}
                 currencySymbol={currencySymbol}
                 sellerName={staffInfo?.name || 'NaxtTo'}
+                onClearAllOrders={onClearAllOrders}
               />
             ) : activeNavTab === 'listings' ? (
               <ListingsTable
@@ -615,6 +620,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 }}
                 currencySymbol={currencySymbol}
                 onRefreshOrders={onRefreshOrders}
+                onDeleteOrder={onDeleteOrder}
+                onClearAllOrders={onClearAllOrders}
               />
             ) : activeNavTab === 'returns' ? (
               <div className="bg-white rounded-xl border border-[#e5e7eb] p-6 shadow-xs space-y-6">
