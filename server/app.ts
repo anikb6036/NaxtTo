@@ -11,6 +11,7 @@ import { dealsRouter } from './routes/deals';
 import { topRatedRouter } from './routes/topRated';
 import { heroBannerRouter } from './routes/heroBanner';
 import { notificationsRouter } from './routes/notifications';
+import { seoRouter } from './routes/seo';
 
 export function createExpressApp(): Express {
   const app = express();
@@ -108,6 +109,7 @@ export function createExpressApp(): Express {
   app.use('/api/top-rated', topRatedRouter);
   app.use('/api/hero-banners', heroBannerRouter);
   app.use('/api/notifications', notificationsRouter);
+  app.use('/api/seo', seoRouter);
 
   // Global API 404 handler
   app.all('/api/*', (req: Request, res: Response) => {

@@ -1,4 +1,5 @@
 import { Product } from '../types';
+import { loadCachedSeoSettings } from './seoManager';
 
 export type AppView = 'shop' | 'product-detail' | 'account' | 'checkout' | 'admin';
 
@@ -195,17 +196,18 @@ export function syncBrowserUrl(
   const currentPath = window.location.pathname;
 
   // Set appropriate page titles
-  let title = 'NaxtTo Fine Jewellery Atelier | 22K Solid Gold & Conch Shell Creations';
+  const customSeo = loadCachedSeoSettings();
+  let title = customSeo.siteTitle || 'NaxtTo Fine Jewellery Atelier | 22K Solid Gold & Conch Shell Creations';
   if (view === 'account') {
     title = isLoggedIn 
-      ? 'My Account & Consignments | NaxtTo Atelier' 
-      : 'Login or Signup | NaxtTo Fine Jewellery Atelier';
+      ? `My Account & Consignments | ${customSeo.ogSiteName || 'NaxtTo Atelier'}` 
+      : `Login or Signup | ${customSeo.ogSiteName || 'NaxtTo Atelier'}`;
   } else if (view === 'checkout') {
-    title = 'Secure Atelier Checkout | NaxtTo Fine Jewellery';
+    title = `Secure Atelier Checkout | ${customSeo.ogSiteName || 'NaxtTo Fine Jewellery'}`;
   } else if (view === 'admin') {
-    title = 'Seller Hub & Atelier Operations | NaxtTo Fine Jewellery';
+    title = `Executive Admin & SEO Console | ${customSeo.ogSiteName || 'NaxtTo Fine Jewellery'}`;
   } else if (view === 'product-detail' && product) {
-    title = `${product.name} | NaxtTo Fine Jewellery Atelier`;
+    title = `${product.name} | ${customSeo.ogSiteName || 'NaxtTo Fine Jewellery Atelier'}`;
   }
 
   // Persist to session storage for refresh persistence

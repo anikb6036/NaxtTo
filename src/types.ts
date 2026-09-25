@@ -347,3 +347,62 @@ export interface HeroBannerSlide {
   type?: 'payday' | 'sakha-pola' | 'bridal-combos' | 'loha-badhano' | 'custom';
   active?: boolean;
 }
+
+export interface SeoSettings {
+  siteTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  author: string;
+  canonicalUrl: string;
+  robots: string;
+  // Open Graph
+  ogTitle: string;
+  ogDescription: string;
+  ogImage: string;
+  ogImageAlt: string;
+  ogType: string;
+  ogSiteName: string;
+  // Twitter Card
+  twitterCard: 'summary_large_image' | 'summary';
+  twitterTitle: string;
+  twitterDescription: string;
+  twitterImage: string;
+  twitterSite: string;
+  twitterCreator: string;
+  // Structured Data (JSON-LD)
+  structuredDataEnabled: boolean;
+  structuredDataType: 'JewelryStore' | 'Organization' | 'WebSite' | 'Product';
+  businessName: string;
+  businessAddress: string;
+  currencyAccepted: string;
+  priceRange: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_SEO_SETTINGS: SeoSettings = {
+  siteTitle: 'NaxtTo Fine Jewellery | Bengali Sakha Pola & Bridal Heirlooms',
+  metaDescription: 'Authentic Bengali Sakha Pola & bridal jewellery atelier featuring hand-carved pure conch Shankha, coral Pola, 22K gold badhano, and auspicious loha bangles.',
+  metaKeywords: 'Sakha Pola, Shankha Pola, Sakha Pola gold badhano, Bengali bridal bangles, Conch shell bangles, Coral pola bangles, Loha badhano, Bowbazar gold jewellery, authentic sakha pola',
+  author: 'Sakha Pola Atelier',
+  canonicalUrl: 'https://naxtto.shop/',
+  robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+  ogTitle: 'NaxtTo | Minimalist Fine Jewellery & Modern Heirlooms',
+  ogDescription: 'Discover NaxtTo: Handcrafted minimalist fine jewellery made with certified 18k solid gold, ethical diamonds, and recycled precious metals at naxtto.shop.',
+  ogImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80',
+  ogImageAlt: 'NaxtTo Fine Jewellery Heirloom Collection',
+  ogType: 'website',
+  ogSiteName: 'NaxtTo Fine Jewellery',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'NaxtTo | Minimalist Fine Jewellery & Modern Heirlooms',
+  twitterDescription: 'Official NaxtTo online boutique. Discover handcrafted minimalist fine jewellery forged in certified 18k solid gold at naxtto.shop.',
+  twitterImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80',
+  twitterSite: '@naxtto',
+  twitterCreator: '@naxtto',
+  structuredDataEnabled: true,
+  structuredDataType: 'JewelryStore',
+  businessName: 'NaxtTo Fine Jewellery Atelier',
+  businessAddress: 'Kolkata & Milan',
+  currencyAccepted: 'INR, USD, EUR, GBP',
+  priceRange: '₹₹₹ - Luxury'
+};

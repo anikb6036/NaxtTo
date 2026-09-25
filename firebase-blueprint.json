@@ -96,6 +96,28 @@
         "createdAt": { "type": "string" }
       },
       "required": ["id", "storeName", "email"]
+    },
+    "SeoSettings": {
+      "title": "SeoSettings",
+      "description": "Dynamic SEO meta tags, social OpenGraph/Twitter cards, and canonical URL settings",
+      "type": "object",
+      "properties": {
+        "siteTitle": { "type": "string" },
+        "metaDescription": { "type": "string" },
+        "metaKeywords": { "type": "string" },
+        "canonicalUrl": { "type": "string" },
+        "robots": { "type": "string" },
+        "ogTitle": { "type": "string" },
+        "ogDescription": { "type": "string" },
+        "ogImage": { "type": "string" },
+        "ogType": { "type": "string" },
+        "twitterCard": { "type": "string" },
+        "twitterTitle": { "type": "string" },
+        "twitterDescription": { "type": "string" },
+        "twitterImage": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["siteTitle", "metaDescription"]
     }
   },
   "firestore": {
@@ -118,6 +140,10 @@
     "/newsletterSubscribers/{subId}": {
       "schema": "NewsletterSubscriber",
       "description": "Stores newsletter subscription emails"
+    },
+    "/settings/{settingId}": {
+      "schema": "SeoSettings",
+      "description": "Stores site-wide administrative configurations such as dynamic SEO and branding"
     }
   }
 }

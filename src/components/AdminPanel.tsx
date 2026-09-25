@@ -33,7 +33,8 @@ import {
   SellerAccount,
   WowDealItem,
   TopRatedItem,
-  HeroBannerSlide
+  HeroBannerSlide,
+  SeoSettings
 } from '../types';
 
 // Seller Hub Components
@@ -60,6 +61,7 @@ import { WowDealsEditorView } from './admin/WowDealsEditorView';
 import { TopRatedEditorView } from './admin/TopRatedEditorView';
 import { HeroBannerEditorView } from './admin/HeroBannerEditorView';
 import { ResendMailServiceView } from './admin/ResendMailServiceView';
+import { SeoSettingsView } from './admin/SeoSettingsView';
 import { apiClient } from '../services/api';
 
 interface AdminPanelProps {
@@ -90,6 +92,8 @@ interface AdminPanelProps {
   onUpdateTopRatedHeader?: (headline: string, subheadline: string, buttonText: string) => void;
   heroBanners?: HeroBannerSlide[];
   onUpdateHeroBanners?: (slides: HeroBannerSlide[]) => void;
+  seoSettings?: SeoSettings;
+  onUpdateSeoSettings?: (settings: SeoSettings) => Promise<void> | void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -119,7 +123,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   topRatedButtonText,
   onUpdateTopRatedHeader,
   heroBanners,
-  onUpdateHeroBanners
+  onUpdateHeroBanners,
+  seoSettings,
+  onUpdateSeoSettings
 }) => {
   // Determine if logged-in staff member is Administrator
   const isAdmin = useMemo(() => {
@@ -502,6 +508,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <ResendMailServiceView
                   orders={orders}
                   adminEmail="baidyaanik18@gmail.com"
+                />
+              )}
+
+              {adminTab === 'seo' && (
+                <SeoSettingsView
+                  initialSettings={seoSettings}
+                  onSaveSettings={onUpdateSeoSettings}
                 />
               )}
 

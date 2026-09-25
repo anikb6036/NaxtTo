@@ -12,7 +12,8 @@ import {
   Address,
   WowDealItem,
   TopRatedItem,
-  HeroBannerSlide
+  HeroBannerSlide,
+  SeoSettings
 } from './types';
 import { 
   INITIAL_PRODUCTS, 
@@ -82,6 +83,7 @@ import {
 } from './utils/userStorage';
 import { parseRouteFromLocation, syncBrowserUrl, AppView } from './utils/routes';
 import { VoiceParseResult } from './utils/voiceSearchParser';
+import { applyDynamicSeo, loadCachedSeoSettings, saveCachedSeoSettings } from './utils/seoManager';
 
 export default function App() {
   // 1. Core State & Local Persistence (Filtered by deleted product tombstones)
@@ -341,6 +343,35 @@ export default function App() {
       await apiClient.updateHeroBanners(newSlides);
     } catch (err) {
       console.warn('Failed to sync hero banners to backend', err);
+    }
+  };
+
+  // Dynamic SEO Settings State & Head Sync
+  const [seoSettings, setSeoSettings] = useState<SeoSettings>(loadCachedSeoSettings);
+
+  // Initialize and apply SEO settings on mount and sync with backend
+  useEffect(() => {
+    // 1. Immediately apply cached SEO settings to document <head>
+    applyDynamicSeo(seoSettings);
+
+    // 2. Fetch latest saved settings from backend server
+    apiClient.getSeoSettings().then(res => {
+      if (res?.success && res.data) {
+        setSeoSettings(res.data);
+        saveCachedSeoSettings(res.data);
+      }
+    }).catch(err => {
+      console.warn('Could not fetch server SEO settings:', err);
+    });
+  }, []);
+
+  const handleUpdateSeoSettings = async (newSettings: SeoSettings) => {
+    setSeoSettings(newSettings);
+    saveCachedSeoSettings(newSettings);
+    try {
+      await apiClient.updateSeoSettings(newSettings);
+    } catch (err) {
+      console.warn('Failed to sync SEO settings to backend:', err);
     }
   };
 
@@ -1622,6 +1653,8 @@ export default function App() {
           onUpdateTopRatedHeader={handleUpdateTopRatedHeader}
           heroBanners={heroBanners}
           onUpdateHeroBanners={handleUpdateHeroBanners}
+          seoSettings={seoSettings}
+          onUpdateSeoSettings={handleUpdateSeoSettings}
         />
       ) : currentView === 'account' ? (
         <AccountPage

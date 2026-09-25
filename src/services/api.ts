@@ -530,6 +530,46 @@ export const apiClient = {
       console.warn('API getEmailLogs error:', err);
       return [];
     }
+  },
+
+  // Dynamic SEO Settings Management
+  async getSeoSettings(): Promise<any> {
+    try {
+      const res = await fetch('/api/seo');
+      if (!res.ok) throw new Error('Failed to fetch SEO settings');
+      return await res.json();
+    } catch (err) {
+      console.warn('API getSeoSettings fallback:', err);
+      return null;
+    }
+  },
+
+  async updateSeoSettings(settings: any): Promise<any> {
+    try {
+      const res = await fetch('/api/seo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (!res.ok) throw new Error('Failed to update SEO settings');
+      return await res.json();
+    } catch (err) {
+      console.warn('API updateSeoSettings fallback:', err);
+      return null;
+    }
+  },
+
+  async resetSeoSettings(): Promise<any> {
+    try {
+      const res = await fetch('/api/seo/reset', {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to reset SEO settings');
+      return await res.json();
+    } catch (err) {
+      console.warn('API resetSeoSettings fallback:', err);
+      return null;
+    }
   }
 };
 

@@ -13,7 +13,8 @@ import {
   Flame,
   Award,
   Layout,
-  Mail
+  Mail,
+  Globe
 } from 'lucide-react';
 
 export type AdminTab = 
@@ -26,6 +27,7 @@ export type AdminTab =
   | 'hero_banners'
   | 'orders'
   | 'email_service'
+  | 'seo'
   | 'security';
 
 interface AdminSidebarProps {
@@ -115,6 +117,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       icon: Mail,
       badge: 'Resend.com',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+    },
+    {
+      id: 'seo' as AdminTab,
+      label: 'SEO Settings',
+      icon: Globe,
+      badge: 'Live Head',
+      badgeColor: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
     },
     {
       id: 'security' as AdminTab,
