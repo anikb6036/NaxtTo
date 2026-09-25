@@ -1,10 +1,11 @@
 import { Product, InstagramPost, BlogPost, UserProfile } from '../types';
-import imgSakhaPolaStack from '../assets/images/sakha_pola_stack_1790248952333.jpg';
-import imgGoldBadhanoPola from '../assets/images/gold_badhano_pola_1790248970104.jpg';
-import imgMayurMukhiShankha from '../assets/images/mayur_mukhi_shankha_1790248994760.jpg';
-import imgLohaBadhanoGold from '../assets/images/loha_badhano_gold_1790249014501.jpg';
-import imgBengaliBridalWrist from '../assets/images/bengali_bridal_wrist_1790249031176.jpg';
-import imgShankhaPolaSet from '../assets/images/shankha_pola_set_1790249048447.jpg';
+
+const imgSakhaPolaStack = '/src/assets/images/sakha_pola_stack_1790248952333.jpg';
+const imgGoldBadhanoPola = '/src/assets/images/gold_badhano_pola_1790248970104.jpg';
+const imgMayurMukhiShankha = '/src/assets/images/mayur_mukhi_shankha_1790248994760.jpg';
+const imgLohaBadhanoGold = '/src/assets/images/loha_badhano_gold_1790249014501.jpg';
+const imgBengaliBridalWrist = '/src/assets/images/bengali_bridal_wrist_1790249031176.jpg';
+const imgShankhaPolaSet = '/src/assets/images/shankha_pola_set_1790249048447.jpg';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {

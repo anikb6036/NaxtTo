@@ -502,7 +502,7 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
       size: sz,
       price: template.price,
       returnPrice: template.returnPrice || Math.round(template.price * 0.9),
-      mrp: template.mrp || template.originalPrice,
+      mrp: template.mrp,
       stockCount: template.stockCount
     }));
     setSizeVariations(tplVariations);
@@ -534,7 +534,7 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
       brand: template.brand,
       description: template.description,
       price: template.price,
-      originalPrice: template.mrp || template.originalPrice,
+      originalPrice: template.mrp,
       stockCount: template.stockCount,
       images: template.images && template.images.length > 0 ? template.images : prev.images
     }));
@@ -824,7 +824,9 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                   <label className="text-xs font-semibold text-[#555] flex items-center gap-1">
                     <span>Product Name</span>
                     <span className="text-red-500">*</span>
-                    <Info className="w-3 h-3 text-gray-400" title="Listing title as visible to customers on catalog" />
+                    <span title="Listing title as visible to customers on catalog">
+                      <Info className="w-3 h-3 text-gray-400" />
+                    </span>
                   </label>
                 </div>
                 <div className="relative flex items-center">
@@ -955,19 +957,25 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                         <th className="py-3 px-4 min-w-[160px]">
                           <div className="flex items-center gap-1">
                             <span>Meesho Price*</span>
-                            <Info className="w-3 h-3 text-gray-400" title="Final selling price shown to the customer" />
+                            <span title="Final selling price shown to the customer">
+                              <Info className="w-3 h-3 text-gray-400" />
+                            </span>
                           </div>
                         </th>
                         <th className="py-3 px-4 min-w-[180px]">
                           <div className="flex items-center gap-1">
                             <span>Wrong/Defective Returns Price</span>
-                            <Info className="w-3 h-3 text-gray-400" title="Payout settlement after returns & logistics protection" />
+                            <span title="Payout settlement after returns & logistics protection">
+                              <Info className="w-3 h-3 text-gray-400" />
+                            </span>
                           </div>
                         </th>
                         <th className="py-3 px-4 min-w-[150px]">
                           <div className="flex items-center gap-1">
                             <span>MRP*</span>
-                            <Info className="w-3 h-3 text-gray-400" title="Maximum Retail Price printed on packaging" />
+                            <span title="Maximum Retail Price printed on packaging">
+                              <Info className="w-3 h-3 text-gray-400" />
+                            </span>
                           </div>
                         </th>
                         <th className="py-3 px-4 min-w-[120px]">

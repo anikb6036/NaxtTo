@@ -4,7 +4,8 @@ import { createServer as createViteServer } from "vite";
 import { app } from "./server/app";
 
 async function startServer() {
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
+  console.log(`[Atelier Server] Initializing on port ${PORT}...`);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
