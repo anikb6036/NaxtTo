@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Eye, ShoppingBag, Check, Star, ShieldCheck } from 'lucide-react';
+import { Heart, ShoppingBag, Check, Star } from 'lucide-react';
 import { Product } from '../types';
 
 interface ProductCardProps {
@@ -20,7 +20,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist,
   currencySymbol
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -42,8 +41,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? product.images
     : ['/src/assets/images/shankha_pola_set_1790249913718.jpg'];
 
-  // Determine current image based on hover
-  const displayImage = isHovered && safeImages.length > 1 ? safeImages[1] : safeImages[0];
+  // Steady display image without hover swap
+  const displayImage = safeImages[0];
 
   // Calculate discount percentage
   const original = product.originalPrice || Math.round(product.price * 1.5);
@@ -68,8 +67,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <div
       id={`myntra-product-card-${product.id}`}
       className="group relative flex flex-col bg-white border border-[#eaeaec] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] transition-all duration-300 cursor-pointer overflow-hidden select-none rounded-xs"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onQuickView(product)}
     >
       {/* Image Container */}
@@ -77,7 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <img
           src={displayImage}
           alt={product.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover object-center"
           loading="lazy"
           referrerPolicy="no-referrer"
         />
@@ -118,20 +115,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         >
           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
         </button>
-
-        {/* Hover Quick View Trigger (Desktop) */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hidden sm:block">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickView(product);
-            }}
-            className="p-1.5 bg-white/95 hover:bg-white text-[#282c3f] rounded-full shadow-md hover:text-[#ff3e6c] transition-colors"
-            title="Quick view product"
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </button>
-        </div>
       </div>
 
       {/* Meta Body (Matching Myntra Typography & Layout) */}

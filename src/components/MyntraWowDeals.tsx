@@ -139,7 +139,7 @@ export const MyntraWowDeals: React.FC<MyntraWowDealsProps> = ({
                 <img
                   src={deal.image}
                   alt={deal.title}
-                  className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     e.currentTarget.src = 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=600&q=80';

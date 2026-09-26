@@ -123,7 +123,7 @@ export const TopRatedSection: React.FC<TopRatedSectionProps> = ({
                   <img
                     src={col.image}
                     alt={col.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     onError={(e) => {

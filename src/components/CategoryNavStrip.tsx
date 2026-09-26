@@ -171,14 +171,14 @@ export const CategoryNavStrip: React.FC<CategoryNavStripProps> = ({
                 <div 
                   className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full p-0.5 border transition-all duration-200 flex items-center justify-center overflow-hidden relative shadow-2xs ${
                     isSelected 
-                      ? 'border-[#2874f0] ring-2 ring-[#2874f0]/20 scale-105 shadow-sm' 
-                      : 'border-[#e0e0e0] group-hover/item:border-[#b07d1e] group-hover/item:scale-105'
+                      ? 'border-[#2874f0] ring-2 ring-[#2874f0]/20 shadow-sm' 
+                      : 'border-[#e0e0e0] group-hover/item:border-[#b07d1e]'
                   }`}
                 >
                   <img
                     src={cat.imgUrl}
                     alt={cat.label}
-                    className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover/item:scale-110"
+                    className="w-full h-full object-cover rounded-full"
                     loading="lazy"
                   />
                   {/* Subtle glossy overlay */}

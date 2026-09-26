@@ -188,7 +188,7 @@ export const InstagramFeed: React.FC<InstagramFeedProps> = ({
                 <img
                   src={post.image}
                   alt={post.caption}
-                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-108"
+                  className="w-full h-full object-cover object-center"
                   loading="lazy"
                   onError={(e) => {
                     const target = e.currentTarget;

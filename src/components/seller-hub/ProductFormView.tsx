@@ -2014,7 +2014,7 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
                     key={i}
                     type="button"
                     onClick={() => handleSelectPresetImage(img.url)}
-                    className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#5022c3] transition-all hover:scale-105 cursor-pointer"
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#5022c3] transition-all cursor-pointer"
                   >
                     <img src={img.url} alt={img.title} className="w-full h-full object-cover" />
                     <span className="absolute inset-x-0 bottom-0 bg-black/70 text-white text-[8px] font-medium p-0.5 truncate text-center">

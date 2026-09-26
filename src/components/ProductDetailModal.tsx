@@ -165,11 +165,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="lg:col-span-7 p-4 sm:p-6 lg:p-8 bg-[#f5f5f7] border-b lg:border-b-0 lg:border-r border-[#e5e5ea] flex flex-col justify-between">
             <div>
               {/* Main Featured Image with Zoom & Lightbox action */}
-              <div className="relative aspect-square w-full rounded-md overflow-hidden bg-white shadow-inner group">
+              <div className="relative aspect-square w-full rounded-md overflow-hidden bg-white shadow-inner">
                 <img
                   src={product.images[activeImageIndex] || product.images[0]}
                   alt={`${product.name} angle ${activeImageIndex + 1}`}
-                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover object-center"
                 />
 
                 {/* Lightbox trigger */}

@@ -311,7 +311,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
             <img 
               src={p.images?.[0] || 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=400&q=80'} 
               alt={p.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover"
             />
             <button
               onClick={() => setPreviewProduct(p)}

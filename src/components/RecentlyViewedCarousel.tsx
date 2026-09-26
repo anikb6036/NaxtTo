@@ -245,7 +245,7 @@ export const RecentlyViewedCarousel: React.FC<RecentlyViewedCarouselProps> = ({
                   src={displayImage || '/src/assets/images/shankha_pola_set_1790249913718.jpg'}
                   alt={item.name}
                   loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
 
                 {/* Status Badges */}

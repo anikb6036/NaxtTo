@@ -133,7 +133,7 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
                 <img
                   src={post.coverImage}
                   alt={post.title}
-                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-106"
+                  className="w-full h-full object-cover object-center"
                   loading="lazy"
                 />
                 <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#1d1d1f]/80 backdrop-blur-xs text-white text-[10px] tracking-wider uppercase font-semibold rounded-xs">

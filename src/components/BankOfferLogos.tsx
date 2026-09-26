@@ -125,7 +125,7 @@ export const BankOfferLogos: React.FC<{ className?: string }> = ({ className = '
             <img
               src={bank.logoUrl}
               alt={`${bank.name} Official Logo`}
-              className={`${bank.logoHeightClass} w-auto max-w-[85px] sm:max-w-[105px] object-contain transition-transform group-hover:scale-105`}
+              className={`${bank.logoHeightClass} w-auto max-w-[85px] sm:max-w-[105px] object-contain`}
               loading="lazy"
             />
           </button>
