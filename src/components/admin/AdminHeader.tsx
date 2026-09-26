@@ -47,11 +47,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       {/* Brand & Executive Title */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#d4af37] via-[#f59e0b] to-[#b45309] p-0.5 flex items-center justify-center shadow-sm">
-            <div className="w-full h-full bg-[#0f172a] rounded-[7px] flex items-center justify-center">
-              <Crown className="w-5 h-5 text-[#f59e0b]" />
-            </div>
-          </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-serif tracking-widest text-sm font-bold text-white uppercase">
