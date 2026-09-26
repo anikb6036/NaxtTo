@@ -956,7 +956,7 @@ export default function App() {
     category: 'all',
     metals: [],
     styles: [],
-    priceRange: [0, 3000],
+    priceRange: [0, 150000],
     inStockOnly: false,
     sortBy: 'featured',
     searchQuery: ''
@@ -1069,8 +1069,26 @@ export default function App() {
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       // Category match
-      if (filterOptions.category !== 'all' && product.category !== filterOptions.category) {
-        return false;
+      if (filterOptions.category !== 'all') {
+        const cat = filterOptions.category;
+        const prodCat = product.category;
+        if (prodCat !== cat) {
+          // Generous matching for related categories
+          const isGoldBadhano = cat === 'gold-badhano' && (
+            prodCat === 'shakha' || prodCat === 'pola' || prodCat === 'loha-badhano' || prodCat === 'bridal-combos'
+          ) && (
+            product.metal === '22k-yellow-gold' ||
+            product.metalName?.toLowerCase().includes('gold') ||
+            product.name.toLowerCase().includes('gold badhano') ||
+            (product.genericName && product.genericName.toLowerCase().includes('badhano'))
+          );
+          const isBridal = cat === 'bridal-combos' && (
+            /bridal|combo|set|pair|stack/i.test(`${product.name} ${product.subtitle || ''} ${product.trend || ''}`)
+          );
+          if (!isGoldBadhano && !isBridal) {
+            return false;
+          }
+        }
       }
       // Metal match
       if (filterOptions.metals.length > 0 && !filterOptions.metals.includes(product.metal)) {
@@ -1080,8 +1098,8 @@ export default function App() {
       if (filterOptions.styles.length > 0 && !filterOptions.styles.includes(product.style)) {
         return false;
       }
-      // Price range
-      if (product.price > filterOptions.priceRange[1]) {
+      // Price range: Only cap if user explicitly chose a price ceiling below 150000
+      if (filterOptions.priceRange && filterOptions.priceRange[1] < 150000 && product.price > filterOptions.priceRange[1]) {
         return false;
       }
       // In-stock
@@ -1091,7 +1109,7 @@ export default function App() {
       // Search query
       if (filterOptions.searchQuery) {
         const q = filterOptions.searchQuery.toLowerCase().trim();
-        const searchable = `${product.name} ${product.subtitle} ${product.metalName} ${product.styleName} ${product.category} ${product.description || ''}`.toLowerCase();
+        const searchable = `${product.name} ${product.subtitle || ''} ${product.metalName || ''} ${product.styleName || ''} ${product.category} ${product.genericName || ''} ${product.brand || ''} ${product.productId || ''} ${product.description || ''}`.toLowerCase();
         
         // Exact substring match
         if (searchable.includes(q)) {
@@ -1472,15 +1490,25 @@ export default function App() {
 
   // 12. Admin CRUD Handlers (Multi-Layer Cloud & Local Persistence)
   const handleAddProduct = (newProd: Product) => {
+    // Validate and fill essential fields so product renders reliably in all sections
+    const validatedProd: Product = {
+      ...newProd,
+      inStock: newProd.inStock !== false && (newProd.stockCount === undefined || newProd.stockCount > 0),
+      stockCount: typeof newProd.stockCount === 'number' && newProd.stockCount > 0 ? newProd.stockCount : 15,
+      rating: typeof newProd.rating === 'number' ? newProd.rating : 4.8,
+      reviewsCount: typeof newProd.reviewsCount === 'number' ? newProd.reviewsCount : 0,
+      category: newProd.category || 'shakha'
+    };
+
     setProducts(prev => {
-      const updated = [newProd, ...prev];
+      const updated = [validatedProd, ...prev.filter(p => p.id !== validatedProd.id)];
       try { localStorage.setItem('naxtto_products', JSON.stringify(updated)); } catch {}
       return updated;
     });
     // Multi-tier persistence: Firestore + Supabase + Postgres
-    saveProductToFirestore(newProd);
-    apiClient.createProduct(newProd);
-    showToast(`Piece "${newProd.name}" successfully catalogued.`);
+    saveProductToFirestore(validatedProd);
+    apiClient.createProduct(validatedProd);
+    showToast(`Piece "${validatedProd.name}" successfully catalogued.`);
   };
 
   const handleUpdateProduct = (updatedProd: Product) => {
@@ -1725,6 +1753,15 @@ export default function App() {
           onBackToShop={() => {
             setCurrentView('shop');
             setSelectedProduct(null);
+            setFilterOptions({
+              category: 'all',
+              metals: [],
+              styles: [],
+              priceRange: [0, 150000],
+              inStockOnly: false,
+              sortBy: 'featured',
+              searchQuery: ''
+            });
             scrollToCatalog();
           }}
           onSignOut={handleAdminSignOut}
@@ -1921,7 +1958,7 @@ export default function App() {
                         category: 'all',
                         metals: [],
                         styles: [],
-                        priceRange: [0, 3000],
+                        priceRange: [0, 150000],
                         inStockOnly: false,
                         sortBy: 'featured',
                         searchQuery: ''

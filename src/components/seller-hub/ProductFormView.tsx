@@ -51,6 +51,7 @@ const PRESET_TEMPLATES = [
   {
     name: 'Bengali Bridal Sakha Pola (Gold Badhano)',
     genericName: 'Sakha Pola',
+    category: 'gold-badhano' as ProductCategory,
     productName: 'Traditional Bengali Bridal Conch Shell & Red Pola Bangle Pair (Gold Badhano)',
     netWeight: '28.5',
     sizes: ['2.2', '2.4', '2.6'],
@@ -85,6 +86,7 @@ const PRESET_TEMPLATES = [
   {
     name: 'Pure Iron Loha Badhano (18K Gold Clad)',
     genericName: 'Loha Badhano',
+    category: 'loha-badhano' as ProductCategory,
     productName: 'Authentic Bengali Bridal Loha Badhano Bangle with 18K Solid Gold Wire Badhano',
     netWeight: '22.0',
     sizes: ['2.4', '2.6', '2.8'],
@@ -118,6 +120,7 @@ const PRESET_TEMPLATES = [
   {
     name: 'Mayur Mukhi Shankha Pair (Peacock Carved)',
     genericName: 'Sakha Pola',
+    category: 'shakha' as ProductCategory,
     productName: 'Exquisite Mayur Mukhi Pure Conch Shell Bridal Shankha (Set of 2)',
     netWeight: '32.0',
     sizes: ['2.4', '2.6', '2.8'],
@@ -303,6 +306,7 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
     name: editingProduct?.name || '',
     
     // Product Details
+    category: (editingProduct?.category || 'shakha') as ProductCategory,
     closure: editingProduct?.closure || 'Slip-On',
     color: editingProduct?.color || 'White & Red',
     genericName: editingProduct?.genericName || 'Sakha Pola',
@@ -558,6 +562,7 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
 
     setFormData(prev => ({
       ...prev,
+      category: (template as any).category || (template.name.includes('Loha') ? 'loha-badhano' : template.name.includes('Gold Badhano') ? 'gold-badhano' : 'shakha') as ProductCategory,
       genericName: template.genericName,
       name: template.productName,
       netWeightGrams: template.netWeight,
@@ -675,23 +680,29 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
       price: firstVar?.price || Number(formData.price) || 2999,
       originalPrice: firstVar?.mrp || Number(formData.originalPrice) || (firstVar?.price || 2999) * 1.25,
       stockCount: totalInventory > 0 ? totalInventory : (Number(formData.stockCount) || 10),
-      inStock: totalInventory > 0,
+      inStock: totalInventory > 0 || (Number(formData.stockCount) || 10) > 0,
       images: formData.images,
       description: formData.description.trim(),
       category: (
-        formData.genericName.toLowerCase().includes('sakha') || formData.genericName.toLowerCase().includes('shankha')
-          ? 'shakha'
-          : formData.genericName.toLowerCase().includes('pola')
-          ? 'pola'
-          : formData.genericName.toLowerCase().includes('loha')
-          ? 'loha-badhano'
-          : formData.genericName.toLowerCase().includes('bangle') || formData.genericName.toLowerCase().includes('bracelet')
-          ? 'bracelets'
-          : formData.genericName.toLowerCase().includes('necklace')
-          ? 'necklaces'
-          : formData.genericName.toLowerCase().includes('ring')
-          ? 'rings'
-          : 'bridal-combos'
+        formData.category || (
+          formData.genericName.toLowerCase().includes('sakha') || formData.genericName.toLowerCase().includes('shankha')
+            ? 'shakha'
+            : formData.genericName.toLowerCase().includes('pola')
+            ? 'pola'
+            : formData.genericName.toLowerCase().includes('loha')
+            ? 'loha-badhano'
+            : formData.genericName.toLowerCase().includes('badhano') || formData.name.toLowerCase().includes('gold badhano')
+            ? 'gold-badhano'
+            : formData.genericName.toLowerCase().includes('necklace')
+            ? 'necklaces'
+            : formData.genericName.toLowerCase().includes('ring')
+            ? 'rings'
+            : formData.genericName.toLowerCase().includes('earring') || formData.genericName.toLowerCase().includes('jhumka')
+            ? 'earrings'
+            : formData.genericName.toLowerCase().includes('bangle') || formData.genericName.toLowerCase().includes('bracelet')
+            ? 'shakha'
+            : 'bridal-combos'
+        )
       ) as ProductCategory,
       metal: (
         formData.baseMetal.toLowerCase().includes('conch')
@@ -1121,6 +1132,28 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
                 
+                {/* Storefront Category */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#555] mb-1.5 flex items-center justify-between">
+                    <span>Storefront Category <span className="text-red-500">*</span></span>
+                    <span className="text-[10px] text-[#2874f0] font-normal">Shows in Curated Sections</span>
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value as ProductCategory })}
+                    className="w-full h-10 px-3 text-xs text-[#212121] bg-white border border-[#2874f0] rounded-md focus:ring-1 focus:ring-[#2874f0] outline-none font-semibold"
+                  >
+                    <option value="shakha">Shankha (Pure Natural Conch Shell)</option>
+                    <option value="pola">Pola (Crimson Coral Red Bangles)</option>
+                    <option value="gold-badhano">Gold Badhano (22K Solid Gold Wire Badhano)</option>
+                    <option value="loha-badhano">Loha Badhano (Sacred Iron &amp; 18K/22K Gold)</option>
+                    <option value="bridal-combos">Bridal Combos &amp; Complete Sets</option>
+                    <option value="rings">Rings &amp; Bands (Angti)</option>
+                    <option value="necklaces">Necklaces &amp; Chokers</option>
+                    <option value="earrings">Earrings &amp; Jhumkas</option>
+                  </select>
+                </div>
+
                 {/* Closure */}
                 <div>
                   <label className="block text-xs font-semibold text-[#555] mb-1.5">

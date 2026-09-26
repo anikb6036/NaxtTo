@@ -1132,7 +1132,7 @@ export function serializeProductForFirestore(product: Product): Record<string, a
   assignIfPresent('subtitle', product.subtitle || '');
   assignIfPresent('price', Number(product.price) || 0);
   assignIfPresent('originalPrice', product.originalPrice ? Number(product.originalPrice) : null);
-  assignIfPresent('category', product.category || 'all');
+  assignIfPresent('category', product.category && product.category !== 'all' ? product.category : 'shakha');
   assignIfPresent('metal', product.metal || '18k-yellow-gold');
   assignIfPresent('metalName', product.metalName || '');
   assignIfPresent('style', product.style || 'traditional-bengali');
@@ -1338,7 +1338,7 @@ export function subscribeToAllProducts(callback: (products: Product[]) => void):
             subtitle: d.subtitle || undefined,
             price: Number(d.price) || 0,
             originalPrice: d.originalPrice ? Number(d.originalPrice) : undefined,
-            category: d.category || 'all',
+            category: d.category && d.category !== 'all' ? d.category : 'shakha',
             metal: d.metal || '18k-yellow-gold',
             metalName: d.metalName || undefined,
             style: d.style || 'traditional-bengali',

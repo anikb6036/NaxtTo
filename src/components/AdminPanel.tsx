@@ -321,12 +321,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const newProduct: Product = {
         id: formData.id || `prod-${Date.now()}`,
         ...formData,
+        category: formData.category || 'shakha',
         metalName: formData.metalName || metalNameMap[formData.metal as MetalType] || '18K Solid Gold',
         styleName: formData.styleName || styleNameMap[formData.style as JewelleryStyle] || 'Traditional Bengali Craft',
         rating: 4.8,
         reviewsCount: 0,
         reviews: [],
-        inStock: formData.stockCount > 0,
+        inStock: formData.inStock !== false && (formData.stockCount === undefined || formData.stockCount > 0),
         isActive: true
       };
       onAddProduct(newProduct);
@@ -624,6 +625,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onEditProduct={handleStartEdit}
                 onDeleteProduct={handleRequestDeleteProduct}
                 currencySymbol={currencySymbol}
+                onViewOnStorefront={(prod) => {
+                  onBackToShop();
+                }}
               />
             ) : activeNavTab === 'orders' ? (
               <SellerOrdersTable

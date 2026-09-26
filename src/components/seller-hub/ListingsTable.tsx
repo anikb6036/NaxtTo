@@ -32,6 +32,7 @@ interface ListingsTableProps {
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
   currencySymbol: string;
+  onViewOnStorefront?: (product: Product) => void;
 }
 
 export const ListingsTable: React.FC<ListingsTableProps> = ({
@@ -39,7 +40,8 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
   onAddNewListing,
   onEditProduct,
   onDeleteProduct,
-  currencySymbol
+  currencySymbol,
+  onViewOnStorefront
 }) => {
   // Status tab filter
   const [listingStatusTab, setListingStatusTab] = useState<'all' | 'active' | 'deactive' | 'low_stock' | 'out_of_stock'>('all');
@@ -516,6 +518,18 @@ export const ListingsTable: React.FC<ListingsTableProps> = ({
                       {/* 8. Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {onViewOnStorefront && (
+                            <button
+                              type="button"
+                              onClick={() => onViewOnStorefront(prod)}
+                              className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+                              title="View on Storefront Catalog"
+                              aria-label={`View ${prod.name} on Storefront`}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             onClick={() => onEditProduct(prod)}

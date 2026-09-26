@@ -37,12 +37,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onToggleWishlist(product);
   };
 
+  // Safeguard images array
+  const safeImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : ['/src/assets/images/shankha_pola_set_1790249913718.jpg'];
+
   // Determine current image based on hover
-  const displayImage = isHovered && product.images.length > 1 ? product.images[1] : product.images[0];
+  const displayImage = isHovered && safeImages.length > 1 ? safeImages[1] : safeImages[0];
 
   // Calculate discount percentage
   const original = product.originalPrice || Math.round(product.price * 1.5);
   const discountPercent = Math.max(10, Math.round(((original - product.price) / original) * 100));
+
+  const ratingVal = typeof product.rating === 'number' && !isNaN(product.rating) ? product.rating : 4.8;
+  const reviewCountVal = typeof product.reviewsCount === 'number' ? product.reviewsCount : 0;
 
   const brandName = (product.metalName && (product.metalName.includes('22K') || product.metalName.includes('Gold')))
     ? '22K GOLD BADHANO' 
@@ -52,6 +60,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? 'CRIMSON CORAL POLA'
     : product.category === 'loha-badhano'
     ? 'SACRED LOHA BADHANO'
+    : product.category === 'gold-badhano'
+    ? '22K GOLD BADHANO'
     : 'BENGAL HERITAGE';
 
   return (
@@ -88,10 +98,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Myntra-Style Green Rating Pill on Bottom-Left of Image */}
         <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded-sm shadow-xs flex items-center gap-1 text-[11px] font-bold text-[#282c3f] z-10">
-          <span>{product.rating.toFixed(1)}</span>
+          <span>{ratingVal.toFixed(1)}</span>
           <Star className="w-3 h-3 text-[#14958f] fill-[#14958f]" />
           <span className="text-[#94969f] font-normal text-[10px] border-l border-gray-300 pl-1 ml-0.5">
-            {product.reviewsCount > 100 ? `${(product.reviewsCount / 100).toFixed(1)}k` : product.reviewsCount}
+            {reviewCountVal > 100 ? `${(reviewCountVal / 100).toFixed(1)}k` : reviewCountVal}
           </span>
         </div>
 

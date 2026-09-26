@@ -78,7 +78,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
       category: 'all',
       metals: [],
       styles: [],
-      priceRange: [0, 3000],
+      priceRange: [0, 150000],
       inStockOnly: false,
       sortBy: 'featured',
       searchQuery: ''
@@ -91,7 +91,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
     filterOptions.styles.length +
     (filterOptions.inStockOnly ? 1 : 0) +
     (filterOptions.searchQuery ? 1 : 0) +
-    (filterOptions.priceRange[0] > 0 || filterOptions.priceRange[1] < 3000 ? 1 : 0);
+    (filterOptions.priceRange[0] > 0 || (filterOptions.priceRange[1] > 0 && filterOptions.priceRange[1] < 150000) ? 1 : 0);
 
   return (
     <div id="product-filter-bar" className="w-full bg-white border-b border-[#e5e5ea] pt-6 sm:pt-8 pb-4">
@@ -377,15 +377,17 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                     Price Ceiling
                   </h4>
                   <span className="text-xs font-serif font-bold text-[#2d2a26]">
-                    Up to {currencySymbol}{filterOptions.priceRange[1]}
+                    {filterOptions.priceRange[1] >= 150000 
+                      ? `All Prices (${currencySymbol}1,50,000+)` 
+                      : `Up to ${currencySymbol}${filterOptions.priceRange[1].toLocaleString('en-IN')}`}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="200"
-                  max="3000"
-                  step="50"
-                  value={filterOptions.priceRange[1]}
+                  min="500"
+                  max="150000"
+                  step="500"
+                  value={filterOptions.priceRange[1] || 150000}
                   onChange={(e) => onChangeFilter({
                     ...filterOptions,
                     priceRange: [0, parseInt(e.target.value, 10)]
@@ -393,9 +395,9 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                   className="w-full accent-[#2d2a26] cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] font-sans text-[#a39d96] mt-1">
-                  <span>{currencySymbol}200</span>
-                  <span>{currencySymbol}1,500</span>
-                  <span>{currencySymbol}3,000+</span>
+                  <span>{currencySymbol}500</span>
+                  <span>{currencySymbol}50,000</span>
+                  <span>{currencySymbol}1,50,000+</span>
                 </div>
               </div>
 
