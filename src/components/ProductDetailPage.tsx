@@ -21,7 +21,6 @@ import {
   MapPin,
   Percent,
   RotateCcw,
-  Sparkles,
   Search,
   ExternalLink,
   ChevronDown,
@@ -35,6 +34,7 @@ import { Product, MetalType, ProductReview, ProductCategory, UserProfile } from 
 import { StarRating, OrangeStar } from './StarRating';
 import { BrandLogo } from './BrandLogo';
 import { RecentlyViewedCarousel } from './RecentlyViewedCarousel';
+import { ChatbotRobotIcon } from './ChatbotRobotIcon';
 
 export const WhatsAppLogo: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg 
@@ -749,7 +749,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   }}
                   className="absolute bottom-3 left-3 px-3 py-1.5 rounded-full bg-white/95 hover:bg-white border border-[#d5d9d9] shadow-xs flex items-center gap-1.5 text-xs text-[#0F1111] font-medium transition-all hover:border-[#007185] cursor-pointer z-10"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#de7921]" />
+                  <ChatbotRobotIcon className="w-4 h-4 shrink-0" />
                   <span>Ask Rufus</span>
                 </button>
               </div>
@@ -1916,9 +1916,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           >
             {/* Rufus Header */}
             <div className="p-3.5 bg-[#f7fafa] border-b border-[#e7e7e7] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#de7921] to-[#ffb84d] flex items-center justify-center text-white shadow-xs">
-                  <Sparkles className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center border border-gray-200 shadow-2xs overflow-hidden shrink-0">
+                  <ChatbotRobotIcon className="w-7 h-7" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#0F1111] flex items-center gap-1.5">
@@ -1941,8 +1941,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               {rufusConversation.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start items-start gap-2'}`}
                 >
+                  {msg.sender === 'rufus' && (
+                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 border border-gray-200 overflow-hidden mt-0.5 shadow-2xs">
+                      <ChatbotRobotIcon className="w-5.5 h-5.5" />
+                    </div>
+                  )}
                   <div
                     className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
                       msg.sender === 'user'
