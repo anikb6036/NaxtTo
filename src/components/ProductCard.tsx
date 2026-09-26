@@ -120,15 +120,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Meta Body (Matching Myntra Typography & Layout) */}
       <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between bg-white text-left">
         <div>
-          {/* Brand Name */}
-          <div className="text-xs sm:text-[13px] font-extrabold uppercase text-[#282c3f] tracking-wide truncate">
-            {brandName}
-          </div>
-
-          {/* Product Title */}
-          <h3 className="text-xs sm:text-[13px] text-[#535766] truncate mt-0.5 font-normal">
+          {/* Product Name */}
+          <h3 className="text-xs sm:text-[13px] font-extrabold text-[#282c3f] tracking-wide truncate" title={product.name}>
             {product.name}
           </h3>
+
+          {/* Subtitle / Generic Details */}
+          <p className="text-xs sm:text-[13px] text-[#535766] truncate mt-0.5 font-normal" title={product.subtitle || product.genericName || brandName}>
+            {product.subtitle || product.genericName || brandName}
+          </p>
 
           {/* Sizes badge row */}
           {((product.availableSizes && product.availableSizes.length > 0) || (product.sizeVariations && product.sizeVariations.length > 0)) && (
