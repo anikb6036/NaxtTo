@@ -310,8 +310,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const updatedProduct: Product = {
         ...editingProduct,
         ...formData,
-        metalName: metalNameMap[formData.metal as MetalType] || formData.metalName,
-        styleName: styleNameMap[formData.style as JewelleryStyle] || formData.styleName,
+        metalName: formData.metalName || metalNameMap[formData.metal as MetalType] || editingProduct.metalName || '18K Solid Gold',
+        styleName: formData.styleName || styleNameMap[formData.style as JewelleryStyle] || editingProduct.styleName || 'Traditional Bengali Craft',
         inStock: formData.stockCount > 0,
         isActive: editingProduct.isActive !== undefined ? editingProduct.isActive : true
       };
@@ -319,10 +319,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showToast(`Listing "${updatedProduct.name}" updated successfully!`);
     } else {
       const newProduct: Product = {
-        id: `prod-${Date.now()}`,
+        id: formData.id || `prod-${Date.now()}`,
         ...formData,
-        metalName: metalNameMap[formData.metal as MetalType] || '18K Solid Gold',
-        styleName: styleNameMap[formData.style as JewelleryStyle] || 'Sculptural Art',
+        metalName: formData.metalName || metalNameMap[formData.metal as MetalType] || '18K Solid Gold',
+        styleName: formData.styleName || styleNameMap[formData.style as JewelleryStyle] || 'Traditional Bengali Craft',
         rating: 4.8,
         reviewsCount: 0,
         reviews: [],

@@ -79,34 +79,39 @@ export async function getAllProducts(): Promise<Product[]> {
       await seedProductsIfEmpty();
       const rows = await db.select().from(products).orderBy(desc(products.createdAt));
       if (rows && rows.length > 0) {
-        const parsed = rows.map(r => ({
-          id: r.id,
-          name: r.name,
-          subtitle: r.subtitle || undefined,
-          price: r.price,
-          originalPrice: r.originalPrice || undefined,
-          category: r.category as any,
-          metal: r.metal as any,
-          metalName: r.metalName || undefined,
-          style: r.style as any,
-          styleName: r.styleName || undefined,
-          images: (r.images as string[]) || [],
-          description: r.description,
-          story: r.story || undefined,
-          features: (r.features as string[]) || [],
-          dimensions: r.dimensions || undefined,
-          karatPurity: r.karatPurity || undefined,
-          origin: r.origin || undefined,
-          inStock: r.inStock,
-          stockCount: r.stockCount,
-          isBestSeller: r.isBestSeller || false,
-          isNewArrival: r.isNewArrival || false,
-          rating: r.rating || 5,
-          reviewsCount: r.reviewsCount || 0,
-          availableSizes: (r.availableSizes as string[]) || [],
-          availableFinishes: (r.availableFinishes as any[]) || [],
-          reviews: (r.reviews as any[]) || []
-        })).filter(p => !deletedProductIds.has(p.id));
+        const parsed = rows.map(r => {
+          const inMem = inMemoryProducts.find(p => p.id === r.id);
+          return {
+            ...(inMem || {}),
+            id: r.id,
+            name: r.name,
+            subtitle: r.subtitle || undefined,
+            price: r.price,
+            originalPrice: r.originalPrice || undefined,
+            category: r.category as any,
+            metal: r.metal as any,
+            metalName: r.metalName || undefined,
+            style: r.style as any,
+            styleName: r.styleName || undefined,
+            images: (r.images as string[]) || inMem?.images || [],
+            description: r.description || inMem?.description || '',
+            story: r.story || inMem?.story || undefined,
+            features: (r.features as string[]) || inMem?.features || [],
+            dimensions: r.dimensions || inMem?.dimensions || undefined,
+            karatPurity: r.karatPurity || inMem?.karatPurity || undefined,
+            origin: r.origin || inMem?.origin || undefined,
+            inStock: r.inStock,
+            stockCount: r.stockCount,
+            isBestSeller: r.isBestSeller || false,
+            isNewArrival: r.isNewArrival || false,
+            rating: r.rating || 5,
+            reviewsCount: r.reviewsCount || 0,
+            availableSizes: (r.availableSizes as string[]) || inMem?.availableSizes || [],
+            availableFinishes: (r.availableFinishes as any[]) || inMem?.availableFinishes || [],
+            reviews: (r.reviews as any[]) || inMem?.reviews || [],
+            sizeVariations: inMem?.sizeVariations
+          };
+        }).filter(p => !deletedProductIds.has(p.id));
         inMemoryProducts = parsed;
         return parsed;
       }

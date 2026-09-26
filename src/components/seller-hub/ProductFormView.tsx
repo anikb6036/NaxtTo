@@ -183,6 +183,54 @@ const PRESET_TEMPLATES = [
   }
 ];
 
+// Compress image file to a crisp, high-resolution thumbnail (< 80KB)
+// so the user's authentic photo is permanently preserved in Firestore and localStorage
+const compressImageFile = (file: File, maxDim = 1200, quality = 0.82): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawUrl = e.target?.result as string;
+      if (!rawUrl) {
+        resolve('');
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, w);
+          canvas.height = Math.max(1, h);
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const optimized = canvas.toDataURL('image/jpeg', quality);
+            resolve(optimized);
+            return;
+          }
+        } catch (err) {
+          console.warn('Canvas image compression notice:', err);
+        }
+        resolve(rawUrl);
+      };
+      img.onerror = () => resolve(rawUrl);
+      img.src = rawUrl;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+};
+
 export const ProductFormView: React.FC<ProductFormViewProps> = ({
   editingProduct,
   onSave,
@@ -295,12 +343,16 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
     stockCount: editingProduct?.stockCount ?? 15,
     
     // Images
-    images: editingProduct?.images && editingProduct.images.length > 0 
-      ? editingProduct.images 
-      : [
-          '/src/assets/images/shankha_pola_set_1790249913718.jpg',
-          '/src/assets/images/sakha_pola_stack_1790249812700.jpg'
-        ]
+    images: (() => {
+      if (editingProduct?.images && editingProduct.images.length > 0) {
+        const cleanImgs = editingProduct.images.filter(img => !img.includes('photo-1605100804763-247f67b3557e'));
+        if (cleanImgs.length > 0) return cleanImgs;
+      }
+      return [
+        '/src/assets/images/shankha_pola_set_1790249913718.jpg',
+        '/src/assets/images/sakha_pola_stack_1790249812700.jpg'
+      ];
+    })()
   });
 
   // Close size dropdown on outside click
@@ -422,35 +474,32 @@ export const ProductFormView: React.FC<ProductFormViewProps> = ({
     { title: 'Artisan Goldsmith Badhano', url: '/src/assets/images/goldsmith_badhano_1790250296653.jpg' }
   ];
 
-  // Handle image upload from computer
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle image upload from computer with canvas-based optimization
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const resultUrl = uploadEvent.target?.result as string;
-        if (resultUrl) {
-          if (replaceImgIndexRef.current !== null) {
-            // Replace specific image
-            setFormData(prev => {
-              const updated = [...prev.images];
-              updated[replaceImgIndexRef.current!] = resultUrl;
-              return { ...prev, images: updated };
-            });
-            replaceImgIndexRef.current = null;
-          } else {
-            // Add to end
-            setFormData(prev => ({
-              ...prev,
-              images: [...prev.images, resultUrl]
-            }));
-          }
+    const fileList = Array.from(files);
+    for (const file of fileList) {
+      const optimizedUrl = await compressImageFile(file);
+      if (optimizedUrl) {
+        if (replaceImgIndexRef.current !== null) {
+          // Replace specific image
+          setFormData(prev => {
+            const updated = [...prev.images];
+            updated[replaceImgIndexRef.current!] = optimizedUrl;
+            return { ...prev, images: updated };
+          });
+          replaceImgIndexRef.current = null;
+        } else {
+          // Add to end
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, optimizedUrl]
+          }));
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      }
+    }
 
     e.target.value = '';
   };

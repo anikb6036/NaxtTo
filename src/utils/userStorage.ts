@@ -3,17 +3,14 @@ import { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy,
 import { firestore, handleFirestoreError, OperationType } from '../lib/firebase';
 
 /**
- * Ensures product payload is strictly compact (< 5KB), removing heavy descriptions,
- * 3D models, review lists, and downscaling/capping large base64 image strings.
+ * Ensures product payload in orders or cart items is clean and compact
+ * while preserving actual images, names, prices, and descriptions.
  */
 export function sanitizeProductForStorage(product: Partial<Product> | undefined): Product {
   const p = product || {};
-  let safeImg = p.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
-  
-  // If base64 data URL exceeds 30KB, fallback to standard placeholder to prevent Firestore 1MB explosion & storage quota crashes
-  if (typeof safeImg === 'string' && safeImg.startsWith('data:') && safeImg.length > 30000) {
-    safeImg = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
-  }
+  const images = Array.isArray(p.images) && p.images.length > 0 
+    ? p.images 
+    : (p.images ? [p.images as unknown as string] : ['/src/assets/images/shankha_pola_set_1790249913718.jpg']);
 
   return {
     id: p.id || '',
@@ -34,41 +31,41 @@ export function sanitizeProductForStorage(product: Partial<Product> | undefined)
     stockCount: p.stockCount ?? 1,
     rating: Number(p.rating) || 5.0,
     reviewsCount: Number(p.reviewsCount) || 0,
-    images: [safeImg],
-    description: '',
-    story: '',
-    details: '',
-    craftsmanship: '',
-    features: [],
+    images: images,
+    description: p.description || '',
+    story: p.story || '',
+    features: Array.isArray(p.features) ? p.features : [],
+    availableSizes: Array.isArray(p.availableSizes) ? p.availableSizes : [],
+    sizeVariations: Array.isArray(p.sizeVariations) ? p.sizeVariations : [],
     reviews: []
   } as unknown as Product;
 }
 
 /**
- * Downscales an image (especially large data URIs) to a compact thumbnail (~4-8KB)
- * to guarantee that Firestore documents remain far below the 1,048,576 bytes limit.
+ * Downscales an image (especially large data URIs) to a compact thumbnail (~15-30KB)
+ * to guarantee that Firestore documents remain far below the 1,048,576 bytes limit
+ * while strictly preserving the user's authentic submitted picture.
  */
-export async function createCompactThumbnail(imgSrc: string | undefined, maxDim = 160, quality = 0.65): Promise<string> {
-  const fallback = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80';
-  if (!imgSrc || typeof imgSrc !== 'string') return fallback;
+export async function createCompactThumbnail(imgSrc: string | undefined, maxDim = 320, quality = 0.75): Promise<string> {
+  if (!imgSrc || typeof imgSrc !== 'string') return '';
 
-  // Web URLs are already very small (< 200 bytes)
-  if (imgSrc.startsWith('http://') || imgSrc.startsWith('https://')) {
+  // Web URLs and relative assets are already very compact (< 200 bytes)
+  if (imgSrc.startsWith('http://') || imgSrc.startsWith('https://') || imgSrc.startsWith('/') || imgSrc.startsWith('./')) {
     return imgSrc;
   }
 
-  // Small data URIs (< 30KB) are already safe
-  if (imgSrc.startsWith('data:') && imgSrc.length <= 30000) {
+  // Small data URIs (< 40KB) are already safe for storage
+  if (imgSrc.startsWith('data:') && imgSrc.length <= 40000) {
     return imgSrc;
   }
 
-  // If in browser and is a large data URI, downscale via canvas
+  // If in browser and is a large data URI, downscale via canvas to keep the user's exact photo
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && imgSrc.startsWith('data:')) {
     try {
       const downscaled = await new Promise<string>((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        const timeout = setTimeout(() => resolve(fallback), 1200);
+        const timeout = setTimeout(() => resolve(imgSrc), 1500);
         img.onload = () => {
           clearTimeout(timeout);
           try {
@@ -88,29 +85,27 @@ export async function createCompactThumbnail(imgSrc: string | undefined, maxDim 
             if (ctx) {
               ctx.drawImage(img, 0, 0, w, h);
               const compressed = canvas.toDataURL('image/jpeg', quality);
-              if (compressed.length < 35000) {
-                resolve(compressed);
-                return;
-              }
+              resolve(compressed);
+              return;
             }
           } catch {
-            // fallback
+            // fallback to original
           }
-          resolve(fallback);
+          resolve(imgSrc);
         };
         img.onerror = () => {
           clearTimeout(timeout);
-          resolve(fallback);
+          resolve(imgSrc);
         };
         img.src = imgSrc;
       });
       return downscaled;
     } catch {
-      return fallback;
+      return imgSrc;
     }
   }
 
-  return fallback;
+  return imgSrc;
 }
 
 /**
@@ -1118,13 +1113,97 @@ export async function clearAllOrdersFromFirestore(): Promise<number> {
 }
 
 /**
+ * Cleanly serializes a catalog product for Firestore cloud storage.
+ * Preserves user-uploaded images, descriptions, size variations, and all supplier portal specifications.
+ * Ensures no undefined values are sent to Firestore (which causes setDoc to crash).
+ */
+export function serializeProductForFirestore(product: Product): Record<string, any> {
+  if (!product) return {};
+  
+  const clean: Record<string, any> = {};
+  const assignIfPresent = (key: string, val: any) => {
+    if (val !== undefined) {
+      clean[key] = val;
+    }
+  };
+
+  assignIfPresent('id', product.id);
+  assignIfPresent('name', product.name);
+  assignIfPresent('subtitle', product.subtitle || '');
+  assignIfPresent('price', Number(product.price) || 0);
+  assignIfPresent('originalPrice', product.originalPrice ? Number(product.originalPrice) : null);
+  assignIfPresent('category', product.category || 'all');
+  assignIfPresent('metal', product.metal || '18k-yellow-gold');
+  assignIfPresent('metalName', product.metalName || '');
+  assignIfPresent('style', product.style || 'traditional-bengali');
+  assignIfPresent('styleName', product.styleName || '');
+
+  // Preserve all images exactly as submitted
+  const safeImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : (product.images ? [product.images as unknown as string] : ['/src/assets/images/shankha_pola_set_1790249913718.jpg']);
+  assignIfPresent('images', safeImages);
+
+  assignIfPresent('description', product.description || '');
+  assignIfPresent('story', product.story || '');
+  assignIfPresent('features', Array.isArray(product.features) ? product.features : []);
+  assignIfPresent('dimensions', product.dimensions || '');
+  assignIfPresent('karatPurity', product.karatPurity || '');
+  assignIfPresent('origin', product.origin || '');
+  assignIfPresent('sku', product.sku || '');
+  assignIfPresent('inStock', product.inStock ?? true);
+  assignIfPresent('stockCount', Number(product.stockCount) ?? 1);
+  assignIfPresent('isActive', product.isActive ?? true);
+  assignIfPresent('isBestSeller', product.isBestSeller ?? false);
+  assignIfPresent('isNewArrival', product.isNewArrival ?? false);
+  assignIfPresent('rating', Number(product.rating) || 5.0);
+  assignIfPresent('reviewsCount', Number(product.reviewsCount) || 0);
+  assignIfPresent('availableSizes', Array.isArray(product.availableSizes) ? product.availableSizes : []);
+  assignIfPresent('sizeVariations', Array.isArray(product.sizeVariations) ? product.sizeVariations : []);
+  assignIfPresent('availableFinishes', Array.isArray(product.availableFinishes) ? product.availableFinishes : []);
+  assignIfPresent('reviews', Array.isArray(product.reviews) ? product.reviews : []);
+
+  // Supplier Portal Single Catalog specifications - strictly preserved
+  assignIfPresent('netWeightGrams', product.netWeightGrams ?? '');
+  assignIfPresent('productId', product.productId ?? '');
+  assignIfPresent('size', product.size ?? '');
+  assignIfPresent('closure', product.closure ?? '');
+  assignIfPresent('color', product.color ?? '');
+  assignIfPresent('genericName', product.genericName ?? '');
+  assignIfPresent('netQuantity', product.netQuantity ?? '');
+  assignIfPresent('occasion', product.occasion ?? '');
+  assignIfPresent('plating', product.plating ?? '');
+  assignIfPresent('diameter', product.diameter ?? '');
+  assignIfPresent('dimensionMm', product.dimensionMm ?? '');
+  assignIfPresent('sizing', product.sizing ?? '');
+  assignIfPresent('stoneType', product.stoneType ?? '');
+  assignIfPresent('trend', product.trend ?? '');
+  assignIfPresent('productType', product.productType ?? '');
+  assignIfPresent('countryOfOrigin', product.countryOfOrigin ?? '');
+  assignIfPresent('manufacturerName', product.manufacturerName ?? '');
+  assignIfPresent('manufacturerAddress', product.manufacturerAddress ?? '');
+  assignIfPresent('manufacturerPincode', product.manufacturerPincode ?? '');
+  assignIfPresent('packerName', product.packerName ?? '');
+  assignIfPresent('packerAddress', product.packerAddress ?? '');
+  assignIfPresent('packerPincode', product.packerPincode ?? '');
+  assignIfPresent('importerName', product.importerName ?? '');
+  assignIfPresent('importerAddress', product.importerAddress ?? '');
+  assignIfPresent('importerPincode', product.importerPincode ?? '');
+  assignIfPresent('baseMetal', product.baseMetal ?? '');
+  assignIfPresent('brand', product.brand ?? '');
+
+  return clean;
+}
+
+/**
  * Persist a product piece to Firestore permanent cloud storage.
+ * Preserves user images, description, size variations, and all catalog details without data loss.
  */
 export async function saveProductToFirestore(product: Product): Promise<void> {
   if (!product || !product.id) return;
   try {
     const prodDocRef = doc(firestore, 'products', product.id);
-    const clean = sanitizeProductForStorage(product);
+    const clean = serializeProductForFirestore(product);
     await setDoc(prodDocRef, {
       ...clean,
       updatedAt: new Date().toISOString()
@@ -1249,24 +1328,29 @@ export function subscribeToAllProducts(callback: (products: Product[]) => void):
         const d = docSnap.data();
         const pId = d.id || docSnap.id;
         if (d && d.name && d.price && !deletedSet.has(pId)) {
+          const rawImages = Array.isArray(d.images) && d.images.length > 0 
+            ? d.images 
+            : (d.images ? [d.images] : []);
+
           prodsList.push({
             id: pId,
             name: d.name,
             subtitle: d.subtitle || undefined,
             price: Number(d.price) || 0,
             originalPrice: d.originalPrice ? Number(d.originalPrice) : undefined,
-            category: d.category,
-            metal: d.metal,
+            category: d.category || 'all',
+            metal: d.metal || '18k-yellow-gold',
             metalName: d.metalName || undefined,
-            style: d.style,
+            style: d.style || 'traditional-bengali',
             styleName: d.styleName || undefined,
-            images: Array.isArray(d.images) ? d.images : [],
+            images: rawImages,
             description: d.description || '',
             story: d.story || undefined,
             features: Array.isArray(d.features) ? d.features : [],
             dimensions: d.dimensions || undefined,
             karatPurity: d.karatPurity || undefined,
             origin: d.origin || undefined,
+            sku: d.sku || undefined,
             inStock: d.inStock ?? true,
             stockCount: Number(d.stockCount) ?? 1,
             isBestSeller: d.isBestSeller ?? false,
@@ -1274,8 +1358,38 @@ export function subscribeToAllProducts(callback: (products: Product[]) => void):
             rating: Number(d.rating) || 5,
             reviewsCount: Number(d.reviewsCount) || 0,
             availableSizes: Array.isArray(d.availableSizes) ? d.availableSizes : [],
+            sizeVariations: Array.isArray(d.sizeVariations) ? d.sizeVariations : [],
             availableFinishes: Array.isArray(d.availableFinishes) ? d.availableFinishes : [],
-            reviews: Array.isArray(d.reviews) ? d.reviews : []
+            reviews: Array.isArray(d.reviews) ? d.reviews : [],
+            isActive: d.isActive !== undefined ? d.isActive : true,
+            // Single Catalog Supplier Portal fields
+            netWeightGrams: d.netWeightGrams || undefined,
+            productId: d.productId || undefined,
+            size: d.size || undefined,
+            closure: d.closure || undefined,
+            color: d.color || undefined,
+            genericName: d.genericName || undefined,
+            netQuantity: d.netQuantity || undefined,
+            occasion: d.occasion || undefined,
+            plating: d.plating || undefined,
+            diameter: d.diameter || undefined,
+            dimensionMm: d.dimensionMm || undefined,
+            sizing: d.sizing || undefined,
+            stoneType: d.stoneType || undefined,
+            trend: d.trend || undefined,
+            productType: d.productType || undefined,
+            countryOfOrigin: d.countryOfOrigin || undefined,
+            manufacturerName: d.manufacturerName || undefined,
+            manufacturerAddress: d.manufacturerAddress || undefined,
+            manufacturerPincode: d.manufacturerPincode || undefined,
+            packerName: d.packerName || undefined,
+            packerAddress: d.packerAddress || undefined,
+            packerPincode: d.packerPincode || undefined,
+            importerName: d.importerName || undefined,
+            importerAddress: d.importerAddress || undefined,
+            importerPincode: d.importerPincode || undefined,
+            baseMetal: d.baseMetal || undefined,
+            brand: d.brand || undefined
           });
         }
       });

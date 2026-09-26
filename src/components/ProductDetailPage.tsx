@@ -34,6 +34,7 @@ import {
 import { Product, MetalType, ProductReview, ProductCategory, UserProfile } from '../types';
 import { StarRating, OrangeStar } from './StarRating';
 import { BrandLogo } from './BrandLogo';
+import { RecentlyViewedCarousel } from './RecentlyViewedCarousel';
 
 export const WhatsAppLogo: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg 
@@ -1686,6 +1687,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             </div>
           )}
         </section>
+
+        {/* Recently Viewed Carousel Section (Tracks last 5 products visited) */}
+        <RecentlyViewedCarousel
+          currentProductId={product.id}
+          allProducts={allProducts}
+          onSelectProduct={onSelectProduct}
+          onAddToCart={onAddToCart}
+          isProductWishlisted={isProductWishlisted}
+          onToggleWishlist={onToggleWishlist}
+          currencySymbol={currencySymbol}
+        />
       </div>
 
       {/* ========================================================= */}

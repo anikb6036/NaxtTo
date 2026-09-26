@@ -456,7 +456,53 @@ export default function App() {
           const currentDeleted = new Set(getDeletedProductIds());
           const map = new Map<string, Product>();
           prev.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
-          validServerProds.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
+          validServerProds.filter(p => !currentDeleted.has(p.id)).forEach(p => {
+            const existing = map.get(p.id);
+            if (!existing) {
+              map.set(p.id, p);
+            } else {
+              const remoteHasRealImages = p.images && p.images.length > 0 && !p.images.some(img => img.includes('photo-1605100804763-247f67b3557e'));
+              const chosenImages = remoteHasRealImages ? p.images : (existing.images && existing.images.length > 0 ? existing.images : p.images);
+              const chosenDesc = (p.description && p.description.trim().length > 0) ? p.description : (existing.description || '');
+
+              map.set(p.id, {
+                ...existing,
+                ...p,
+                images: chosenImages,
+                description: chosenDesc,
+                sizeVariations: (p.sizeVariations && p.sizeVariations.length > 0) ? p.sizeVariations : existing.sizeVariations,
+                availableSizes: (p.availableSizes && p.availableSizes.length > 0) ? p.availableSizes : existing.availableSizes,
+                features: (p.features && p.features.length > 0) ? p.features : existing.features,
+                genericName: p.genericName || existing.genericName,
+                closure: p.closure || existing.closure,
+                color: p.color || existing.color,
+                netQuantity: p.netQuantity || existing.netQuantity,
+                occasion: p.occasion || existing.occasion,
+                plating: p.plating || existing.plating,
+                diameter: p.diameter || existing.diameter,
+                dimensionMm: p.dimensionMm || existing.dimensionMm,
+                sizing: p.sizing || existing.sizing,
+                stoneType: p.stoneType || existing.stoneType,
+                trend: p.trend || existing.trend,
+                productType: p.productType || existing.productType,
+                countryOfOrigin: p.countryOfOrigin || existing.countryOfOrigin,
+                manufacturerName: p.manufacturerName || existing.manufacturerName,
+                manufacturerAddress: p.manufacturerAddress || existing.manufacturerAddress,
+                manufacturerPincode: p.manufacturerPincode || existing.manufacturerPincode,
+                packerName: p.packerName || existing.packerName,
+                packerAddress: p.packerAddress || existing.packerAddress,
+                packerPincode: p.packerPincode || existing.packerPincode,
+                importerName: p.importerName || existing.importerName,
+                importerAddress: p.importerAddress || existing.importerAddress,
+                importerPincode: p.importerPincode || existing.importerPincode,
+                baseMetal: p.baseMetal || existing.baseMetal,
+                brand: p.brand || existing.brand,
+                netWeightGrams: p.netWeightGrams || existing.netWeightGrams,
+                productId: p.productId || existing.productId,
+                size: p.size || existing.size
+              });
+            }
+          });
           const merged = Array.from(map.values());
           try {
             localStorage.setItem('naxtto_products', JSON.stringify(merged));
@@ -475,7 +521,53 @@ export default function App() {
           const currentDeleted = new Set(getDeletedProductIds());
           const map = new Map<string, Product>();
           prev.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
-          validRemoteProds.filter(p => !currentDeleted.has(p.id)).forEach(p => map.set(p.id, p));
+          validRemoteProds.filter(p => !currentDeleted.has(p.id)).forEach(p => {
+            const existing = map.get(p.id);
+            if (!existing) {
+              map.set(p.id, p);
+            } else {
+              const remoteHasRealImages = p.images && p.images.length > 0 && !p.images.some(img => img.includes('photo-1605100804763-247f67b3557e'));
+              const chosenImages = remoteHasRealImages ? p.images : (existing.images && existing.images.length > 0 ? existing.images : p.images);
+              const chosenDesc = (p.description && p.description.trim().length > 0) ? p.description : (existing.description || '');
+
+              map.set(p.id, {
+                ...existing,
+                ...p,
+                images: chosenImages,
+                description: chosenDesc,
+                sizeVariations: (p.sizeVariations && p.sizeVariations.length > 0) ? p.sizeVariations : existing.sizeVariations,
+                availableSizes: (p.availableSizes && p.availableSizes.length > 0) ? p.availableSizes : existing.availableSizes,
+                features: (p.features && p.features.length > 0) ? p.features : existing.features,
+                genericName: p.genericName || existing.genericName,
+                closure: p.closure || existing.closure,
+                color: p.color || existing.color,
+                netQuantity: p.netQuantity || existing.netQuantity,
+                occasion: p.occasion || existing.occasion,
+                plating: p.plating || existing.plating,
+                diameter: p.diameter || existing.diameter,
+                dimensionMm: p.dimensionMm || existing.dimensionMm,
+                sizing: p.sizing || existing.sizing,
+                stoneType: p.stoneType || existing.stoneType,
+                trend: p.trend || existing.trend,
+                productType: p.productType || existing.productType,
+                countryOfOrigin: p.countryOfOrigin || existing.countryOfOrigin,
+                manufacturerName: p.manufacturerName || existing.manufacturerName,
+                manufacturerAddress: p.manufacturerAddress || existing.manufacturerAddress,
+                manufacturerPincode: p.manufacturerPincode || existing.manufacturerPincode,
+                packerName: p.packerName || existing.packerName,
+                packerAddress: p.packerAddress || existing.packerAddress,
+                packerPincode: p.packerPincode || existing.packerPincode,
+                importerName: p.importerName || existing.importerName,
+                importerAddress: p.importerAddress || existing.importerAddress,
+                importerPincode: p.importerPincode || existing.importerPincode,
+                baseMetal: p.baseMetal || existing.baseMetal,
+                brand: p.brand || existing.brand,
+                netWeightGrams: p.netWeightGrams || existing.netWeightGrams,
+                productId: p.productId || existing.productId,
+                size: p.size || existing.size
+              });
+            }
+          });
           const merged = Array.from(map.values());
           try {
             localStorage.setItem('naxtto_products', JSON.stringify(merged));
