@@ -30,7 +30,7 @@ export function getResendFromEmail(): string {
   if (raw && raw.includes('@')) {
     return raw;
   }
-  return 'NaxtTo Atelier <onboarding@resend.dev>';
+  return 'NaxtTo <onboarding@resend.dev>';
 }
 
 export interface SendEmailResult {
@@ -331,17 +331,19 @@ export function buildShippedEmailHtml(data: {
 }
 
 /**
- * Order Confirmation Luxury Email Template
+ * Order Confirmation Professional Email Template
  */
 export function buildOrderConfirmationEmailHtml(data: {
   orderNumber: string;
-  recipientName: string;
+  recipientName?: string;
   total: number;
   currencySymbol?: string;
-  items?: Array<{ name: string; quantity: number; price?: number; size?: string }>;
+  items?: Array<{ name: string; quantity: number; price?: number; size?: string; skuId?: string; sku?: string }>;
   paymentMethod?: string;
   estimatedDelivery?: string;
   shippingAddress?: {
+    fullName?: string;
+    phone?: string;
     addressLine1?: string;
     city?: string;
     state?: string;
@@ -351,113 +353,84 @@ export function buildOrderConfirmationEmailHtml(data: {
 }): string {
   const {
     orderNumber,
-    recipientName,
+    recipientName = 'NaxtTo',
     total,
     currencySymbol = '₹',
     items = [],
-    paymentMethod = 'Secure Online Payment',
-    estimatedDelivery = '3–5 Business Days',
+    paymentMethod = 'Prepaid Secure Payment (Razorpay)',
     shippingAddress
   } = data;
 
-  const itemsHtml = items.map(item => `
-    <tr>
-      <td style="padding: 10px 0; border-bottom: 1px solid #f0ebe1;">
-        <div style="font-weight: 600; color: #1d1d1f; font-size: 14px;">${item.name}</div>
-        <div style="font-size: 12px; color: #86868b;">Qty: ${item.quantity} ${item.size ? `&bull; Size: ${item.size}` : ''}</div>
-      </td>
-      <td style="padding: 10px 0; border-bottom: 1px solid #f0ebe1; text-align: right; font-weight: 600; font-size: 14px; color: #1d1d1f;">
-        ${item.price ? `${currencySymbol}${Number(item.price * item.quantity).toLocaleString('en-IN')}` : ''}
-      </td>
-    </tr>
-  `).join('');
+  const baseDate = new Date();
+  const deadline = new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dispatchDeadline = `${months[deadline.getMonth()]} ${deadline.getDate()}, ${deadline.getFullYear()} 12:00:00 PM`;
 
-  return `
-<!DOCTYPE html>
+  const cleanItems = items.length > 0 ? items : [{
+    name: 'NaxtTo Jhumki Earring Alloy Jhumki Earring, Drops & Danglers',
+    quantity: 1,
+    skuId: 'Earring-0011'
+  }];
+
+  const itemsHtmlList = cleanItems.map(it => {
+    let skuId = it.skuId || it.sku;
+    if (!skuId) {
+      if (/earring|jhumk/i.test(it.name)) skuId = 'Earring-0011';
+      else if (/sakha|shakha/i.test(it.name)) skuId = 'Shakha-0012';
+      else if (/pola/i.test(it.name)) skuId = 'Pola-0014';
+      else if (/bangle|badhano/i.test(it.name)) skuId = 'Bangle-0021';
+      else if (/ring/i.test(it.name)) skuId = 'Ring-0018';
+      else if (/necklace/i.test(it.name)) skuId = 'Necklace-0035';
+      else skuId = 'Earring-0011';
+    }
+
+    return `
+    <li style="margin-bottom: 8px;"><strong>Product:</strong> ${it.name}</li>
+    <li style="margin-bottom: 8px;"><strong>Quantity:</strong> ${it.quantity} units</li>
+    <li style="margin-bottom: 12px;"><strong>SKU ID:</strong> ${skuId}</li>
+    `;
+  }).join('');
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Order Confirmation #${orderNumber} – NaxtTo Fine Jewellery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[Action Required] New Order Received</title>
+  <style type="text/css">
+    body { margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #202124; background-color: #ffffff; }
+    p { margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124; }
+    ul { margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: #202124; }
+    li { margin-bottom: 6px; }
+    h3 { font-size: 16px; font-weight: bold; color: #202124; margin: 24px 0 12px 0; }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #faf8f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1d1d1f;">
-  <div style="max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #efeae1;">
-    
-    <div style="height: 4px; background: linear-gradient(90deg, #d4af37, #b8860b, #d4af37);"></div>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #202124; background-color: #ffffff; font-size: 14px; line-height: 1.6;">
+  <div style="max-width: 650px; margin: 0 auto; text-align: left;">
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124;">Dear NaxtTo,</p>
 
-    <div style="padding: 32px 36px 20px; text-align: center; border-bottom: 1px solid #f4f0e8;">
-      <div style="font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: #9e7d3b; font-weight: 700; margin-bottom: 6px;">
-        NaxtTo Fine Jewellery Atelier
-      </div>
-      <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em;">
-        Acquisition Confirmed
-      </h1>
-      <p style="margin: 6px 0 0; font-size: 13px; color: #86868b;">
-        Order #${orderNumber} &bull; Registered in Atelier Master Ledger
-      </p>
-    </div>
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124;">You have received a new order:</p>
 
-    <div style="padding: 28px 36px;">
-      <p style="font-size: 15px; line-height: 1.6; color: #333336; margin: 0 0 16px;">
-        Dear <strong>${recipientName}</strong>,
-      </p>
-      <p style="font-size: 14px; line-height: 1.6; color: #515154; margin: 0 0 24px;">
-        Thank you for choosing NaxtTo. Your bespoke fine jewellery order has been authenticated and entered into our artisan workshop queue.
-      </p>
+    <ul style="list-style-type: disc; margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: #202124;">
+      <li style="margin-bottom: 8px;"><strong>Order ID:</strong> ${orderNumber}</li>
+      ${itemsHtmlList}
+    </ul>
 
-      <!-- Order Summary Card -->
-      <div style="background-color: #faf8f3; border: 1px solid #e8dec8; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <tr>
-            <td style="color: #86868b; padding-bottom: 6px;">Order Number:</td>
-            <td style="text-align: right; font-weight: 700; color: #1d1d1f; padding-bottom: 6px;">#${orderNumber}</td>
-          </tr>
-          <tr>
-            <td style="color: #86868b; padding-bottom: 6px;">Payment Method:</td>
-            <td style="text-align: right; font-weight: 600; color: #1d1d1f; padding-bottom: 6px;">${paymentMethod}</td>
-          </tr>
-          <tr>
-            <td style="color: #86868b; padding-bottom: 6px;">Estimated Delivery:</td>
-            <td style="text-align: right; font-weight: 600; color: #1d1d1f; padding-bottom: 6px;">${estimatedDelivery}</td>
-          </tr>
-          <tr style="border-top: 1px solid #e8dec8;">
-            <td style="color: #1d1d1f; font-weight: 700; padding-top: 10px; font-size: 15px;">Total Amount:</td>
-            <td style="text-align: right; font-weight: 700; color: #9e7d3b; padding-top: 10px; font-size: 16px;">${currencySymbol}${Number(total).toLocaleString('en-IN')}</td>
-          </tr>
-        </table>
-      </div>
+    <h3 style="font-size: 16px; font-weight: bold; color: #202124; margin: 24px 0 12px 0;">What You Need to Do</h3>
 
-      <!-- Items Table -->
-      ${items.length > 0 ? `
-      <div style="margin-bottom: 24px;">
-        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #86868b; margin-bottom: 8px;">
-          Commissioned Pieces
-        </div>
-        <table style="width: 100%; border-collapse: collapse;">
-          ${itemsHtml}
-        </table>
-      </div>` : ''}
+    <ul style="list-style-type: disc; margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.6; color: #202124;">
+      <li>Pack the order and mark it <strong>Ready to Dispatch</strong> by ${dispatchDeadline} to avoid SLA breaches, which may impact your ratings and performance.</li>
+    </ul>
 
-      ${shippingAddress ? `
-      <div style="background-color: #fbfbfd; border: 1px solid #f0f0f4; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #515154;">
-        <strong style="color: #1d1d1f; display: block; margin-bottom: 4px;">Delivery Address:</strong>
-        ${shippingAddress.addressLine1 || ''}<br/>
-        ${shippingAddress.city ? `${shippingAddress.city}, ` : ''}${shippingAddress.state || ''} ${shippingAddress.postalCode || ''}<br/>
-        ${shippingAddress.country || 'India'}
-      </div>` : ''}
-
-      <p style="font-size: 13px; color: #86868b; line-height: 1.5; margin: 0;">
-        Warm regards,<br/>
-        <strong>NaxtTo Private Concierge & Master Goldsmiths</strong>
-      </p>
-    </div>
-
-    <div style="background-color: #f7f6f2; padding: 18px 36px; text-align: center; border-top: 1px solid #efeae1; font-size: 11px; color: #86868b;">
-      Powered by Resend Mail Service &bull; &copy; ${new Date().getFullYear()} NaxtTo Fine Jewellery Atelier.
-    </div>
+    ${shippingAddress ? `
+    <div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #e0e0e0; font-size: 13px; color: #5f6368; line-height: 1.6;">
+      <div><strong>Customer:</strong> ${shippingAddress.fullName || recipientName}${shippingAddress.phone ? ` &bull; <strong>Phone:</strong> ${shippingAddress.phone}` : ''}</div>
+      <div><strong>Delivery Address:</strong> ${shippingAddress.addressLine1 || ''}${shippingAddress.city ? `, ${shippingAddress.city}` : ''}${shippingAddress.postalCode ? ` - ${shippingAddress.postalCode}` : ''}</div>
+      ${total ? `<div style="margin-top: 4px;"><strong>Order Value:</strong> ${currencySymbol}${Number(total).toLocaleString('en-IN')} &bull; <strong>Payment Method:</strong> ${paymentMethod}</div>` : ''}
+    </div>` : ''}
   </div>
 </body>
-</html>
-  `.trim();
+</html>`;
 }
 
 /**

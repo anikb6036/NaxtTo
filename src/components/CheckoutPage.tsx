@@ -272,7 +272,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setPaymentError(null);
 
     try {
-      const generatedOrderNumber = `NXT-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+      const generatedOrderNumber = `OD${Date.now().toString().slice(-6)}${Math.floor(1000000000 + Math.random() * 9000000000)}`;
       const generatedTracking = `DELHIVERY-${Math.floor(100000000 + Math.random() * 900000000)}`;
 
       const confirmedOrder: Order = {
@@ -289,14 +289,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         trackingNumber: generatedTracking,
         estimatedDelivery: deliveryDateString,
         shippingAddress: {
-          fullName: selectedAddress.fullName,
-          addressLine1: selectedAddress.addressLine1,
-          addressLine2: selectedAddress.addressLine2,
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          postalCode: selectedAddress.postalCode,
-          country: selectedAddress.country,
-          phone: selectedAddress.phone,
+          fullName: selectedAddress.fullName || '',
+          addressLine1: selectedAddress.addressLine1 || '',
+          addressLine2: selectedAddress.addressLine2 || '',
+          city: selectedAddress.city || '',
+          state: selectedAddress.state || '',
+          postalCode: selectedAddress.postalCode || '',
+          country: selectedAddress.country || 'India',
+          phone: selectedAddress.phone || '',
           isDefault: true
         },
         items: Array.isArray(cartItems) && cartItems.length > 0 ? [...cartItems] : []

@@ -13,8 +13,33 @@ export interface EmailTemplateItem {
   quantity: number;
   price?: number;
   size?: string;
+  sku?: string;
+  skuId?: string;
   image?: string;
   description?: string;
+}
+
+export function getItemSkuId(item: { name?: string; size?: string; sku?: string; skuId?: string; id?: string }): string {
+  if (item.skuId) return item.skuId;
+  if (item.sku) return item.sku;
+  const name = item.name || '';
+  if (/earring|jhumk/i.test(name)) return 'Earring-0011';
+  if (/sakha|shakha/i.test(name)) return 'Shakha-0012';
+  if (/pola/i.test(name)) return 'Pola-0014';
+  if (/badhano|bangle/i.test(name)) return 'Bangle-0021';
+  if (/ring/i.test(name)) return 'Ring-0018';
+  if (/necklace/i.test(name)) return 'Necklace-0035';
+  return 'Earring-0011';
+}
+
+export function getDispatchDeadlineString(baseDate?: Date | string): string {
+  const base = baseDate ? new Date(baseDate) : new Date();
+  const deadline = new Date(base.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[deadline.getMonth()];
+  const date = deadline.getDate();
+  const year = deadline.getFullYear();
+  return `${month} ${date}, ${year} 12:00:00 PM`;
 }
 
 export interface EmailTemplateAddress {
@@ -80,16 +105,72 @@ export function renderEmailTemplateHtml(props: EmailTemplateProps): string {
     callToAction
   } = props;
 
+  // Order Confirmation uses the clean professional format matching the specification
+  if (templateType === 'order_confirmation') {
+    const dispatchDeadline = getDispatchDeadlineString();
+    const cleanItems = items.length > 0 ? items : [{
+      name: 'NaxtTo Jhumki Earring Alloy Jhumki Earring, Drops & Danglers',
+      quantity: 1,
+      skuId: 'Earring-0011'
+    }];
+
+    const itemsHtmlList = cleanItems.map(it => {
+      const skuId = getItemSkuId(it);
+      return `
+      <li style="margin-bottom: 8px;"><strong>Product:</strong> ${it.name}</li>
+      <li style="margin-bottom: 8px;"><strong>Quantity:</strong> ${it.quantity} units</li>
+      <li style="margin-bottom: 12px;"><strong>SKU ID:</strong> ${skuId}</li>
+      `;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[Action Required] New Order Received</title>
+  <style type="text/css">
+    body { margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #202124; background-color: #ffffff; }
+    p { margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124; }
+    ul { margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: #202124; }
+    li { margin-bottom: 6px; }
+    h3 { font-size: 16px; font-weight: bold; color: #202124; margin: 24px 0 12px 0; }
+  </style>
+</head>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #202124; background-color: #ffffff; font-size: 14px; line-height: 1.6;">
+  <div style="max-width: 650px; margin: 0 auto; text-align: left;">
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124;">Dear NaxtTo,</p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #202124;">You have received a new order:</p>
+
+    <ul style="list-style-type: disc; margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: #202124;">
+      <li style="margin-bottom: 8px;"><strong>Order ID:</strong> ${orderNumber}</li>
+      ${itemsHtmlList}
+    </ul>
+
+    <h3 style="font-size: 16px; font-weight: bold; color: #202124; margin: 24px 0 12px 0;">What You Need to Do</h3>
+
+    <ul style="list-style-type: disc; margin: 0 0 24px 0; padding-left: 20px; font-size: 14px; line-height: 1.6; color: #202124;">
+      <li>Pack the order and mark it <strong>Ready to Dispatch</strong> by ${dispatchDeadline} to avoid SLA breaches, which may impact your ratings and performance.</li>
+    </ul>
+
+    ${shippingAddress ? `
+    <div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #e0e0e0; font-size: 13px; color: #5f6368; line-height: 1.6;">
+      <div><strong>Customer:</strong> ${shippingAddress.fullName || recipientName}${shippingAddress.phone ? ` &bull; <strong>Phone:</strong> ${shippingAddress.phone}` : ''}</div>
+      <div><strong>Delivery Address:</strong> ${shippingAddress.addressLine1 || ''}${shippingAddress.city ? `, ${shippingAddress.city}` : ''}${shippingAddress.postalCode ? ` - ${shippingAddress.postalCode}` : ''}</div>
+      ${total ? `<div style="margin-top: 4px;"><strong>Order Value:</strong> ${currencySymbol}${Number(total).toLocaleString('en-IN')} &bull; <strong>Payment Method:</strong> ${paymentMethod}</div>` : ''}
+    </div>` : ''}
+  </div>
+</body>
+</html>`;
+  }
+
   // Header Title & Tagline depending on type
   let categoryTag = 'NaxtTo Fine Jewellery Atelier';
   let title = headline || 'Consignment Update';
   let subtitle = `Order #${orderNumber} • Registered in Atelier Master Ledger`;
 
   switch (templateType) {
-    case 'order_confirmation':
-      title = headline || 'Order Acquisition Confirmed';
-      subtitle = `Consignment #${orderNumber} • Handcrafting in Artisan Workshop`;
-      break;
     case 'order_shipped':
       title = headline || 'Consignment Dispatched';
       subtitle = `Order #${orderNumber} • Armored High-Value Transit`;
@@ -210,9 +291,6 @@ export function renderEmailTemplateHtml(props: EmailTemplateProps): string {
               </p>` : templateType === 'order_shipped' ? `
               <p style="font-size: 14px; line-height: 1.65; color: #44403c; margin: 0 0 24px;">
                 We are delighted to inform you that your handcrafted jewellery piece has completed final quality authentication, received official BIS hallmark sealing, and departed our master vaults in an armored, tamper-evident security consignment.
-              </p>` : templateType === 'order_confirmation' ? `
-              <p style="font-size: 14px; line-height: 1.65; color: #44403c; margin: 0 0 24px;">
-                Thank you for commissioning NaxtTo Fine Jewellery. Your bespoke acquisition has been authenticated and entered into our artisan workshop schedule.
               </p>` : templateType === 'newsletter_welcome' ? `
               <p style="font-size: 14px; line-height: 1.65; color: #44403c; margin: 0 0 24px;">
                 Welcome to the NaxtTo circle. As a privileged subscriber, you will receive advance previews of archival Shankha-Pola commissions, 22K Gold Badhano heritage drops, and bespoke artisan releases before they appear on the salon floor.
@@ -261,32 +339,6 @@ export function renderEmailTemplateHtml(props: EmailTemplateProps): string {
                   </tr>
                 </table>` : ''}
               </div>` : ''}
-
-              <!-- Order Summary Block (Confirmation Mode) -->
-              ${templateType === 'order_confirmation' ? `
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #faf8f3; border: 1px solid #e8dec8; border-radius: 10px; margin-bottom: 28px;">
-                <tr>
-                  <td style="padding: 18px 20px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px;">
-                      <tr>
-                        <td style="color: #78716c; padding-bottom: 6px;">Payment Method:</td>
-                        <td style="text-align: right; font-weight: 600; color: #1c1917; padding-bottom: 6px;">${paymentMethod}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #78716c; padding-bottom: 6px;">Estimated Completion:</td>
-                        <td style="text-align: right; font-weight: 600; color: #1c1917; padding-bottom: 6px;">${estimatedDelivery}</td>
-                      </tr>
-                      ${total ? `
-                      <tr style="border-top: 1px solid #e8dec8;">
-                        <td style="color: #1c1917; font-weight: 700; padding-top: 10px; font-size: 14px;">Total Value:</td>
-                        <td style="text-align: right; font-weight: 700; color: #9e7d3b; padding-top: 10px; font-size: 15px;">
-                          ${currencySymbol}${Number(total).toLocaleString('en-IN')}
-                        </td>
-                      </tr>` : ''}
-                    </table>
-                  </td>
-                </tr>
-              </table>` : ''}
 
               <!-- Delivery Destination Box -->
               ${shippingAddress?.addressLine1 ? `

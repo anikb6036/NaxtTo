@@ -1,6 +1,7 @@
 import { Order, EmailNotification } from '../types';
 import { firestore } from '../lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { sanitizeForFirestore } from '../utils/userStorage';
 import { 
   renderEmailTemplateHtml, 
   EmailTemplateProps, 
@@ -59,17 +60,34 @@ export async function sendOrderConfirmationEmail(
 
   const notificationId = `notif_conf_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const sentAt = new Date().toISOString();
-  const subject = `💎 Order Confirmed: Consignment #${orderNum} – NaxtTo Fine Jewellery Atelier`;
+  const subject = `[Action Required] New Order Received`;
 
-  // Map order items to EmailTemplateItem structure
-  const templateItems: EmailTemplateItem[] = (order.items || []).map(item => ({
-    name: item.product?.name || 'Artisanal Fine Jewellery Piece',
-    quantity: item.quantity || 1,
-    price: item.product?.price,
-    size: item.selectedSize,
-    description: item.selectedFinish ? `Finish: ${item.selectedFinish}` : undefined,
-    image: item.product?.images?.[0]
-  }));
+  // Map order items to EmailTemplateItem structure with SKU derivation
+  const templateItems: EmailTemplateItem[] = (order.items || []).map(item => {
+    const p = item.product || ({} as any);
+    const rawSku = p.sku || p.productId;
+    let skuId = rawSku;
+    if (!skuId) {
+      if (/earring|jhumk/i.test(p.name || '')) skuId = 'Earring-0011';
+      else if (/sakha|shakha/i.test(p.name || '')) skuId = 'Shakha-0012';
+      else if (/pola/i.test(p.name || '')) skuId = 'Pola-0014';
+      else if (/bangle|badhano/i.test(p.name || '')) skuId = 'Bangle-0021';
+      else if (/ring/i.test(p.name || '')) skuId = 'Ring-0018';
+      else if (/necklace/i.test(p.name || '')) skuId = 'Necklace-0035';
+      else skuId = 'Earring-0011';
+    }
+
+    return {
+      name: p.name || 'NaxtTo Jhumki Earring Alloy Jhumki Earring, Drops & Danglers',
+      quantity: item.quantity || 1,
+      price: p.price,
+      size: item.selectedSize,
+      sku: skuId,
+      skuId: skuId,
+      description: item.selectedFinish ? `Finish: ${item.selectedFinish}` : undefined,
+      image: p.images?.[0]
+    };
+  });
 
   const shippingAddr: EmailTemplateAddress | undefined = order.shippingAddress ? {
     fullName: order.shippingAddress.fullName,
@@ -84,7 +102,7 @@ export async function sendOrderConfirmationEmail(
 
   const trackingNum = order.trackingNumber || `TRACK-NXT-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  // 1. Generate Luxury HTML Email using the created EmailTemplate generator
+  // 1. Generate Professional HTML Email using the created EmailTemplate generator
   const htmlContent = renderEmailTemplateHtml({
     templateType: 'order_confirmation',
     recipientName,
@@ -103,43 +121,36 @@ export async function sendOrderConfirmationEmail(
     shippingAddress: shippingAddr,
     paymentMethod: order.paymentMethod || 'Prepaid Secure Payment (Razorpay)',
     estimatedDelivery: order.estimatedDelivery || '3–5 Business Days',
-    headline: 'Your Bespoke Acquisition is Confirmed',
-    callToAction: {
-      label: 'Inspect Consignment Status in Atelier Ledger →',
-      url: `https://naxtto.shop/account?tab=orders&order=${encodeURIComponent(orderNum)}`
-    }
+    headline: '[Action Required] New Order Received'
   });
 
+  // Calculate SLA dispatch deadline (3 days at 12:00:00 PM)
+  const baseDate = new Date();
+  const deadline = new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dispatchDeadline = `${months[deadline.getMonth()]} ${deadline.getDate()}, ${deadline.getFullYear()} 12:00:00 PM`;
+
+  const cleanItemsForText = templateItems.length > 0 ? templateItems : [{
+    name: 'NaxtTo Jhumki Earring Alloy Jhumki Earring, Drops & Danglers',
+    quantity: 1,
+    skuId: 'Earring-0011'
+  }];
+
+  const itemsText = cleanItemsForText.map(it => {
+    return `• Product: ${it.name}\n• Quantity: ${it.quantity} units\n• SKU ID: ${it.skuId || 'Earring-0011'}`;
+  }).join('\n\n');
+
   const textContent = `
-NAXTTO FINE JEWELLERY ATELIER
---------------------------------------------------
-TRANSACTIONAL ORDER CONFIRMATION
+Dear NaxtTo,
 
-Dear ${recipientName},
+You have received a new order:
 
-Thank you for your distinguished patronage. Your acquisition for Consignment #${orderNum} has been officially recorded in the atelier master ledger and crafting has commenced.
+• Order ID: ${orderNum}
+${itemsText}
 
-ORDER SUMMARY:
-- Consignment Number: #${orderNum}
-- Status: Order Confirmed (Workshop Crafting Initialized)
-- Total Amount: ₹${(order.total || 0).toLocaleString('en-IN')}
-- Payment Method: ${order.paymentMethod || 'Prepaid Secure Payment'}
-- Estimated Dispatch: ${order.estimatedDelivery || '3–5 Business Days'}
+What You Need to Do
 
-SHIPPING DESTINATION:
-${recipientName}
-${order.shippingAddress?.addressLine1 || ''}
-${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.postalCode || ''}
-Phone: ${order.shippingAddress?.phone || 'On file'}
-
-BIS 916 / 750 HALLMARK & LIFETIME WARRANTY INCLUDED.
-
-View your verified consignment in real time at:
-https://naxtto.shop/account?tab=orders&order=${encodeURIComponent(orderNum)}
-
-Warm regards,
-NaxtTo Fine Jewellery Atelier Concierge
-concierge@naxtto.shop
+• Pack the order and mark it Ready to Dispatch by ${dispatchDeadline} to avoid SLA breaches, which may impact your ratings and performance.
   `.trim();
 
   // Create notification entity
@@ -224,11 +235,11 @@ concierge@naxtto.shop
   // a) Top-level `notifications` collection
   try {
     const notifDocRef = doc(firestore, 'notifications', notificationId);
-    await setDoc(notifDocRef, {
+    await setDoc(notifDocRef, sanitizeForFirestore({
       ...notification,
-      messageId,
+      messageId: messageId || null,
       createdAt: sentAt
-    });
+    }));
   } catch (fsErr) {
     console.warn('Firestore notifications collection notice:', fsErr);
   }
@@ -243,9 +254,9 @@ concierge@naxtto.shop
         ? orderData.emailNotifications 
         : [];
       
-      await setDoc(orderDocRef, {
+      await setDoc(orderDocRef, sanitizeForFirestore({
         emailNotifications: [notification, ...existingNotifs]
-      }, { merge: true });
+      }), { merge: true });
     }
   } catch (fsErr2) {
     console.warn('Firestore order emailNotifications update notice:', fsErr2);
@@ -472,7 +483,7 @@ export async function triggerShippedEmailNotification(
     // Persist to Firestore
     try {
       const notifDocRef = doc(firestore, 'notifications', notificationId);
-      await setDoc(notifDocRef, { ...notification, createdAt: sentAt });
+      await setDoc(notifDocRef, sanitizeForFirestore({ ...notification, createdAt: sentAt }));
     } catch (fsErr) {
       console.warn('Firestore notifications notice:', fsErr);
     }
@@ -485,9 +496,9 @@ export async function triggerShippedEmailNotification(
         const existingNotifs: EmailNotification[] = Array.isArray(orderData.emailNotifications) 
           ? orderData.emailNotifications 
           : [];
-        await setDoc(orderDocRef, {
+        await setDoc(orderDocRef, sanitizeForFirestore({
           emailNotifications: [notification, ...existingNotifs]
-        }, { merge: true });
+        }), { merge: true });
       }
     } catch (fsErr2) {
       console.warn('Firestore order update notice:', fsErr2);

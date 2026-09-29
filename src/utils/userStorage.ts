@@ -116,6 +116,10 @@ export function sanitizeOrderForStorage(order: Order): Order {
   if (!order) return order;
   return {
     ...order,
+    shippingAddress: order.shippingAddress ? {
+      ...order.shippingAddress,
+      addressLine2: order.shippingAddress.addressLine2 || ''
+    } : order.shippingAddress,
     items: Array.isArray(order.items)
       ? order.items.map(item => ({
           quantity: item.quantity || 1,
@@ -125,6 +129,41 @@ export function sanitizeOrderForStorage(order: Order): Order {
         }))
       : []
   };
+}
+
+/**
+ * Deeply removes all undefined values, converts NaN to null, and ensures
+ * all nested structures are compliant with Firestore specification.
+ * Firestore setDoc() throws an immediate fatal error if ANY key is undefined.
+ */
+export function sanitizeForFirestore<T>(input: T): T {
+  if (input === undefined || input === null) {
+    return null as any;
+  }
+  if (typeof input === 'number') {
+    return (Number.isNaN(input) ? null : input) as any;
+  }
+  if (typeof input === 'string' || typeof input === 'boolean') {
+    return input;
+  }
+  if (Array.isArray(input)) {
+    return input
+      .filter(item => item !== undefined)
+      .map(item => sanitizeForFirestore(item)) as any;
+  }
+  if (typeof input === 'object') {
+    if (input instanceof Date) {
+      return input.toISOString() as any;
+    }
+    const cleanObj: Record<string, any> = {};
+    for (const [key, value] of Object.entries(input)) {
+      if (value !== undefined) {
+        cleanObj[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleanObj as any;
+  }
+  return input;
 }
 
 /**
@@ -522,7 +561,7 @@ export async function syncUserDataToFirestore(
       if (userProfile.phone) updatePayload.phone = userProfile.phone;
     }
 
-    await setDoc(userDocRef, updatePayload, { merge: true });
+    await setDoc(userDocRef, sanitizeForFirestore(updatePayload), { merge: true });
   } catch (err) {
     // Graceful offline/silent fallback so local operations never stall
     console.debug('Firestore sync notice (local backup active):', err);
@@ -590,8 +629,21 @@ export async function saveOrderToFirestore(order: Order, userId?: string, patron
       })
     );
 
-    const orderPayload = {
+    const safeShippingAddress = {
+      fullName: order.shippingAddress?.fullName || '',
+      addressLine1: order.shippingAddress?.addressLine1 || '',
+      addressLine2: order.shippingAddress?.addressLine2 || '',
+      city: order.shippingAddress?.city || '',
+      state: order.shippingAddress?.state || '',
+      postalCode: order.shippingAddress?.postalCode || '',
+      country: order.shippingAddress?.country || 'India',
+      phone: order.shippingAddress?.phone || '',
+      isDefault: Boolean(order.shippingAddress?.isDefault)
+    };
+
+    const orderPayload = sanitizeForFirestore({
       ...order,
+      shippingAddress: safeShippingAddress,
       items: sanitizedItems,
       userId: userId || order.userId || 'guest',
       customerEmail: patronEmail || order.customerEmail || '',
@@ -604,13 +656,13 @@ export async function saveOrderToFirestore(order: Order, userId?: string, patron
           note: 'Order successfully placed by patron and acknowledged in atelier ledger.'
         }
       ]
-    };
+    });
 
     // Absolute safety check: If document payload approaches 900KB, fall back to CDN placeholder
     try {
       const payloadString = JSON.stringify(orderPayload);
       if (payloadString.length > 900000) {
-        orderPayload.items = orderPayload.items.map(it => ({
+        orderPayload.items = orderPayload.items.map((it: any) => ({
           ...it,
           product: {
             ...it.product,
@@ -636,7 +688,7 @@ export async function saveOrderToFirestore(order: Order, userId?: string, patron
             orderPayload,
             ...existingHistory.filter(o => o.id !== order.id)
           ].slice(0, 15);
-          await setDoc(userDocRef, { orderHistory: updatedHistory }, { merge: true });
+          await setDoc(userDocRef, { orderHistory: sanitizeForFirestore(updatedHistory) }, { merge: true });
         }
       } catch (userErr) {
         console.warn('Notice updating user order history in Firestore:', userErr);
@@ -690,11 +742,11 @@ export async function updateOrderStatusInFirestore(
 
     const updatedTimeline = [...existingUpdates, newUpdateEntry];
 
-    await setDoc(orderDocRef, {
+    await setDoc(orderDocRef, sanitizeForFirestore({
       status: newStatus,
       updatedAt: now,
       statusUpdates: updatedTimeline
-    }, { merge: true });
+    }), { merge: true });
 
     // Sync back to user's orderHistory if linked
     if (userId && userId !== 'guest') {
@@ -710,7 +762,7 @@ export async function updateOrderStatusInFirestore(
             }
             return o;
           });
-          await setDoc(userDocRef, { orderHistory: updatedHistory }, { merge: true });
+          await setDoc(userDocRef, { orderHistory: sanitizeForFirestore(updatedHistory) }, { merge: true });
         }
       } catch (err) {
         console.warn('Notice updating user doc with new status:', err);

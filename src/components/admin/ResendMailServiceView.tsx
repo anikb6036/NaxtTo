@@ -548,7 +548,7 @@ export const ResendMailServiceView: React.FC<ResendMailServiceViewProps> = ({
               className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none"
             >
               <option value="order_shipped">Template: Consignment Shipped (AWB Tracking)</option>
-              <option value="order_confirmation">Template: Order Confirmation (Invoice)</option>
+              <option value="order_confirmation">Template: [Action Required] New Order Received</option>
               <option value="newsletter_welcome">Template: Atelier Privé Welcome</option>
             </select>
           </div>
@@ -557,8 +557,8 @@ export const ResendMailServiceView: React.FC<ResendMailServiceViewProps> = ({
         <div className="p-4 sm:p-6 bg-slate-100/70">
           <EmailTemplate
             templateType={previewTemplateType}
-            recipientName={orders[0]?.shippingAddress?.fullName || 'Anik Baidya'}
-            orderNumber={orders[0]?.orderNumber || 'NXT-908234'}
+            recipientName={orders[0]?.shippingAddress?.fullName || 'NaxtTo'}
+            orderNumber={orders[0]?.orderNumber || 'OD438737670141981100'}
             trackingNumber={orders[0]?.trackingNumber || 'TRACK-NXT-771122'}
             carrier="Blue Dart Apex Secure Armored Transit"
             items={(orders[0]?.items || []).length > 0 ? (orders[0]?.items || []).map(i => ({

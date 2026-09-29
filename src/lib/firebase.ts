@@ -17,6 +17,7 @@ try {
     // are not buffered or severed by reverse proxies, preventing [code=unavailable] errors
     firestoreInstance = initializeFirestore(app, {
       experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
     }, firebaseConfig.firestoreDatabaseId || undefined);
   } else {
     firestoreInstance = firebaseConfig.firestoreDatabaseId

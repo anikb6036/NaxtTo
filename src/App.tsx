@@ -1300,13 +1300,6 @@ export default function App() {
   // 9. Promo Actions
   const handleApplyPromo = (code: string): boolean => {
     const clean = code.toUpperCase().trim();
-    if (clean.startsWith('NAXTTO-REWARD-') || clean.startsWith('REWARDS-') || clean.startsWith('NAXTTO-REWARDS-')) {
-      const match = clean.match(/\d+/);
-      const amount = match ? parseInt(match[0], 10) : 500;
-      setAppliedPromo({ code: clean, discountPercent: 0, discountAmount: amount });
-      showToast(`₹${amount.toLocaleString('en-IN')} NaxtTo Rewards Voucher Applied`);
-      return true;
-    }
     if (clean === 'NAXTTO10') {
       setAppliedPromo({ code: 'NAXTTO10', discountPercent: 10, discountAmount: 0 });
       showToast('10% Atelier Welcome Discount Applied');

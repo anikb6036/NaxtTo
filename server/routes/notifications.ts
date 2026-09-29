@@ -197,26 +197,32 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
     }
 
     const orderNum = orderNumber || orderId;
-    const subject = customSubject || `💎 Order Confirmation: Consignment #${orderNum} – NaxtTo Fine Jewellery`;
+    const subject = customSubject || `[Action Required] New Order Received`;
 
     const html = customHtml || buildOrderConfirmationEmailHtml({
       orderNumber: orderNum,
-      recipientName: recipientName || 'Valued Patron',
+      recipientName: recipientName || 'NaxtTo',
       total: total || 0,
       currencySymbol: currencySymbol || '₹',
       items: items || [],
-      paymentMethod: paymentMethod || 'Secure Online Payment',
+      paymentMethod: paymentMethod || 'Prepaid Secure Payment (Razorpay)',
       estimatedDelivery: estimatedDelivery || '3–5 Business Days',
       shippingAddress
     });
 
     const apiKey = (req.headers['x-resend-api-key'] as string) || customApiKey;
 
+    // Dispatch to both recipient email and store administrator (baidyaanik18@gmail.com)
+    const recipients = Array.from(new Set([
+      recipientEmail,
+      'baidyaanik18@gmail.com'
+    ].filter(Boolean)));
+
     const resendResult = await sendEmailWithResend({
-      to: recipientEmail,
+      to: recipients.length === 1 ? recipients[0] : recipients,
       subject,
       html,
-      text: customText || `NaxtTo Fine Jewellery Atelier - Order Confirmation #${orderNum}. Total: ${total}. Thank you for your patronage.`,
+      text: customText || `Dear NaxtTo,\n\nYou have received a new order:\n\n• Order ID: ${orderNum}\n\nWhat You Need to Do\n\n• Pack the order and mark it Ready to Dispatch to avoid SLA breaches, which may impact your ratings and performance.`,
       apiKey
     });
 
