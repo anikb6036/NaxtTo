@@ -42,7 +42,7 @@ import { SellerHeader } from './seller-hub/SellerHeader';
 import { SellerSidebar, SellerNavTab } from './seller-hub/SellerSidebar';
 import { SellerHomeDashboard } from './seller-hub/SellerHomeDashboard';
 import { ListingsTable } from './seller-hub/ListingsTable';
-import { SellerOrdersTable } from './seller-hub/SellerOrdersTable';
+import { SellerOrdersTable, getOrderItemImage } from './seller-hub/SellerOrdersTable';
 import { ProductFormView } from './seller-hub/ProductFormView';
 import { ShippingLabelModal } from './seller-hub/ShippingLabelModal';
 import { CloudStorageManager } from './seller-hub/CloudStorageManager';
@@ -788,6 +788,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             <div className="p-5 space-y-4 text-xs max-h-[70vh] overflow-y-auto">
+              {/* Ordered Jewellery Pieces with Images */}
+              <div className="p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-2.5">
+                <span className="font-semibold text-[#212121] block">Ordered Jewellery Pieces</span>
+                <div className="space-y-2">
+                  {(selectedOrder.items || []).map((item, idx) => {
+                    const thumb = getOrderItemImage(item);
+                    const name = item.product?.name || (item as any)?.name || 'Atelier Jewellery Piece';
+                    const qty = item.quantity || 1;
+                    const price = item.product?.price || (item as any)?.price || 0;
+                    return (
+                      <div key={idx} className="flex items-center gap-3 p-2.5 bg-white rounded-lg border border-[#e5e5ea]">
+                        <img 
+                          src={thumb} 
+                          alt={name}
+                          className="w-12 h-12 rounded-md object-cover border border-[#e5e5ea] shrink-0"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=150&q=80';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-xs text-[#212121] truncate">{name}</p>
+                          <div className="flex items-center gap-2 text-[11px] text-[#717478]">
+                            <span className="font-medium text-[#2874f0]">Qty: {qty}</span>
+                            {item.selectedSize && <span>• Size: {item.selectedSize}</span>}
+                            {item.selectedFinish && <span>• {item.selectedFinish}</span>}
+                          </div>
+                        </div>
+                        <span className="font-bold font-mono text-xs text-[#212121]">
+                          {currencySymbol}{(price * qty).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="p-3.5 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] space-y-1">
                 <span className="font-semibold text-[#212121] block">Fulfillment Details</span>
                 <p className="text-[#717478]">Tracking ID: <strong className="text-[#212121]">{selectedOrder.trackingNumber}</strong></p>

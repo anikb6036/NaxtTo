@@ -1,0 +1,39 @@
+[
+  {
+    "id": "OD-2026-999888",
+    "orderNumber": "OD-2026-999888",
+    "date": "2026-09-30",
+    "status": "Confirmed",
+    "items": [
+      {
+        "product": {
+          "id": "sakha-pola-01",
+          "name": "Authentic Bengali Sakha Pola (Micron Gold Plated)",
+          "price": 3850,
+          "images": [
+            "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80"
+          ]
+        },
+        "quantity": 1
+      }
+    ],
+    "subtotal": 3850,
+    "shippingFee": 0,
+    "discount": 0,
+    "tax": 0,
+    "total": 3850,
+    "customerEmail": "baidyaanik18@gmail.com",
+    "shippingAddress": {
+      "fullName": "Anik Baidya",
+      "addressLine1": "Kolkata Sector V",
+      "city": "Kolkata",
+      "state": "WB",
+      "postalCode": "700091",
+      "country": "India",
+      "phone": "8927936036"
+    },
+    "trackingNumber": "TRACK-NXT-286933",
+    "paymentMethod": "Razorpay Online",
+    "estimatedDelivery": "3-5 Business Days"
+  }
+]

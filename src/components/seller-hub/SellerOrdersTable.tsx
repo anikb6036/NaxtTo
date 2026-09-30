@@ -21,6 +21,41 @@ import { Order } from '../../types';
 import { ShippingLabelModal } from './ShippingLabelModal';
 import { getDeletedOrderIds, DUMMY_ORDER_IDENTIFIERS } from '../../utils/userStorage';
 
+export function getOrderItemImage(item: any): string {
+  if (!item) return 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=300&q=80';
+  
+  if (Array.isArray(item.product?.images) && item.product.images.length > 0 && item.product.images[0]) {
+    return item.product.images[0];
+  }
+  if (typeof item.product?.image === 'string' && item.product.image.length > 0) {
+    return item.product.image;
+  }
+  if (Array.isArray(item.images) && item.images.length > 0 && item.images[0]) {
+    return item.images[0];
+  }
+  if (typeof item.image === 'string' && item.image.length > 0) {
+    return item.image;
+  }
+
+  const name = (item.product?.name || item.name || '').toLowerCase();
+  if (name.includes('sakha') || name.includes('shakha') || name.includes('pola')) {
+    return 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=300&q=80';
+  }
+  if (name.includes('bangle') || name.includes('badhano') || name.includes('chur')) {
+    return 'https://images.unsplash.com/photo-1611591475879-c2901c0989f6?auto=format&fit=crop&w=300&q=80';
+  }
+  if (name.includes('necklace') || name.includes('choker') || name.includes('haar')) {
+    return 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=300&q=80';
+  }
+  if (name.includes('earring') || name.includes('jhumk')) {
+    return 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=300&q=80';
+  }
+  if (name.includes('ring')) {
+    return 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=300&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=300&q=80';
+}
+
 interface SellerOrdersTableProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
@@ -61,9 +96,9 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                     (o.trackingNumber || '').toLowerCase().includes(q);
       if (!match) return false;
     }
-    if (orderStatusTab === 'pending' && o.status !== 'Confirmed') return false;
-    if (orderStatusTab === 'accepted' && (o.status !== 'Accepted' && o.status !== 'Crafting')) return false;
-    if (orderStatusTab === 'shipped' && (o.status !== 'Dispatched' && o.status !== 'Out for Delivery')) return false;
+    if (orderStatusTab === 'pending' && o.status !== 'Confirmed' && o.status !== 'Processing') return false;
+    if (orderStatusTab === 'accepted' && o.status !== 'Accepted' && o.status !== 'Crafting') return false;
+    if (orderStatusTab === 'shipped' && o.status !== 'Dispatched' && o.status !== 'Out for Delivery' && o.status !== 'Shipped') return false;
     if (orderStatusTab === 'delivered' && o.status !== 'Delivered') return false;
     return true;
   });
@@ -216,9 +251,9 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#e5e5ea] bg-[#fafafa] text-[11px] font-semibold text-[#717478]">
-                <th className="py-3 px-4 min-w-[150px]">Order ID & Date</th>
-                <th className="py-3 px-4 min-w-[170px]">Patron / Recipient</th>
-                <th className="py-3 px-4 min-w-[180px]">Items</th>
+                <th className="py-3 px-4 min-w-[210px]">Order ID & Date</th>
+                <th className="py-3 px-4 min-w-[160px]">Patron / Recipient</th>
+                <th className="py-3 px-4 min-w-[220px]">Ordered Product / Items</th>
                 <th className="py-3 px-4 min-w-[110px]">Total Amount</th>
                 <th className="py-3 px-4 min-w-[130px]">Delivery Status</th>
                 <th className="py-3 px-4 min-w-[140px]">Tracking Code</th>
@@ -236,28 +271,87 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map(ord => (
-                  <tr key={ord.id} className="hover:bg-[#f8f9fa] transition-colors">
-                    <td className="py-3 px-4">
-                      <p className="font-bold text-xs text-[#212121]">{ord.orderNumber}</p>
-                      <p className="text-[11px] text-[#717478]">{ord.date}</p>
-                    </td>
+                filteredOrders.map(ord => {
+                  const firstItem = ord.items?.[0];
+                  const firstItemThumb = getOrderItemImage(firstItem);
+                  const firstItemName = firstItem?.product?.name || (firstItem as any)?.name || 'Atelier Fine Jewellery';
+                  const firstItemSize = firstItem?.selectedSize || (firstItem as any)?.size;
+                  const firstItemFinish = firstItem?.selectedFinish;
+                  const totalUnits = (ord.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+                  const totalDifferentItems = (ord.items || []).length;
 
-                    <td className="py-3 px-4">
-                      <p className="font-semibold text-xs text-[#212121]">{ord.shippingAddress?.fullName || 'Patron of Atelier'}</p>
-                      <p className="text-[11px] text-[#717478] truncate max-w-[160px]">
-                        {ord.shippingAddress?.city || 'Bespoke'}, {ord.shippingAddress?.country || 'India'}
-                      </p>
-                    </td>
+                  return (
+                    <tr key={ord.id} className="hover:bg-[#f8f9fa] transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          {/* Order Product Image Thumbnail */}
+                          <div 
+                            className="relative w-12 h-12 rounded-lg border border-[#e5e5ea] bg-white overflow-hidden shrink-0 shadow-2xs group cursor-pointer hover:border-[#2874f0] transition-colors"
+                            onClick={() => onSelectOrder(ord)}
+                            title={`Click to view details for ${firstItemName}`}
+                          >
+                            <img
+                              src={firstItemThumb}
+                              alt={firstItemName}
+                              className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-200"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=150&q=80';
+                              }}
+                            />
+                            {totalDifferentItems > 1 && (
+                              <span className="absolute bottom-0 right-0 bg-[#2874f0] text-white text-[9px] font-bold px-1 py-0.2 rounded-tl-sm shadow-xs leading-none">
+                                +{totalDifferentItems - 1}
+                              </span>
+                            )}
+                          </div>
 
-                    <td className="py-3 px-4">
-                      <p className="font-medium text-xs text-[#212121]">
-                        {(ord.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0)} item(s)
-                      </p>
-                      <p className="text-[11px] text-[#717478] truncate max-w-[180px]">
-                        {ord.items?.[0]?.product?.name || (ord.items?.[0] as any)?.name || 'Atelier Fine Jewellery'}
-                      </p>
-                    </td>
+                          {/* Order Number & Date */}
+                          <div className="min-w-0">
+                            <p 
+                              className="font-bold text-xs text-[#212121] hover:text-[#2874f0] cursor-pointer font-mono tracking-tight"
+                              onClick={() => onSelectOrder(ord)}
+                            >
+                              {ord.orderNumber}
+                            </p>
+                            <p className="text-[11px] text-[#717478]">{ord.date}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <p className="font-semibold text-xs text-[#212121]">{ord.shippingAddress?.fullName || 'Patron of Atelier'}</p>
+                        <p className="text-[11px] text-[#717478] truncate max-w-[160px]">
+                          {ord.shippingAddress?.city || 'Bespoke'}, {ord.shippingAddress?.country || 'India'}
+                        </p>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="min-w-0 max-w-[220px]">
+                          <p 
+                            className="font-semibold text-xs text-[#212121] line-clamp-2 hover:text-[#2874f0] cursor-pointer leading-snug"
+                            title={firstItemName}
+                            onClick={() => onSelectOrder(ord)}
+                          >
+                            {firstItemName}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#717478] flex-wrap">
+                            <span className="font-semibold text-[#2874f0] bg-blue-50 px-1.5 py-0.5 rounded text-[10px]">
+                              {totalUnits} {totalUnits === 1 ? 'unit' : 'units'}
+                            </span>
+                            {firstItemSize && (
+                              <span className="bg-gray-100 text-gray-700 font-medium px-1.5 py-0.5 rounded text-[10px]">
+                                Size: {firstItemSize}
+                              </span>
+                            )}
+                            {firstItemFinish && (
+                              <span className="bg-amber-50 text-amber-800 font-medium px-1.5 py-0.5 rounded text-[10px]">
+                                {firstItemFinish}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
 
                     <td className="py-3 px-4">
                       <p className="font-bold text-xs text-[#212121]">{currencySymbol}{(Number(ord.total) || 0).toFixed(2)}</p>
@@ -341,8 +435,9 @@ export const SellerOrdersTable: React.FC<SellerOrdersTableProps> = ({
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
+                );
+              })
+            )}
             </tbody>
           </table>
         </div>

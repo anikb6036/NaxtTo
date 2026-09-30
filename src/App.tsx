@@ -172,31 +172,89 @@ export default function App() {
 
   const prevUserKeyRef = useRef<string | null>(getUserStorageKey(user));
 
-  // Global store orders (for admin order management and patron sync)
+  // Helper to deduplicate, validate, and merge orders across storage, backend, and Firestore
+  const mergeOrderLists = useCallback((...sources: (Order[] | null | undefined)[]): Order[] => {
+    const map = new Map<string, Order>();
+    const deleted = getDeletedOrderIds();
+
+    for (const list of sources) {
+      if (!Array.isArray(list)) continue;
+      for (const o of list) {
+        if (!o) continue;
+        const id = o.id || o.orderNumber;
+        if (!id) continue;
+        if (deleted.has(id) || (o.orderNumber && deleted.has(o.orderNumber))) continue;
+        if (DUMMY_ORDER_IDENTIFIERS.has(id) || (o.orderNumber && DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber))) continue;
+
+        const existing = map.get(id);
+        if (!existing) {
+          map.set(id, o);
+        } else {
+          map.set(id, {
+            ...existing,
+            ...o,
+            items: (Array.isArray(o.items) && o.items.length > 0) ? o.items : existing.items,
+            status: o.status || existing.status,
+            shippingAddress: o.shippingAddress || existing.shippingAddress
+          });
+        }
+      }
+    }
+
+    const result = Array.from(map.values());
+    result.sort((a, b) => {
+      const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+      const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+    return result;
+  }, []);
+
+  // Global store orders (for admin order management, seller hub, and patron sync)
   const [orders, setOrders] = useState<Order[]>(() => {
+    const list: Order[] = [];
     try {
       const saved = localStorage.getItem('naxtto_all_orders');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const deleted = getDeletedOrderIds();
-          const clean = parsed.filter(o => 
-            o && 
-            !deleted.has(o.id) && 
-            !deleted.has(o.orderNumber) && 
-            !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
-            !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
-          );
-          if (clean.length !== parsed.length) {
-            safeSetItem('naxtto_all_orders', JSON.stringify(clean));
-          }
-          return clean;
-        }
+        if (Array.isArray(parsed)) list.push(...parsed);
       }
-    } catch {
-      // ignore
+    } catch {}
+
+    try {
+      const last = localStorage.getItem('naxtto_last_order');
+      if (last) {
+        const parsed = JSON.parse(last);
+        if (parsed && (parsed.id || parsed.orderNumber)) list.push(parsed);
+      }
+    } catch {}
+
+    try {
+      const completed = sessionStorage.getItem('naxtto_completed_order');
+      if (completed) {
+        const parsed = JSON.parse(completed);
+        if (parsed && (parsed.id || parsed.orderNumber)) list.push(parsed);
+      }
+    } catch {}
+
+    const map = new Map<string, Order>();
+    const deleted = getDeletedOrderIds();
+    for (const o of list) {
+      if (!o) continue;
+      const id = o.id || o.orderNumber;
+      if (!id || deleted.has(id) || (o.orderNumber && deleted.has(o.orderNumber))) continue;
+      if (DUMMY_ORDER_IDENTIFIERS.has(id) || (o.orderNumber && DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber))) continue;
+      map.set(id, o);
     }
-    return [];
+    const clean = Array.from(map.values()).sort((a, b) => {
+      const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
+      const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+    if (clean.length > 0) {
+      safeSetItem('naxtto_all_orders', JSON.stringify(clean.slice(0, 100).map(sanitizeOrderForStorage)));
+    }
+    return clean;
   });
 
   // Storefront WOW DEALS Merchandising State
@@ -375,31 +433,43 @@ export default function App() {
     }
   };
 
-  // Fetch orders from backend API and sync with local state & storage
+  // Fetch orders from backend API and sync with local state & storage without overwriting
   const refreshOrders = useCallback(async () => {
     try {
       const serverOrders = await apiClient.getOrders();
-      if (Array.isArray(serverOrders)) {
-        const deleted = getDeletedOrderIds();
-        const valid = serverOrders.filter(o => 
-          o && 
-          !deleted.has(o.id) && 
-          !deleted.has(o.orderNumber) && 
-          !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
-          !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
-        );
-        const sorted = [...valid].sort((a, b) => {
-          const timeA = new Date(a.date || (a as any).createdAt || 0).getTime();
-          const timeB = new Date(b.date || (b as any).createdAt || 0).getTime();
-          return timeB - timeA;
-        });
-        setOrders(sorted);
-        safeSetItem('naxtto_all_orders', JSON.stringify(sorted.slice(0, 50).map(sanitizeOrderForStorage)));
-      }
+      setOrders(prev => {
+        const stored = (() => {
+          try {
+            const raw = localStorage.getItem('naxtto_all_orders');
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        })();
+        const lastOrder = (() => {
+          try {
+            const raw = localStorage.getItem('naxtto_last_order');
+            return raw ? [JSON.parse(raw)] : [];
+          } catch {
+            return [];
+          }
+        })();
+        const completedOrder = (() => {
+          try {
+            const raw = sessionStorage.getItem('naxtto_completed_order');
+            return raw ? [JSON.parse(raw)] : [];
+          } catch {
+            return [];
+          }
+        })();
+        const merged = mergeOrderLists(prev, stored, lastOrder, completedOrder, userRef.current?.orderHistory, serverOrders);
+        safeSetItem('naxtto_all_orders', JSON.stringify(merged.slice(0, 100).map(sanitizeOrderForStorage)));
+        return merged;
+      });
     } catch (err) {
       console.warn('Orders sync notice:', err);
     }
-  }, []);
+  }, [mergeOrderLists]);
 
   // Fetch initial orders on app load
   useEffect(() => {
@@ -409,27 +479,24 @@ export default function App() {
   // Real-time Firestore cloud orders listener for Admin Panel & Patron tracking
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((remoteOrders) => {
-      const deleted = getDeletedOrderIds();
-      const valid = (remoteOrders || []).filter(o => 
-        o && 
-        !deleted.has(o.id) && 
-        !deleted.has(o.orderNumber) && 
-        !DUMMY_ORDER_IDENTIFIERS.has(o.id) && 
-        !DUMMY_ORDER_IDENTIFIERS.has(o.orderNumber)
-      );
-
-      const sorted = [...valid].sort((a, b) => {
-        const timeA = new Date((a as any).createdAt || a.date || 0).getTime();
-        const timeB = new Date((b as any).createdAt || b.date || 0).getTime();
-        return timeB - timeA;
+      setOrders(prev => {
+        const stored = (() => {
+          try {
+            const raw = localStorage.getItem('naxtto_all_orders');
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        })();
+        const merged = mergeOrderLists(prev, stored, userRef.current?.orderHistory, remoteOrders);
+        safeSetItem('naxtto_all_orders', JSON.stringify(merged.slice(0, 100).map(sanitizeOrderForStorage)));
+        return merged;
       });
-
-      setOrders(sorted);
-      safeSetItem('naxtto_all_orders', JSON.stringify(sorted.slice(0, 50).map(sanitizeOrderForStorage)));
 
       // Sync order status updates to current patron user.orderHistory in real time
       setUser(prev => {
         if (!prev || !prev.orderHistory || prev.orderHistory.length === 0) return prev;
+        const deleted = getDeletedOrderIds();
         const cleanedHistory = prev.orderHistory.filter(o => 
           !deleted.has(o.id) && 
           !deleted.has(o.orderNumber) && 
@@ -441,9 +508,9 @@ export default function App() {
     });
 
     return () => {
-      unsubscribe();
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, []);
+  }, [mergeOrderLists]);
 
   // Synchronize catalog products with Supabase / Postgres and Firestore
   useEffect(() => {
@@ -1249,11 +1316,16 @@ export default function App() {
     }));
   };
 
-  const handleRemoveFromCart = (productId: string, size?: string, finish?: any) => {
-    setCartItems(prev => prev.filter(item => 
-      !(item.product.id === productId && item.selectedSize === size && item.selectedFinish === finish)
-    ));
-    showToast('Item removed from Atelier Bag');
+  const handleRemoveFromCart = (productId: string, size?: string, finish?: any, itemIndex?: number) => {
+    setCartItems(prev => {
+      if (typeof itemIndex === 'number' && itemIndex >= 0 && itemIndex < prev.length) {
+        return prev.filter((_, idx) => idx !== itemIndex);
+      }
+      return prev.filter(item => 
+        !(item.product.id === productId && (!size || item.selectedSize === size) && (!finish || item.selectedFinish === finish))
+      );
+    });
+    showToast('Item removed from order');
   };
 
   // 8. Wishlist Actions
@@ -1628,6 +1700,7 @@ export default function App() {
   };
 
   const handleRequestStaffAccess = () => {
+    refreshOrders();
     if (isStaffAuthenticated) {
       setSelectedProduct(null);
       setCurrentView('admin');
@@ -1645,6 +1718,7 @@ export default function App() {
       setStaffUser(staff);
       sessionStorage.setItem('naxtto_staff_info', JSON.stringify(staff));
     }
+    refreshOrders();
     setSelectedProduct(null);
     setCurrentView('admin');
     window.scrollTo(0, 0);

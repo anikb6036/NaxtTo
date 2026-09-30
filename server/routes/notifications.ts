@@ -212,14 +212,13 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
 
     const apiKey = (req.headers['x-resend-api-key'] as string) || customApiKey;
 
-    // Dispatch to both recipient email and store administrator (baidyaanik18@gmail.com)
-    const recipients = Array.from(new Set([
-      recipientEmail,
-      'baidyaanik18@gmail.com'
-    ].filter(Boolean)));
+    // In development/test mode without custom domain, Resend accepts the verified account email (anikb7960@gmail.com)
+    const validRecipient = (recipientEmail && recipientEmail.includes('@')) 
+      ? recipientEmail.trim() 
+      : 'anikb7960@gmail.com';
 
     const resendResult = await sendEmailWithResend({
-      to: recipients.length === 1 ? recipients[0] : recipients,
+      to: validRecipient,
       subject,
       html,
       text: customText || `Dear NaxtTo,\n\nYou have received a new order:\n\n• Order ID: ${orderNum}\n\nWhat You Need to Do\n\n• Pack the order and mark it Ready to Dispatch to avoid SLA breaches, which may impact your ratings and performance.`,
@@ -257,7 +256,7 @@ notificationsRouter.post('/order-confirmed', async (req: Request, res: Response)
 notificationsRouter.post('/test-email', async (req: Request, res: Response) => {
   try {
     const { to, customMessage } = req.body;
-    const recipient = to || 'baidyaanik18@gmail.com';
+    const recipient = to || 'anikb7960@gmail.com';
     const configured = isResendConfigured();
     const from = getResendFromEmail();
 

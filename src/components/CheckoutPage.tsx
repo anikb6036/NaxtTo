@@ -20,7 +20,9 @@ import {
   AlertCircle,
   HelpCircle,
   Clock,
-  RotateCcw
+  RotateCcw,
+  Trash2,
+  X
 } from 'lucide-react';
 import { CartItem, Address, Order, UserProfile } from '../types';
 import { apiClient } from '../services/api';
@@ -81,7 +83,7 @@ interface CheckoutPageProps {
   onSaveNewAddress?: (address: Address) => void;
   onDeleteAddress?: (addressId: string) => void;
   onGoToLogin?: () => void;
-  onRemoveItem?: (productId: string, size?: string, finish?: any) => void;
+  onRemoveItem?: (productId: string, size?: string, finish?: any, itemIndex?: number) => void;
   onUpdateQuantity?: (productId: string, newQty: number, size?: string, finish?: any) => void;
 }
 
@@ -191,6 +193,23 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [cardCvv, setCardCvv] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // State to handle confirmation when removing a product
+  const [itemToRemove, setItemToRemove] = useState<{ item: CartItem; index: number } | null>(null);
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
+
+  const handleRemoveItem = (item: CartItem, index: number) => {
+    if (onRemoveItem) {
+      onRemoveItem(
+        item.product.id,
+        item.selectedSize,
+        item.selectedFinish,
+        index
+      );
+    }
+    setConfirmRemoveIndex(null);
+    setItemToRemove(null);
+  };
 
   // Price Details expandable toggles
   const [expandFees, setExpandFees] = useState(true);
@@ -839,36 +858,53 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                   return (
                     <div key={`${item.product.id}-${idx}`} className="p-4 sm:p-5 space-y-3">
-                      <div className="flex items-start gap-4">
-                        {/* Thumbnail */}
-                        <img
-                          src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80'}
-                          alt={item.product.name}
-                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xs border border-gray-100 shrink-0"
-                        />
+                      <div className="flex items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                          {/* Thumbnail */}
+                          <img
+                            src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80'}
+                            alt={item.product.name}
+                            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xs border border-gray-100 shrink-0"
+                          />
 
-                        {/* Title, Seller, Price */}
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <h3 className="text-sm sm:text-base font-normal text-[#212121] truncate">
-                            {item.product.name}
-                          </h3>
-                          <div className="text-xs text-[#878787]">
-                            Seller:NaxtTo
-                          </div>
+                          {/* Title, Seller, Price */}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <h3 className="text-sm sm:text-base font-normal text-[#212121] truncate">
+                              {item.product.name}
+                            </h3>
+                            <div className="text-xs text-[#878787]">
+                              Seller:NaxtTo
+                            </div>
 
-                          {/* Price Row: ↓42%  ₹399  ₹228 */}
-                          <div className="flex items-center gap-2 pt-1">
-                            <span className="text-xs sm:text-sm font-bold text-[#388e3c]">
-                              ↓{discountPct}%
-                            </span>
-                            <span className="text-xs sm:text-sm text-[#878787] line-through">
-                              {currencySymbol}{itemMrp}
-                            </span>
-                            <span className="text-base sm:text-lg font-bold text-[#212121]">
-                              {currencySymbol}{itemSellingPrice}
-                            </span>
+                            {/* Price Row: ↓42%  ₹399  ₹228 */}
+                            <div className="flex items-center gap-2 pt-1">
+                              <span className="text-xs sm:text-sm font-bold text-[#388e3c]">
+                                ↓{discountPct}%
+                              </span>
+                              <span className="text-xs sm:text-sm text-[#878787] line-through">
+                                {currencySymbol}{itemMrp}
+                              </span>
+                              <span className="text-base sm:text-lg font-bold text-[#212121]">
+                                {currencySymbol}{itemSellingPrice}
+                              </span>
+                            </div>
                           </div>
                         </div>
+
+                        {/* Remove Element on Arrow Side (Top Right) - Only shown when multiple products exist */}
+                        {cartItems.length > 1 && onRemoveItem && (
+                          <div className="shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setItemToRemove({ item, index: idx })}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 bg-transparent transition-colors cursor-pointer hover:underline py-1 px-1 active:scale-95"
+                              title="Remove product from order"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Quantity Dropdown and Delivery Date */}
@@ -893,16 +929,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             </select>
                             <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-1.5 top-2 pointer-events-none" />
                           </div>
-
-                          {onRemoveItem && (
-                            <button
-                              type="button"
-                              onClick={() => onRemoveItem(item.product.id, item.selectedSize, item.selectedFinish)}
-                              className="text-xs font-semibold text-[#878787] hover:text-[#212121] transition-colors ml-2 cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          )}
                         </div>
 
                         {/* Delivery by Oct 4, Sun */}
@@ -1419,6 +1445,72 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         )}
 
       </div>
+
+      {/* Remove Item Confirmation Popup Modal (active only when multiple products exist) */}
+      {itemToRemove && cartItems.length > 1 && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setItemToRemove(null);
+            }
+          }}
+        >
+          <div className="bg-white rounded-md shadow-2xl max-w-sm w-full p-5 space-y-4 border border-gray-200 animate-scaleUp relative">
+            {/* Close X Button */}
+            <button
+              type="button"
+              onClick={() => setItemToRemove(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer p-1"
+              aria-label="Close popup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-1 pr-6">
+              <h3 className="text-base font-bold text-[#212121]">Remove Item</h3>
+              <p className="text-xs text-[#565959]">
+                Are you sure you want to remove this product from your order?
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-100">
+              <img
+                src={itemToRemove.item.product.images?.[0] || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=200&q=80'}
+                alt={itemToRemove.item.product.name}
+                className="w-14 h-14 object-cover rounded border border-gray-200 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-[#212121] truncate">
+                  {itemToRemove.item.product.name}
+                </p>
+                <p className="text-[11px] text-[#878787] mt-0.5">
+                  Qty: {itemToRemove.item.quantity} • {currencySymbol}{itemToRemove.item.product.price * itemToRemove.item.quantity}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setItemToRemove(null)}
+                className="px-4 py-2 text-xs font-semibold text-[#565959] hover:text-[#212121] hover:bg-gray-100 rounded uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleRemoveItem(itemToRemove.item, itemToRemove.index);
+                }}
+                className="px-5 py-2 text-xs font-bold text-white bg-[#2874f0] hover:bg-[#1a62d6] rounded uppercase tracking-wider shadow-xs transition-colors cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

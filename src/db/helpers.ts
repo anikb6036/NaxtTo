@@ -1,6 +1,8 @@
 import { db } from './index';
 import { products, orders, newsletterSubscribers, users } from './schema';
 import { eq, desc } from 'drizzle-orm';
+import fs from 'fs';
+import path from 'path';
 import { INITIAL_PRODUCTS } from '../data/mockData';
 import { Product, Order } from '../types';
 import {
@@ -15,8 +17,37 @@ import {
   saveNewsletterSubscriberToSupabase
 } from '../../server/db/supabase';
 
+const ORDERS_FILE_PATH = path.join(process.cwd(), 'data', 'orders.json');
+
+function loadOrdersFromDisk(): Order[] {
+  try {
+    if (fs.existsSync(ORDERS_FILE_PATH)) {
+      const raw = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Notice reading orders from disk:', err);
+  }
+  return [];
+}
+
+function saveOrdersToDisk(ordersList: Order[]) {
+  try {
+    const dir = path.dirname(ORDERS_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(ORDERS_FILE_PATH, JSON.stringify(ordersList, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Notice saving orders to disk:', err);
+  }
+}
+
 let inMemoryProducts: Product[] = [...INITIAL_PRODUCTS];
-const inMemoryOrders: Order[] = [];
+const inMemoryOrders: Order[] = loadOrdersFromDisk();
 const inMemorySubscribers: { id: string; email: string; subscribedAt: Date }[] = [];
 const deletedProductIds = new Set<string>();
 
@@ -301,6 +332,7 @@ export async function createOrderInDb(order: Order): Promise<Order> {
   } else {
     inMemoryOrders.unshift(order);
   }
+  saveOrdersToDisk(inMemoryOrders);
 
   // 1. Save to Supabase
   if (isSupabaseConfigured()) {
@@ -337,6 +369,7 @@ export async function updateOrderStatusInDb(id: string, status: string): Promise
   const existing = inMemoryOrders.find(o => o.id === id);
   if (existing) {
     existing.status = status as any;
+    saveOrdersToDisk(inMemoryOrders);
   }
 
   if (isSupabaseConfigured()) {
@@ -357,6 +390,7 @@ export async function deleteOrderFromDb(id: string): Promise<boolean> {
   const existingIdx = inMemoryOrders.findIndex(o => o.id === id);
   if (existingIdx >= 0) {
     inMemoryOrders.splice(existingIdx, 1);
+    saveOrdersToDisk(inMemoryOrders);
   }
   if (db) {
     try {
@@ -370,6 +404,7 @@ export async function deleteOrderFromDb(id: string): Promise<boolean> {
 
 export async function clearAllOrdersFromDb(): Promise<boolean> {
   inMemoryOrders.length = 0;
+  saveOrdersToDisk(inMemoryOrders);
   if (db) {
     try {
       await db.delete(orders);

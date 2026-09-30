@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Order } from '../../types';
 import { apiClient } from '../../services/api';
+import { getOrderItemImage } from '../seller-hub/SellerOrdersTable';
 
 interface AdminOrdersViewProps {
   orders: Order[];
@@ -216,13 +217,33 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({
                     className="hover:bg-slate-50/80 cursor-pointer transition-colors"
                   >
                     <td className="py-3.5 px-4">
-                      <span className="font-bold text-slate-900 font-mono text-sm block">
-                        #{ord.orderNumber}
-                      </span>
-                      <span className="text-slate-400 text-[10px] flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(ord.date).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-11 h-11 rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0 shadow-2xs group">
+                          <img
+                            src={getOrderItemImage(ord.items?.[0])}
+                            alt={ord.items?.[0]?.product?.name || 'Jewellery piece'}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=150&q=80';
+                            }}
+                          />
+                          {(ord.items || []).length > 1 && (
+                            <span className="absolute bottom-0 right-0 bg-slate-900 text-white text-[9px] font-bold px-1 rounded-tl-sm leading-tight">
+                              +{ord.items.length - 1}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-900 font-mono text-sm block">
+                            #{ord.orderNumber}
+                          </span>
+                          <span className="text-slate-400 text-[10px] flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(ord.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4">
@@ -231,10 +252,19 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <div className="max-w-xs truncate text-slate-700 font-medium">
-                        {ord.items.map(i => i.product.name).join(', ')}
+                      <div className="max-w-xs text-slate-800 font-semibold line-clamp-1">
+                        {ord.items?.[0]?.product?.name || (ord.items?.[0] as any)?.name || 'Atelier Fine Jewellery'}
                       </div>
-                      <span className="text-[10px] text-slate-400 block">{ord.items.length} piece(s)</span>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500">
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded font-medium text-slate-700">
+                          {(ord.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0)} unit(s)
+                        </span>
+                        {ord.items?.[0]?.selectedSize && (
+                          <span className="bg-slate-100 px-1.5 py-0.5 rounded font-medium text-slate-700">
+                            Size: {ord.items[0].selectedSize}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
@@ -327,17 +357,22 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({
                     <div key={idx} className="p-3 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img 
-                          src={item.product.images[0]} 
-                          alt={item.product.name} 
-                          className="w-10 h-10 object-cover rounded border border-slate-200"
+                          src={getOrderItemImage(item)} 
+                          alt={item.product?.name || (item as any)?.name || 'Jewellery piece'} 
+                          className="w-12 h-12 object-cover rounded-lg border border-slate-200"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=150&q=80';
+                          }}
                         />
                         <div>
-                          <p className="font-bold text-slate-900">{item.product.name}</p>
-                          <p className="text-slate-500 text-[10px]">Qty: {item.quantity} • {item.product.metalName}</p>
+                          <p className="font-bold text-slate-900">{item.product?.name || (item as any)?.name || 'Atelier Jewellery'}</p>
+                          <p className="text-slate-500 text-[10px]">
+                            Qty: {item.quantity || 1} • {item.product?.metalName || 'Fine Gold'} {item.selectedSize ? `• Size ${item.selectedSize}` : ''}
+                          </p>
                         </div>
                       </div>
                       <span className="font-bold font-mono text-slate-900">
-                        {currencySymbol}{(item.product.price * item.quantity).toFixed(2)}
+                        {currencySymbol}{(((item.product?.price || (item as any)?.price || 0) * (item.quantity || 1))).toFixed(2)}
                       </span>
                     </div>
                   ))}

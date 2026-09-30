@@ -27,10 +27,16 @@ export function getResendFromEmail(): string {
   if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
     raw = raw.slice(1, -1).trim();
   }
-  if (raw && raw.includes('@')) {
-    return raw;
+  if (raw) {
+    if (raw.includes('@')) {
+      return raw;
+    }
+    // If user provided a domain like "naxtto.shop", format it with a mailbox
+    if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(raw)) {
+      return `NaxtTo Atelier <orders@${raw}>`;
+    }
   }
-  return 'NaxtTo <onboarding@resend.dev>';
+  return 'NaxtTo Atelier <onboarding@resend.dev>';
 }
 
 export interface SendEmailResult {
@@ -41,6 +47,40 @@ export interface SendEmailResult {
   warning?: string;
   deliveredTo?: string;
   timestamp: string;
+}
+
+let cachedAuthorizedTestEmail: string = 'anikb7960@gmail.com';
+
+async function dispatchResendPayload(
+  apiKey: string,
+  payload: {
+    from: string;
+    to: string | string[];
+    subject: string;
+    html: string;
+    text?: string;
+  }
+): Promise<{ data: any; error: any }> {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const resJson = await res.json().catch(() => null);
+    if (!res.ok) {
+      return {
+        data: null,
+        error: resJson || { message: `Resend API returned status ${res.status}` }
+      };
+    }
+    return { data: resJson, error: null };
+  } catch (err: any) {
+    return { data: null, error: { message: err?.message || 'Network error dispatching to Resend' } };
+  }
 }
 
 /**
@@ -62,14 +102,17 @@ export async function sendEmailWithResend({
   apiKey?: string;
 }): Promise<SendEmailResult> {
   const timestamp = new Date().toISOString();
-  const recipientList = Array.isArray(to) ? to : [to];
-  const targetRecipient = recipientList[0] || 'patron@naxtto.shop';
+  const rawList = Array.isArray(to) ? to : [to];
+  const recipientList = rawList
+    .map(e => (typeof e === 'string' ? e.trim() : ''))
+    .filter(e => e.includes('@'));
+  
+  const targetRecipient = recipientList[0] || cachedAuthorizedTestEmail;
   const sender = from || getResendFromEmail();
 
   const keyToUse = apiKey?.trim() || process.env.RESEND_API_KEY?.trim();
-  const client = keyToUse ? new Resend(keyToUse) : getResendClient();
 
-  if (!client) {
+  if (!keyToUse) {
     const simulatedId = `sim_resend_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     console.log(`[RESEND SIMULATED] (${targetRecipient}) "${subject}" - RESEND_API_KEY not set. Message ID: ${simulatedId}`);
     return {
@@ -83,83 +126,98 @@ export async function sendEmailWithResend({
   }
 
   try {
-    const response = await client.emails.send({
+    const payload: any = {
       from: sender,
-      to: recipientList,
+      to: recipientList.length === 1 ? recipientList[0] : recipientList,
       subject,
-      html,
-      text: text || ''
-    });
+      html
+    };
+    if (text && text.trim().length > 0) {
+      payload.text = text.trim();
+    }
+
+    const response = await dispatchResendPayload(keyToUse, payload);
 
     if (response.error) {
+      const errObj = response.error.error || response.error;
+      const errMsg = (errObj.message || response.error.message || '').toString();
+
+      // Check for Resend test account constraint (e.g. unverified domain or unverified recipient)
+      const isTestRestriction = 
+        errMsg.toLowerCase().includes('only send testing emails') ||
+        errMsg.toLowerCase().includes('testing email address') ||
+        errMsg.toLowerCase().includes('example.com') ||
+        response.error.statusCode === 403 || 
+        errObj.statusCode === 403;
+
+      if (isTestRestriction) {
+        const match = errMsg.match(/\(([^)]+)\)/);
+        const authorizedEmail = match?.[1] || cachedAuthorizedTestEmail;
+        cachedAuthorizedTestEmail = authorizedEmail;
+
+        console.log(`[RESEND TEST ROUTING] Resend test tier active. Forwarding message for ${targetRecipient} to registered account inbox: ${authorizedEmail}`);
+
+        const testPayload: any = {
+          from: 'onboarding@resend.dev',
+          to: authorizedEmail,
+          subject: `[Order Confirmed for ${targetRecipient}] ${subject}`,
+          html
+        };
+        if (text && text.trim().length > 0) {
+          testPayload.text = text.trim();
+        }
+
+        const devResp = await dispatchResendPayload(keyToUse, testPayload);
+        if (!devResp.error && devResp.data?.id) {
+          const devMessageId = devResp.data.id;
+          console.log(`[RESEND SENT]: Successfully delivered to registered test inbox ${authorizedEmail} (ID: ${devMessageId})`);
+          return {
+            success: true,
+            provider: 'resend',
+            messageId: devMessageId,
+            deliveredTo: `${authorizedEmail} (forwarded from ${targetRecipient})`,
+            timestamp,
+            warning: `Delivered to verified Resend address (${authorizedEmail}). To send directly to patrons, verify a custom domain at resend.com/domains.`
+          };
+        }
+      }
+
       // If custom domain is not verified, attempt fallback to Resend's free verified test sender
       if (!sender.includes('onboarding@resend.dev') && 
-          (response.error.message?.toLowerCase().includes('domain') || 
-           response.error.message?.toLowerCase().includes('from') || 
-           response.error.message?.toLowerCase().includes('verify'))) {
+          (errMsg.toLowerCase().includes('domain') || 
+           errMsg.toLowerCase().includes('from') || 
+           errMsg.toLowerCase().includes('verify') ||
+           errMsg.toLowerCase().includes('validation_error'))) {
         console.log('[RESEND RETRY] Custom domain not verified, attempting fallback via onboarding@resend.dev...');
-        try {
-          const fallbackResp = await client.emails.send({
-            from: 'onboarding@resend.dev',
-            to: recipientList,
-            subject,
-            html,
-            text: text || ''
-          });
-          if (!fallbackResp.error) {
-            const fbMessageId = fallbackResp.data?.id || `resend_${Date.now()}`;
-            console.log(`[RESEND SENT]: Delivered via fallback onboarding@resend.dev to ${targetRecipient} (ID: ${fbMessageId})`);
-            return {
-              success: true,
-              provider: 'resend',
-              messageId: fbMessageId,
-              deliveredTo: targetRecipient,
-              timestamp,
-              warning: 'Custom domain not yet verified in Resend. Delivered using onboarding@resend.dev'
-            };
-          }
-        } catch {
-          // ignore fallback error and report primary
+        const fallbackPayload: any = {
+          from: 'onboarding@resend.dev',
+          to: payload.to,
+          subject,
+          html
+        };
+        if (text && text.trim().length > 0) {
+          fallbackPayload.text = text.trim();
+        }
+        const fallbackResp = await dispatchResendPayload(keyToUse, fallbackPayload);
+        if (!fallbackResp.error && fallbackResp.data?.id) {
+          const fbMessageId = fallbackResp.data.id;
+          console.log(`[RESEND SENT]: Delivered via fallback onboarding@resend.dev to ${targetRecipient} (ID: ${fbMessageId})`);
+          return {
+            success: true,
+            provider: 'resend',
+            messageId: fbMessageId,
+            deliveredTo: targetRecipient,
+            timestamp,
+            warning: 'Custom domain not yet verified in Resend. Delivered using onboarding@resend.dev'
+          };
         }
       }
 
-      // If in Resend testing mode and recipient is unverified, route to developer's registered test inbox
-      if (response.error.message?.includes('You can only send testing emails to your own email address')) {
-        const match = response.error.message.match(/\(([^)]+)\)/);
-        if (match && match[1]) {
-          const authorizedEmail = match[1];
-          console.log(`[RESEND TEST ROUTING] Customer address (${targetRecipient}) requires domain verification. Forwarding to authorized test owner: ${authorizedEmail}`);
-          try {
-            const devResp = await client.emails.send({
-              from: 'onboarding@resend.dev',
-              to: authorizedEmail,
-              subject: `[Order Confirmed for ${targetRecipient}] ${subject}`,
-              html,
-              text: text || ''
-            });
-            if (!devResp.error) {
-              const devMessageId = devResp.data?.id || `resend_${Date.now()}`;
-              console.log(`[RESEND SENT]: Successfully forwarded to registered test inbox ${authorizedEmail} (ID: ${devMessageId})`);
-              return {
-                success: true,
-                provider: 'resend',
-                messageId: devMessageId,
-                deliveredTo: `${authorizedEmail} (forwarded from ${targetRecipient})`,
-                timestamp,
-                warning: `Delivered to verified Resend address (${authorizedEmail}). To send directly to ${targetRecipient}, verify a custom domain at resend.com/domains.`
-              };
-            }
-          } catch {
-            // continue to error
-          }
-        }
-      }
-
-      console.error('[RESEND API ERROR]:', response.error);
+      console.warn('[RESEND DISPATCH NOTICE]:', errMsg || response.error);
       return {
         success: false,
         provider: 'resend',
-        error: response.error.message || 'Resend API returned an error',
+        error: errMsg || 'Resend API returned an error',
         deliveredTo: targetRecipient,
         timestamp
       };
@@ -176,7 +234,7 @@ export async function sendEmailWithResend({
       timestamp
     };
   } catch (err: any) {
-    console.error('[RESEND DISPATCH EXCEPTION]:', err);
+    console.warn('[RESEND DISPATCH EXCEPTION]:', err?.message || err);
     return {
       success: false,
       provider: 'resend',
